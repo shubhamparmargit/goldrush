@@ -1,0 +1,57 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Digital Investment
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/trade-buttons.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% include "digital-investment/includes/wallet-balance-card.html" %}
+                {% csrf_token %}
+                <div class="maintitle">{{ title }}</div>
+                <div class="subtitle">Live Rate :: {{currency_icon}}<span class="{{metal_type}}-rate">{{ current_metal_rate }}</span> / gm</div>
+                <p id="dateTime" style="font-size: 12px; text-align: center;"></p>
+                <div class="weight-grid">
+                    <!-- ONE BAR -->
+                    {% for gm in weights %}
+                    <div class="ingot ingot-{{metal_type}} weight-bar" data-metal="{{metal_type}}" data-gm="{{gm}}">
+                        <div class="ingot-inner">
+                            <div class="ingot-text">
+                                <div class="metal-name">{{gm}}</div>
+                                <div class="metal-purity">GM</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% include "digital-investment/includes/bottom-sheet.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraModal %}{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}"></script>
+<script>
+    document.querySelectorAll('.weight-bar').forEach(bar => {
+        bar.addEventListener('click', () => {
+            openGoldSheet(parseInt(bar.dataset.gm),bar.dataset.metal);
+        });
+    });
+
+    setInterval(fetchLiveRate, 10000);
+</script>
+{% endblock %}

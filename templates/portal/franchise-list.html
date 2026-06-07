@@ -1,0 +1,300 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+	<div class="container-full">
+		<div class="content-header">
+			<div class="d-flex align-items-center">
+				<div class="mr-auto">
+					<h3 class="page-title">Franchise List</h3>
+					<input type="hidden" name="type" id="type" value="trading_user">
+					{% csrf_token %}
+					<div class="d-inline-block align-items-center">
+						<nav>
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
+								<li class="breadcrumb-item active" aria-current="page">Franchise List</li>
+							</ol>
+						</nav>
+					</div>
+				</div>							
+			</div>
+		</div>	  
+		<section class="content">
+			<div class="col-12">
+				<div class="box">
+					<div class="box-body">
+						{% if request.session.role == 1 or  request.session.role == 5 %}
+						<!-- Nav tabs -->
+						<ul class="nav nav-tabs justify-content-center franchise-tabs" role="tablist">
+							{% for role_id, role_name in ROLE_FRANCHISE_MAP %}
+								<li class="nav-item">
+									<a class="nav-link"
+									data-toggle="tab"
+									href="#{{ role_name|lower }}"
+									role="tab"
+									title="{{ role_name }}">
+										<span><i class="mdi mdi-file-document-box"></i></span>
+										<span class="hidden-xs-down ms-15">{{ role_name }}</span>
+									</a>
+								</li>
+							{% endfor %}
+						</ul>
+						{% endif %}
+						<div class="box">
+							<div class="box-header with-bfeedback">
+								<div class="row">
+									<div class="col-2">
+										<h4 class="box-title">Franchise List</h4>
+									</div>
+									<div class="col-10 dFlex">
+										<select class="form-control floatLeft w-p10" id="limit">
+											<option value="1">1</option>
+											<option value="5">5</option>
+											<option value="10" selected>10</option>
+											<option value="20">20</option>
+											<option value="50">50</option>
+											<option value="100">100</option>
+											<option value="250">250</option>
+											<option value="500">500</option>
+										</select> 
+										<div class="input-group_search input-group floatLeft w-p30">
+											<input id="search" type="search" class="input-sm form-control" placeholder="Search Customer">
+										</div>
+										<select class="form-control floatLeft w-p15" id="access">
+											<option value="">Sort by Access</option>	
+											<option value="All">All</option>
+											<option value="Blocked">Blocked</option>
+											<option value="Granted">Granted</option>
+										</select> 
+										<div class="btn-group floatLeft w-p30">
+											<span id="reportrange" class="btn btn-primary btnSpan pdNew">
+												<i class="fa fa-calendar"></i>&nbsp;
+												<span class="btn-date-range">
+													<span>Filter By Date</span> 
+												</span>
+												<b class="caret"></b>
+											</span>
+										</div>
+										<input type="hidden" name="from_date" id="from_date"> 
+										<input type="hidden" name="to_date" id="to_date">
+										<button type="button" class="btn btn-warning floatLeft m-0 pdNew w-p5" id="clear-filter" title="Clear filter"><i class="mdi mdi-filter-remove"></i></button>
+										{% if request.session.role == 1 %}
+										<button type="button" id="downloadExcel" class="btn btn-danger floatLeft m-0 pdNew w-p5" title="Export to xls"><i class="fa fa-download"></i></button>
+										{% endif %}
+									</div>
+								</div>
+							</div>
+							<div class="box-body no-padding">
+								<div class="row mt10 mb10 table-bot">
+									<div class="col-md-6 col-sm-12 botFlex">
+										<p class="show_p"></p>
+									</div>
+									<div class="col-md-6 col-sm-12">
+										<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+										</ul>
+									</div>
+								</div>
+								<div class="table-responsive freeze-table-header">
+									<table class="table table-hover table-striped table-bordered nowrap" id="export_table">
+										<thead>
+											<tr>
+												<th>Sr. no.</th>
+												<th>Activation Date</th>
+												<th>Franchise Name</th>
+												<th>Holder Name</th>
+												<th>Referral Id</th>
+												<th>Mobile No.</th>
+												<th>Email</th>
+												<th colspan="2">Access</th>
+												<th class="ignore">Action</th>
+												<th class="ignore">Status</th>
+											</tr>
+										</thead>
+										<tbody class="dynamic_content">
+										</tbody>
+									</table>
+								</div>
+								<div class="row no-data mb10">
+									<div class="col-md-12 col-sm-12 text-center">
+										<p>No Record To Display</p>
+									</div>
+								</div>
+								<div class="row mt10 mb10 table-bot">
+									<div class="col-md-6 col-sm-12 botFlex">
+										<p class="show_p"></p>
+									</div>
+									<div class="col-md-6 col-sm-12">
+										<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- /.box-body -->
+				</div>
+				<!-- /.box -->
+			</div>
+		</section>
+	</div>
+</div>
+{% endblock %}
+{% block extraModal %}
+<!-- View Modal -->
+<div id="view-modal" class="modal fade franchiseModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-xxl"> 
+		<div class="modal-content"> 
+			<div class="modal-header"> 
+				<h4 class="modal-title">Franchise Details</h4>
+				<button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+			</div> 
+			<div class="modal-body">
+				<div id="modal-loader" style="display: none; text-align: center;">
+					<img src="{% static 'portal/img/ajax-loader.gif' %}">
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<h4 class="modal-title">Franchise Details</h4>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped table-actions">
+								<tr>
+									<th>Activation Date</th>
+									<td id="date_v"></td>
+									<th>Parent</th>
+									<td id="parent_v"></td>
+									<th>Franchise Model</th>
+									<td id="model_v"></td>
+								</tr>
+								<tr>
+									<th>Franchise Name</th>
+									<td id="name_v"></td>
+									<th>Holder Name</th>
+									<td id="holder_v"></td>
+									<th>Access</th>
+									<td id="access_v"></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<h4 class="modal-title">Contact Details</h4>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped table-actions">
+								<tr>
+									<th>Mobile No.</th>
+									<td id="mobile_v"></td>
+									<th>Email Id</th>
+									<td id="email_v"></td>
+								</tr>
+								<tr>
+									<th>Address</th>
+									<td colspan="3" id="address_v"></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<h4 class="modal-title">Identity Details</h4>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped table-actions">
+								<tr>
+									<th>Company Id</th>
+									<td id="company_id_v"></td>
+									<th>Referral Id</th>
+									<td id="referral_v"></td>
+									<th>Agent Id</th>
+									<td id="agent_id_v"></td>
+								</tr>
+								<tr>
+									<th>Aadhar Number</th>
+									<td id="aadhaar_v"></td>
+									<th>PAN Number</th>
+									<td id="pan_v"></td>
+									<th>GST Number</th>
+									<td id="gst_v"></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<h4 class="modal-title">Commission Details</h4>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped table-actions">
+								<tr>
+									<th>Commission Slab</th>
+									<td id="com_slab_v"></td>
+									<th>Commission %</th>
+									<td id="com_per_v"></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="franchise_doc_details"></div>
+				<div class="franchise_bank_details"></div>
+			</div> 
+		</div> 
+	</div>
+</div>
+<!-- /.modal -->
+{% if request.session.role == 1 %}
+<!-- View Franchise Modal -->
+<div id="view-franchise-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-lg"> 
+		<div class="modal-content"> 
+			<div class="modal-header"> 
+				<h4 class="modal-title">Franchise Hierarchy Details</h4>
+				<button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+			</div> 
+			<div class="modal-body">
+				<div id="modal-loader" style="display: none; text-align: center;">
+					<img src="{% static 'portal/img/ajax-loader.gif' %}">
+				</div>
+				<div class="hierarchy-container">
+
+					<!-- LEFT : TREE -->
+					<div class="hierarchy-wrapper" id="hierarchyTree"></div>
+
+					<!-- RIGHT : DETAILS -->
+					<div class="hierarchy-detail" id="detailPanel">
+						<h4>Franchise Details</h4>
+						<div class="detail-body">
+							<p>Select a franchise to view details</p>
+						</div>
+					</div>
+
+				</div>
+			</div> 
+		</div> 
+	</div>
+</div>
+<!-- /.modal -->
+{% endif %}
+{% endblock %}
+{% block extraJS %}
+<script src="{% static 'portal/js/action/dataList.js' %}"></script>
+{% endblock %}

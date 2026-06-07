@@ -1,0 +1,44 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Logged Out
+{% endblock %}
+
+{% block extraCSS %}
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="card-wrapper">
+    <div class="card-body">
+        <div class="error-icon">
+            🔒
+        </div>
+        <div class="maintitle">You are logged out</div>
+        <div class="subtitle">Your digital investment session has been closed securely.<br/>Please reopen Digital Investment from the mobile app.</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script>
+(function () {
+
+    function preventBack() {
+        window.history.pushState(null, "", window.location.href);
+    }
+
+    // current logout page ko history me push karo
+    preventBack();
+
+    // back press detect
+    window.onpopstate = function () {
+        preventBack();
+    };
+
+})();
+</script>
+{% endblock %}

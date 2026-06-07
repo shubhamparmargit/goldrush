@@ -1,0 +1,237 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Add Wallet Balance</h3>
+                    <nav><ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item">Wallet</li>
+                        <li class="breadcrumb-item active">Add Wallet Balance</li>
+                    </ol></nav>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="row">
+
+                <!-- CREDIT FORM -->
+                <div class="col-md-5">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Credit Wallet</h4>
+                        </div>
+                        <div class="box-body">
+                            {% csrf_token %}
+
+                            <!-- STEP 1: Search customer -->
+                            <div class="form-group">
+                                <label>Search by Mobile Number <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="search_mobile"
+                                        placeholder="10-digit mobile number" maxlength="10">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-primary" id="searchBtn">Search</button>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2: Customer info (hidden until found) -->
+                            <div id="customerCard" style="display:none;">
+                                <input type="hidden" id="credit_unique_id">
+                                <div class="alert alert-info" style="border-radius:8px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <div>
+                                            <b id="cust_name"></b><br>
+                                            <small id="cust_mobile" class="text-muted"></small>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div style="font-size:12px;color:#555;">Current Balance</div>
+                                            <div style="font-size:20px;font-weight:800;" id="cust_balance"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Amount to Credit (₹) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="credit_amount" placeholder="Enter amount" min="1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>UTR / Transaction Reference</label>
+                                    <input type="text" class="form-control" id="credit_utr" placeholder="Bank UTR or payment reference (optional)">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Remark <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="credit_remark" rows="3"
+                                        placeholder="e.g. Fund transfer received via NEFT on 01-06-2026"></textarea>
+                                </div>
+
+                                <button class="btn btn-success btn-block" id="creditBtn">
+                                    <i class="fa fa-plus-circle"></i> Credit Wallet
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HISTORY -->
+                <div class="col-md-7">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Credit History</h4>
+                            <div class="pull-right" style="display:flex;gap:8px;">
+                                <input type="text" class="form-control input-sm" id="historyMobileFilter"
+                                    placeholder="Filter by mobile" style="width:160px;">
+                                <button class="btn btn-sm btn-default" id="filterHistoryBtn">Filter</button>
+                                <button class="btn btn-sm btn-default" id="clearFilterBtn">Clear</button>
+                            </div>
+                        </div>
+                        <div class="box-body no-padding">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped table-hover" style="font-size:13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Date</th>
+                                            <th>Customer</th>
+                                            <th>Amount</th>
+                                            <th>Before</th>
+                                            <th>After</th>
+                                            <th>UTR</th>
+                                            <th>Remark</th>
+                                            <th>By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyBody">
+                                        <tr><td colspan="9" class="text-center">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    const SEARCH_URL  = "{% url 'search_customer_wallet' %}";
+    const CREDIT_URL  = "{% url 'credit_wallet' %}";
+    const HISTORY_URL = "{% url 'wallet_credit_history' %}";
+    const CSRF        = "{{ csrf_token }}";
+
+    // ===== SEARCH =====
+    document.getElementById('searchBtn').addEventListener('click', function () {
+        const mobile = document.getElementById('search_mobile').value.trim();
+        if (!mobile || mobile.length !== 10) { alert('Enter a valid 10-digit mobile number'); return; }
+
+        this.disabled = true;
+        fetch(`${SEARCH_URL}?mobile=${mobile}`)
+            .then(r => r.json())
+            .then(data => {
+                this.disabled = false;
+                if (data.success !== '1') { alert(data.message); document.getElementById('customerCard').style.display = 'none'; return; }
+
+                document.getElementById('credit_unique_id').value = data.unique_id;
+                document.getElementById('cust_name').textContent   = data.name;
+                document.getElementById('cust_mobile').textContent = data.mobile;
+                document.getElementById('cust_balance').textContent = '₹' + Number(data.balance).toLocaleString('en-IN') + '/-';
+                document.getElementById('credit_amount').value     = '';
+                document.getElementById('credit_utr').value        = '';
+                document.getElementById('credit_remark').value     = '';
+                document.getElementById('customerCard').style.display = 'block';
+            })
+            .catch(() => { this.disabled = false; alert('Something went wrong'); });
+    });
+
+    // Enter key on search
+    document.getElementById('search_mobile').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') document.getElementById('searchBtn').click();
+    });
+
+    // ===== CREDIT =====
+    document.getElementById('creditBtn').addEventListener('click', function () {
+        const unique_id  = document.getElementById('credit_unique_id').value;
+        const amount     = document.getElementById('credit_amount').value.trim();
+        const utr        = document.getElementById('credit_utr').value.trim();
+        const remark     = document.getElementById('credit_remark').value.trim();
+
+        if (!amount || parseInt(amount) < 1) { alert('Enter a valid amount'); return; }
+        if (!remark) { alert('Remark is required'); return; }
+        if (!confirm(`Credit ₹${amount} to this customer?\n\nRemark: ${remark}`)) return;
+
+        this.disabled = true;
+        this.textContent = 'Processing...';
+
+        fetch(CREDIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `unique_id=${unique_id}&amount=${amount}&utr_number=${encodeURIComponent(utr)}&remark=${encodeURIComponent(remark)}&csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fa fa-plus-circle"></i> Credit Wallet';
+            alert(data.message);
+            if (data.success === '1') {
+                document.getElementById('cust_balance').textContent = '₹' + Number(data.new_balance).toLocaleString('en-IN') + '/-';
+                document.getElementById('credit_amount').value = '';
+                document.getElementById('credit_utr').value    = '';
+                document.getElementById('credit_remark').value = '';
+                loadHistory();
+            }
+        })
+        .catch(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fa fa-plus-circle"></i> Credit Wallet';
+            alert('Something went wrong');
+        });
+    });
+
+    // ===== HISTORY =====
+    function loadHistory(mobile) {
+        const url = mobile ? `${HISTORY_URL}?mobile=${mobile}` : HISTORY_URL;
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById('historyBody');
+                if (!data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center">No records found</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.data.map((r, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${r.date}</td>
+                        <td><b>${r.customer_name}</b><br><small>${r.mobile}</small></td>
+                        <td><b class="text-success">+₹${r.amount}</b></td>
+                        <td>₹${r.balance_before}</td>
+                        <td>₹${r.balance_after}</td>
+                        <td>${r.utr_number}</td>
+                        <td>${r.remark}</td>
+                        <td>${r.credited_by}</td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    document.getElementById('filterHistoryBtn').addEventListener('click', function () {
+        loadHistory(document.getElementById('historyMobileFilter').value.trim());
+    });
+    document.getElementById('clearFilterBtn').addEventListener('click', function () {
+        document.getElementById('historyMobileFilter').value = '';
+        loadHistory();
+    });
+
+    loadHistory();
+</script>
+{% endblock %}

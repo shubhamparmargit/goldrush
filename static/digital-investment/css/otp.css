@@ -1,0 +1,71 @@
+/* Card */
+.otp-card {
+  width: 100%;
+  /* max-width: 400px; */
+  background: var(--Gainsboro);
+  border-radius: 18px;
+  padding: 30px 24px;
+  /* box-shadow: 0 20px 40px rgba(0,0,0,0.15); */
+  text-align: center;
+}
+
+/* Header */
+.otp-header h2 {
+  margin: 10px 0 5px;
+  font-size: 22px;
+  color: #0a0f2c;
+}
+
+.otp-header p {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+.otp-icon {
+  font-size: 28px;
+}
+
+/* OTP Inputs */
+.otp-input-group {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 25px 0;
+}
+
+.otp-input {
+  width: 48px;
+  height: 55px;
+  text-align: center;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  border: 1.5px solid #d1d5db !important;
+  background: #ffffff;
+  outline: none !important;
+  transition: all 0.2s ease;
+}
+
+/* Focus state */
+.otp-input:focus {
+  border-color: #1b2a6b;
+  box-shadow: 0 0 0 3px rgba(27,42,107,0.15);
+}
+
+/* Footer */
+.otp-footer {
+  margin-top: 18px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.otp-footer a {
+  color: #1b2a6b;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.otp-footer a:hover {
+  text-decoration: underline;
+}

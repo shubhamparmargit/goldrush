@@ -1,0 +1,287 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+	<div class="container-full">
+		<div class="content-header">
+			<div class="d-flex align-items-center">
+				<div class="me-auto">
+					<h3 class="page-title">Franchise Module</h3>
+					<div class="d-inline-block align-items-center">
+						<nav>
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
+								<li class="breadcrumb-item active" aria-current="page">Franchise Module</li>
+							</ol>
+						</nav>
+					</div>
+				</div>
+			</div>
+		</div>
+		<section class="content">
+			<form class="form submitForm" method="post" id="frm_addFranchise" name="frm_addFranchise" enctype="multipart/form-data">
+				{% csrf_token %}
+				<div id="loaderAjax" style="display:none;">
+					<img src="{% static 'portal/img/ajax-loader.gif' %}" alt="Loading..." />
+				</div>
+				<div class="row">
+					<!-- ================= BASIC DETAILS ================= -->
+					<div class="col-lg-6 col-12">
+						<div class="box">
+							<div class="box-body">
+								<h4 class="box-title text-info mb-0">Franchise Details</h4>
+								<hr class="my-15">
+								<div class="row">
+									{% if request.session.role == 1 %}
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Franchise Model<span class="error">*</span></label>
+											<select class="form-control required" data-placeholder="Select Franchise Model" id="franchise_model" name="franchise_model">
+												<option value="">Choose Model</option>
+												<option value="SMRA">SMRA</option>
+												<option value="MRA">MRA</option>
+												<option value="RA">RA</option>
+												<option value="User">User</option>
+											</select>
+										</div>
+									</div>
+									<!-- Parent Franchise dropdown -->
+									<div class="col-md-12" id="parent_div" style="display:none;">
+										<div class="form-group">
+											<label class="form-label">Parent Franchise<span class="error">*</span></label>
+											<select class="form-control select2" id="parent_franchise" name="parent_franchise" style="width: 100%;">
+												<option value="">Select Parent</option>
+											</select>
+										</div>
+									</div>
+									{% endif %}
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Franchise Type<span class="error">*</span></label>
+											<select class="form-control required" id="franchise_type" name="franchise_type">
+												<option value="">Choose Type</option>
+												<option value="Mr">Mr</option>
+												<option value="Mrs">Mrs</option>
+												<option value="Ms">Ms</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Franchise Name<span class="error">*</span></label>
+											<input type="text" class="form-control required" id="franchise_name"  name="franchise_name" placeholder="Franchise Name">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Holder Name<span class="error">*</span></label>
+											<input type="text" class="form-control required" id="holder_name"  name="holder_name" placeholder="Holder Name">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- ================= CONTACT DETAILS ================= -->
+					<div class="col-lg-6 col-12">
+						<div class="box">
+							<div class="box-body">
+								<h4 class="box-title text-info mb-0">Contact Details</h4>
+								<hr class="my-15">
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Mobile<span class="error">*</span></label>
+											<input type="number" class="form-control required" id="mobile" name="mobile" placeholder="Mobile Number">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Email<span class="error">*</span></label>
+											<input type="email" class="form-control required" id="email" name="email" placeholder="Email">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Address</label>
+											<input type="text" class="form-control" id="address" name="address" placeholder="Address">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- ================= ID DETAILS ================= -->
+					<div class="col-lg-6 col-12">
+						<div class="box">
+							<div class="box-body">
+								<h4 class="box-title text-info mb-0">Identity Details</h4>
+								<hr class="my-15">
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Aadhaar Number<span class="error">*</span></label>
+											<input type="number" class="form-control required" id="aadhaar_number" name="aadhaar_number" placeholder="Aadhaar Number">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">PAN Number<span class="error">*</span></label>
+											<input type="text" class="form-control required" id="pan_number" name="pan_number" placeholder="PAN Number">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">GST Number</label>
+											<input type="text" class="form-control" id="gst_number" name="gst_number" placeholder="GST Number">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label class="form-label">Agent Id</label>
+											<input type="text" class="form-control" id="agent_id" name="agent_id" placeholder="Agent Id">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label class="form-label">Access Control</label><br/>
+											<input type="checkbox" class="filled-in chk-col-success"  id="access" name="access" checked />
+											<label for="access" style="margin-top: 7px;margin-bottom:0px;">Granted</label>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- ================= DOCUMENT UPLOAD ================= -->
+					<div class="col-lg-6 col-12">
+						<div class="box">
+							<div class="box-body">
+								<h4 class="box-title text-info mb-0">Documents Upload</h4>
+								<hr class="my-15">
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Aadhaar Document<span class="error">*</span></label>
+											<input type="file" class="form-control filedata requiredFile" id="aadhaar_doc"  name="aadhaar_doc">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">PAN Document<span class="error">*</span></label>
+											<input type="file" class="form-control filedata requiredFile" id="pan_doc" name="pan_doc">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Agreement<span class="error">*</span></label>
+											<input type="file" class="form-control filedata requiredFile" id="agreement_doc"  name="agreement_doc">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- ================= BANK DETAILS ================= -->
+					<div class="col-lg-6 col-12">
+						<div class="box">
+							<div class="box-body">
+								<h4 class="box-title text-info mb-0">Bank Details</h4>
+								<hr class="my-15">
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Bank Name<span class="error">*</span></label>
+											<input type="text" class="form-control required" id="bank_name" name="bank_name" placeholder="Bank Name">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Account Holder Name<span class="error">*</span></label>
+											<input type="text" class="form-control required" id="account_holder_name" name="account_holder_name" placeholder="Account Holder Name">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Account Number<span class="error">*</span></label>
+											<input type="number" class="form-control required" id="account_number" name="account_number" placeholder="Account Number">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">IFSC Code<span class="error">*</span></label>
+											<input type="text" class="form-control required" id="ifsc_code" name="ifsc_code" placeholder="IFSC Code">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Branch Name</label>
+											<input type="text" class="form-control" id="branch_name" name="branch_name" placeholder="Branch Name">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- ================= COMMISSION ================= -->
+					<div class="col-lg-6 col-12">
+						<div class="box">
+							<div class="box-body">
+								<h4 class="box-title text-info mb-0">Bank Documents / Commission Details</h4>
+								<hr class="my-15">
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Cancelled Cheque</label>
+											<input type="file" class="form-control filedata" id="cancelled_cheque" name="cancelled_cheque">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Passbook</label>
+											<input type="file" class="form-control filedata" id="passbook" name="passbook">
+										</div>
+									</div>
+									<!-- <div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Bank Statement</label>
+											<input type="file" class="form-control filedata" id="bank_statement" name="bank_statement">
+										</div>
+									</div>	 -->
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Commission Slab<span class="error">*</span></label>
+											<input type="number" class="form-control required" id="commission_slab" name="commission_slab" placeholder="Commission Slab">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Commission Percentage<span class="error">*</span></label>
+											<input type="number" class="form-control required" id="commission_percentage" name="commission_percentage" placeholder="Commission Percentage">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- ================= ACTION ================= -->
+					<div class="col-lg-12 col-12">
+						<div class="box-footer text-end">
+							<input type="hidden" name="btn_addFranchise" value="btn_addFranchise">
+							<button type="button" class="btn btn-primary btn_submitForm" id="btn_addFranchise" name="btn_addFranchise">
+								<i class="ti-save-alt"></i> Save Franchise
+							</button>
+						</div>
+					</div>
+				</div>
+			</form>
+		</section>
+	</div>
+</div>
+{% endblock %}
+{% block extraModal %}
+{% endblock %}
+{% block extraJS %}
+<script src="{% static 'portal/js/action/form.js' %}"></script>
+{% endblock %}

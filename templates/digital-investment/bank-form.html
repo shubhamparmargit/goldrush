@@ -1,0 +1,71 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Fill Bank Details
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="card-wrapper">
+    <div class="card-body">
+        <div class="maintitle">Fill Bank Details</div>
+        <div class="subtitle">Please provide your bank details to activate digital investment access</div>
+        <form method="post" enctype="multipart/form-data" class="submitBankForm">
+            {% csrf_token %}
+            <div id="loaderAjax" style="display:none;">
+                <img src="{% static 'portal/img/ajax-loader.gif' %}" alt="Loading..." />
+            </div>
+            <h5 class="mb-16">Bank Details</h5>
+            <div class="mb-16">
+                <input type="text" name="bank_name" id="bank_name" class="form-control required bg-Gainsboro"
+                    placeholder="Bank Name *">
+            </div>
+            <div class="mb-16">
+                <input type="text" class="form-control required bg-Gainsboro" id="account_holder_name"
+                    name="account_holder_name" placeholder="Account Holder Name *">
+            </div>
+            <div class="mb-16">
+                <input type="number" class="form-control required bg-Gainsboro" id="account_number"
+                    name="account_number" placeholder="Account Number *">
+            </div>
+            <div class="mb-16">
+                <input type="text" class="form-control required bg-Gainsboro" id="ifsc_code" name="ifsc_code"
+                    placeholder="IFSC Code *">
+            </div>
+            <div class="mb-24">
+                <input type="text" class="form-control bg-Gainsboro" id="branch_name" name="branch_name"
+                    placeholder="Branch Name">
+            </div>
+            <h5 id="file_error">Bank Documents<br/>
+                <small style="color:#6f6b6b;font-weight: normal;font-size: 50%;">Only JPG, PNG and PDF files are allowed (size: Max 5MB)</small>
+            </h5>
+            <div class="mb-16">
+                <label class="f14-regular mb-6 d-block">Cancelled Cheque<span class="error">*</span></label>
+                <input type="file" class="form-control filedata" id="cancelled_cheque"
+                    name="cancelled_cheque">
+            </div>
+            <div class="mb-16">
+                <label class="f14-regular mb-6 d-block">Passbook<span class="error">*</span></label>
+                <input type="file" class="form-control filedata" id="passbook" name="passbook">
+            </div>
+            <!-- <div class="mb-24">
+                <label class="f14-regular mb-6 d-block">Bank Statement<span class="error">*</span></label>
+                <input type="file" class="form-control filedata requiredFile" id="bank_statement" name="bank_statement">
+            </div> -->
+            <button type="button" class="action-btn primary-btn btn_submitBankForm">
+                Submit Bank Details
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/main.js' %}"></script>
+<script src="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.js' %}"></script>
+<script src="{% static 'digital-investment/js/bank-validation.js' %}"></script>
+{% endblock %}

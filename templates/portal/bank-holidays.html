@@ -1,0 +1,162 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Bank Holidays</h3>
+                    <div class="d-inline-block align-items-center">
+                        <nav>
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                                <li class="breadcrumb-item" aria-current="page">Dashboard</li>
+                                <li class="breadcrumb-item active" aria-current="page">Bank Holidays</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <section class="content">
+            <div class="row">
+
+                <!-- ADD HOLIDAY FORM -->
+                <div class="col-4">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Add Bank Holiday</h4>
+                        </div>
+                        <div class="box-body">
+                            <div class="mb-16">
+                                <label>Date <span class="text-danger">*</span></label>
+                                <input type="date" id="holiday_date" class="form-control" min="{{ today }}">
+                            </div>
+                            <div class="mb-16">
+                                <label>Description <span class="text-danger">*</span></label>
+                                <input type="text" id="holiday_description" class="form-control" placeholder="e.g. Diwali, Republic Day">
+                            </div>
+                            <button class="btn btn-primary" id="btn_add_holiday">Add Holiday</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HOLIDAYS LIST -->
+                <div class="col-8">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Holiday List</h4>
+                        </div>
+                        <div class="box-body">
+                            <table class="table table-bordered" id="holidayTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th>Added By</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="holidayTableBody">
+                                    <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    const LIST_URL   = "{% url 'list_holidays' %}";
+    const ADD_URL    = "{% url 'add_holiday' %}";
+    const DELETE_URL = "{% url 'delete_holiday' %}";
+    const TOGGLE_URL = "{% url 'toggle_holiday' %}";
+    const CSRF       = "{{ csrf_token }}";
+
+    function loadHolidays() {
+        fetch(LIST_URL)
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById('holidayTableBody');
+                if (!data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No holidays added</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.data.map((h, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${h.date}</td>
+                        <td>${h.description}</td>
+                        <td>
+                            <span class="badge ${h.is_active ? 'badge-success' : 'badge-secondary'}">
+                                ${h.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td>${h.added_by}</td>
+                        <td>
+                            <button class="btn btn-xs ${h.is_active ? 'btn-warning' : 'btn-success'}"
+                                onclick="toggleHoliday(${h.id})">
+                                ${h.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button class="btn btn-xs btn-danger" onclick="deleteHoliday(${h.id})">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    document.getElementById('btn_add_holiday').addEventListener('click', function () {
+        const date = document.getElementById('holiday_date').value.trim();
+        const desc = document.getElementById('holiday_description').value.trim();
+
+        if (!date || !desc) { alert('Date and description are required'); return; }
+
+        fetch(ADD_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `date=${date}&description=${encodeURIComponent(desc)}&csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success === '1') {
+                document.getElementById('holiday_date').value = '';
+                document.getElementById('holiday_description').value = '';
+                loadHolidays();
+            }
+        });
+    });
+
+    function deleteHoliday(id) {
+        if (!confirm('Delete this holiday?')) return;
+        fetch(DELETE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}&csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(data => { alert(data.message); loadHolidays(); });
+    }
+
+    function toggleHoliday(id) {
+        fetch(TOGGLE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}&csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(data => { alert(data.message); loadHolidays(); });
+    }
+
+    loadHolidays();
+</script>
+{% endblock %}

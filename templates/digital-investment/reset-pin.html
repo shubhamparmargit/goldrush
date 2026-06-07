@@ -1,0 +1,194 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Reset PIN
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/otp.css' %}">
+<link rel="stylesheet" href="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.css' %}">
+{% endblock %}
+
+{% block content %}
+<div id="wrapper">
+    <div id="page">
+        <div class="sign-in-wrap">
+            <div class="sign-in-box">
+
+                <div class="left">
+                    <div class="content">
+
+                        <h3 class="heading">Reset PIN</h3>
+                        <div class="sub f12-regular text-GrayDark">
+                            Create a secure PIN for Digital Investment access
+                        </div>
+
+                        <div class="otp-card">
+
+                            <div class="otp-header">
+                                <div class="otp-icon">🔐</div>
+                                <h2>Set New PIN</h2>
+                            </div>
+
+                            <form id="resetPinForm">
+
+                                <label class="text-GrayDark f12-regular">New PIN</label>
+
+                                <div class="otp-input-group mt-3">
+
+                                    {% for i in "123456" %}
+                                    <input type="password" maxlength="1" class="otp-input pin-box">
+                                    {% endfor %}
+
+                                </div>
+
+                                <label class="text-GrayDark f12-regular">Confirm PIN</label>
+
+                                <div class="otp-input-group mt-3">
+
+                                    {% for i in "123456" %}
+                                    <input type="password" maxlength="1" class="otp-input confirm-box">
+                                    {% endfor %}
+
+                                </div>
+
+                                <button class="action-btn primary-btn w-100 mt-4">
+                                    Reset PIN
+                                </button>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
+                {% include "digital-investment/includes/login-right.html" %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extraJS %}
+
+<script src="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.js' %}"></script>
+<script src="{% static 'digital-investment/js/pin-text.js' %}"></script>
+<script>
+    $(document).ready(function () {
+        document.querySelector(".otp-input").focus();
+    })
+    
+    handlePinInputs(".pin-box");
+    handlePinInputs(".confirm-box");
+
+    window.APP_URLS = {
+        reset_pin: "{% url 'reset_trading_pin' %}",
+        forgot_pin: "{% url 'trading_forgot_pin' %}"
+    }
+    $("#resetPinForm").submit(function (e) {
+
+        e.preventDefault()
+
+        let pin = ""
+        let confirm = ""
+
+        $(".pin-box").each(function () {
+            pin += this.value
+        })
+
+        $(".confirm-box").each(function () {
+            confirm += this.value
+        })
+
+        if (pin.length != 6) {
+
+            $.toast({
+                heading: "Error",
+                text: "Enter valid PIN",
+                icon: "error"
+            })
+
+            return
+        }
+
+        if (pin != confirm) {
+
+            $.toast({
+                heading: "Error",
+                text: "PIN mismatch",
+                icon: "error"
+            })
+
+            return
+        }
+
+        let btn = document.querySelector(".primary-btn");
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+        $.ajax({
+
+            url: window.APP_URLS.reset_pin,
+            type: "POST",
+            data: {
+                pin: pin,
+                confirm_pin: confirm,
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+
+            success: function (res) {
+                btn.disabled = false;
+                btn.innerText = "Reset PIN";
+                if (res.success) {
+
+                    $.toast({
+                        heading: "Success",
+                        text: res.message,
+                        icon: "success"
+                    })
+
+                    setTimeout(function () {
+                        window.location = res.redirectURL
+                    }, 1000)
+
+                } else {
+
+                    if(res.session_expired){
+
+                        $.toast({
+                            heading:"Error",
+                            text:"Session expired. Please request OTP again",
+                            icon:"error"
+                        })
+
+                        setTimeout(function(){
+                            window.location=window.APP_URLS.forgot_pin
+                        },1500)
+
+                        return
+                    }
+
+                    $.toast({
+                        heading: "Error",
+                        text: res.message,
+                        icon: "error"
+                    })
+
+                }
+
+            },
+            error: function () {
+                btn.disabled = false;
+                btn.innerText = "Try Again";
+                $.toast({ text: "Something went wrong", icon: "error"});
+            }
+
+        })
+
+    })
+
+</script>
+
+{% endblock %}

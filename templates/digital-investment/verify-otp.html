@@ -1,0 +1,234 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Verify OTP
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/otp.css' %}">
+<link rel="stylesheet" href="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div id="wrapper">
+    <div id="page">
+        <div class="sign-in-wrap">
+            <div class="sign-in-box">
+
+                <div class="left">
+                    <div class="content">
+
+                        <h3 class="heading">Verify OTP</h3>
+                        <div class="sub f12-regular text-GrayDark">
+                            OTP sent to your registered email
+                        </div>
+
+                        <div class="otp-card">
+
+                            <div class="otp-header">
+                                <div class="otp-icon">🔑</div>
+                                <h2>Enter OTP</h2>
+                                <p>Enter Your 6-Digit OTP</p>
+                            </div>
+
+                            <form id="otpForm">
+                                <input type="hidden" id="otp_version" name="otp_version" value="{{ otp_version }}">
+                                <div class="otp-input-group mt-3">
+
+                                    {% for i in "123456" %}
+                                    <input type="password" maxlength="1" class="otp-input otp-box">
+                                    {% endfor %}
+
+                                </div>
+
+                                <button class="action-btn primary-btn w-100 mt-4">
+                                    Verify OTP
+                                </button>
+
+                                <div style="text-align:center;margin-top:10px;">
+                                    <a href="javascript:void(0)" id="resendOtp" style="display:none;" class="text-danger link-btn">
+                                        Resend OTP
+                                    </a>
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
+                {% include "digital-investment/includes/login-right.html" %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extraJS %}
+
+<script src="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.js' %}"></script>
+<script src="{% static 'digital-investment/js/pin-text.js' %}"></script>
+<script>
+    $(document).ready(function () {
+        document.querySelector(".otp-input").focus();
+    })
+    
+    handlePinInputs(".otp-input");
+
+    window.APP_URLS = {
+        verify_otp: "{% url 'verify_pin_otp' %}",
+        send_otp : "{% url 'send_pin_otp' %}"
+    }
+    $(".otp-box").keyup(function () {
+
+        if (this.value.length == 1) {
+            $(this).next(".otp-box").focus()
+        }
+
+    })
+
+    $("#otpForm").submit(function (e) {
+
+        e.preventDefault()
+
+        let otp = ""
+
+        $(".otp-box").each(function () {
+            otp += this.value
+        })
+
+        if (otp.length != 6) {
+
+            $.toast({
+                heading: "Error",
+                text: "Enter valid OTP",
+                icon: "error"
+            })
+
+            return
+        }
+
+        let btn = document.querySelector(".primary-btn");
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+        $.ajax({
+
+            url: window.APP_URLS.verify_otp,
+            type: "POST",
+            data: {
+                otp: otp,
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+
+            success: function (res) {
+
+                btn.disabled = false;
+                btn.innerText = "Verify OTP";
+
+                if (res.success) {
+
+                    window.location = res.redirectURL
+
+                } 
+                else {
+
+                    if(res.otp_expired){
+
+                        $.toast({
+                            heading: "Error",
+                            text: res.message,
+                            icon: "error"
+                        })
+
+                        $("#resendOtp").show()
+
+                        return
+                    }
+
+                    if(res.locked){
+
+                        $.toast({
+                            heading:"Error",
+                            text:res.message,
+                            icon:"error"
+                        })
+
+                        return
+                    }
+
+                    if(res.attempts_remaining !== undefined){
+
+                        $.toast({
+                            heading:"Error",
+                            text:res.message+" ("+res.attempts_remaining+" attempts remaining)",
+                            icon:"error"
+                        })
+
+                        return
+                    }
+
+                    $.toast({
+                        heading: "Error",
+                        text: res.message,
+                        icon: "error"
+                    })
+                }
+
+            },
+            error: function () {
+                btn.disabled = false;
+                btn.innerText = "Try Again";
+                $.toast({ text: "Something went wrong", icon: "error"});
+            }
+
+        })
+
+    })
+
+    $("#resendOtp").click(function(){
+
+        let btn = $(this)
+
+        btn.hide()
+
+        $.ajax({
+
+            url: window.APP_URLS.send_otp,
+            type:"POST",
+            data:{
+                csrfmiddlewaretoken:"{{ csrf_token }}"
+            },
+
+            success:function(res){
+
+                if(res.success){
+
+                    $.toast({
+                        heading:"Success",
+                        text:"OTP sent again",
+                        icon:"success"
+                    })
+
+                }else{
+
+                    $.toast({
+                        heading:"Error",
+                        text:res.message,
+                        icon:"error"
+                    })
+
+                }
+
+            }
+
+        })
+
+    })
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Payment Success
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/payment-status.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="card-wrapper">
+    <div class="card-body">
+        <div class="status-icon success">
+            ✓
+        </div>
+        <div class="maintitle">Payment Successful</div>
+        <div class="subtitle">Your wallet has been recharged successfully.</div>
+        <div class="status-info">
+            <div><span>Amount</span><strong>₹{{ amount|intcomma }}/-</strong></div>
+            <div><span>Transaction ID</span><strong>{{transaction_id}}</strong></div>
+            <div><span>Membership</span><strong>{{membership}}</strong></div>
+        </div>
+        <button class="action-btn primary-btn" onclick="location.href='{% url 'recharge_wallet' %}'">
+            Go to Wallet
+        </button>
+        <button class="link-btn" onclick="location.href='{% url 'my_wallet' %}'">
+            View Transaction
+        </button>
+    </div>
+</div>
+{% endblock %}

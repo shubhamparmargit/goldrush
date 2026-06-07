@@ -1,0 +1,174 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Inactive Customer Cleanup</h3>
+                    <nav><ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item">Customers</li>
+                        <li class="breadcrumb-item active">Inactive Cleanup</li>
+                    </ol></nav>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+
+            <!-- RULE INFO -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <b>Cleanup Rules (30-day inactivity):</b>
+                        <ul class="mb-0 mt-5">
+                            <li><b>Never recharged</b> + registered &gt; 30 days ago → <span class="badge badge-danger">Permanently Deleted</span></li>
+                            <li><b>Had recharges</b> but no recharge in last 30 days → <span class="badge badge-warning">Blocked</span> (financial records preserved)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREVIEW + STATS -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="box bg-danger-light text-center" style="padding:20px;border-radius:10px;">
+                        <div style="font-size:36px;font-weight:800;color:#e74c3c;" id="deleteCount">–</div>
+                        <div style="font-size:13px;color:#555;">Will be Deleted</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="box bg-warning-light text-center" style="padding:20px;border-radius:10px;">
+                        <div style="font-size:36px;font-weight:800;color:#f39c12;" id="blockCount">–</div>
+                        <div style="font-size:13px;color:#555;">Will be Blocked</div>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                    <div>
+                        <button class="btn btn-primary btn-lg mr-10" id="previewBtn">
+                            <i class="fa fa-search"></i> Preview
+                        </button>
+                        <button class="btn btn-danger btn-lg" id="runCleanupBtn" disabled>
+                            <i class="fa fa-trash"></i> Run Cleanup
+                        </button>
+                        <p class="text-muted mt-5" style="font-size:12px;">Preview first, then run cleanup.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREVIEW TABLES -->
+            <div id="previewSection" style="display:none;">
+                <div class="row">
+                    <!-- TO DELETE -->
+                    <div class="col-md-6">
+                        <div class="box">
+                            <div class="box-header with-border" style="background:#fdecea;">
+                                <h4 class="box-title text-danger"><i class="fa fa-trash"></i> To be Deleted (Never Recharged)</h4>
+                                <small class="text-muted">Showing first 100 records</small>
+                            </div>
+                            <div class="box-body no-padding">
+                                <div class="table-responsive" style="max-height:350px;overflow-y:auto;">
+                                    <table class="table table-bordered table-sm">
+                                        <thead><tr><th>#</th><th>Name</th><th>Mobile</th><th>Registered On</th></tr></thead>
+                                        <tbody id="deleteTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TO BLOCK -->
+                    <div class="col-md-6">
+                        <div class="box">
+                            <div class="box-header with-border" style="background:#fef9e7;">
+                                <h4 class="box-title text-warning"><i class="fa fa-ban"></i> To be Blocked (No Recharge in 30 days)</h4>
+                                <small class="text-muted">Showing first 100 records</small>
+                            </div>
+                            <div class="box-body no-padding">
+                                <div class="table-responsive" style="max-height:350px;overflow-y:auto;">
+                                    <table class="table table-bordered table-sm">
+                                        <thead><tr><th>#</th><th>Name</th><th>Mobile</th><th>Registered On</th></tr></thead>
+                                        <tbody id="blockTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</div>
+
+<script>
+    const PREVIEW_URL = "{% url 'inactive_cleanup_preview' %}";
+    const RUN_URL     = "{% url 'inactive_cleanup_run' %}";
+    const CSRF        = "{{ csrf_token }}";
+
+    document.getElementById('previewBtn').addEventListener('click', function () {
+        this.disabled = true;
+        this.textContent = 'Loading...';
+
+        fetch(PREVIEW_URL)
+            .then(r => r.json())
+            .then(data => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fa fa-search"></i> Preview';
+
+                if (data.success !== '1') { alert(data.message); return; }
+
+                document.getElementById('deleteCount').textContent = data.delete_count;
+                document.getElementById('blockCount').textContent  = data.block_count;
+                document.getElementById('previewSection').style.display = 'block';
+
+                const rowsFor = (list) => list.length
+                    ? list.map((r, i) => `<tr><td>${i+1}</td><td>${r.name}</td><td>${r.mobile}</td><td>${r.date}</td></tr>`).join('')
+                    : '<tr><td colspan="4" class="text-center text-muted">None</td></tr>';
+
+                document.getElementById('deleteTable').innerHTML = rowsFor(data.delete_list);
+                document.getElementById('blockTable').innerHTML  = rowsFor(data.block_list);
+
+                if (data.delete_count > 0 || data.block_count > 0) {
+                    document.getElementById('runCleanupBtn').disabled = false;
+                }
+            })
+            .catch(() => { this.disabled = false; this.innerHTML = '<i class="fa fa-search"></i> Preview'; alert('Something went wrong'); });
+    });
+
+    document.getElementById('runCleanupBtn').addEventListener('click', function () {
+        const deleteCount = document.getElementById('deleteCount').textContent;
+        const blockCount  = document.getElementById('blockCount').textContent;
+
+        if (!confirm(`Are you sure you want to run cleanup?\n\n⚠️ This will:\n• Permanently DELETE ${deleteCount} registrations\n• BLOCK ${blockCount} inactive customers\n\nThis cannot be undone!`)) return;
+
+        this.disabled = true;
+        this.textContent = 'Running...';
+
+        fetch(RUN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            this.disabled = true;
+            this.innerHTML = '<i class="fa fa-check"></i> Done';
+            alert(data.message);
+            if (data.success === '1') {
+                document.getElementById('deleteCount').textContent = 0;
+                document.getElementById('blockCount').textContent  = 0;
+                document.getElementById('deleteTable').innerHTML = '<tr><td colspan="4" class="text-center text-success">Cleaned up</td></tr>';
+                document.getElementById('blockTable').innerHTML  = '<tr><td colspan="4" class="text-center text-success">Cleaned up</td></tr>';
+            }
+        })
+        .catch(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fa fa-trash"></i> Run Cleanup';
+            alert('Something went wrong');
+        });
+    });
+</script>
+{% endblock %}

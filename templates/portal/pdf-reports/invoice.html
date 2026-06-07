@@ -1,0 +1,409 @@
+{% load static %}
+<html>
+	<head>
+		<title>Invoice</title>
+		<meta name="description" content="Virash | Payment Invoice">
+		<style>
+			/* Define page size and margins */
+			@page {
+            	size: A4;
+            	margin: 20px;
+            	padding: 0px;
+            	border: 2px solid #ccc; /* Page border */
+        	}
+			.bg-grey
+			{
+				background-color: #eee;
+			}
+
+			.text-bold
+			{
+				font-weight: bold;
+			}
+			footer{
+				margin-top: 500px;
+			}
+			p
+			{
+				font-size: 12px;
+				margin: 0px;
+			}
+			.fnt-16
+			{
+				font-size: 16px;
+			}
+			.fnt-25
+			{
+				font-size: 25px;
+			}
+			.border_left
+			{
+				border-left: 2px solid #ccc;
+			}
+		</style>
+	</head>
+	<body>
+		<table cellspacing="0" cellpadding="0" style="width: 100%; vertical-align: middle; ">
+			<tr>
+				<td>
+					<table cellspacing="0" cellpadding="3" style="width: 100%; vertical-align: middle;">
+						<tr>
+							<td align="left" style="border-bottom: 2px solid #ccc;border-left: 2px solid #ccc;">
+								<img src="static/img/no-image.png" style="height:70px">
+							</td>
+							<td style="width: 50%; border-bottom: 2px solid #ccc;">
+								<p class="text-bold fnt-16">
+									Virash Technologies LLP
+								</p>
+								<p>
+									C/17, Shanti Enclave Apeksha CHS,<br/>
+									Mira Road East<br/>
+									Thane Maharashtra 400107<br/>
+									India<br/>
+									GSTIN 27AAPFV3851K1ZI
+								</p>
+							</td>
+							<td style="width: 25%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;text-align: right;vertical-align: bottom;">
+								<p class="fnt-25">
+									TAX INVOICE
+								</p>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<table cellspacing="0" cellpadding="3" style="width: 100%; vertical-align: middle;">
+						<tr>
+							<td style="width: 50%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<table width="100%" cellspacing="0" style="vertical-align: middle;">
+									<tr>
+										<td>
+											<p>
+												#
+											</p> 
+										</td>
+										<td>
+											<p class="text-bold">
+												: {{ data.0.order_number }}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<p>
+												Invoice Date
+											</p>
+										</td>
+										<td>
+											<p class="text-bold">
+												: {{ data.0.order_date_time }}
+											</p>
+										</td>
+									</tr>
+								</table>
+							</td>
+							<td style="width: 50%;border-bottom: 2px solid #ccc;">
+								&nbsp;
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr class="bg-grey">
+				<td>
+					<table cellspacing="0" cellpadding="3" style="width: 100%; vertical-align: middle;">
+						<tr>
+							<td align="left" style="width: 50%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Bill To
+								</p>
+							</td>
+							<td style="width: 50%; border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Ship To
+								</p>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<table cellspacing="0" cellpadding="3" style="width: 100%; vertical-align: top;">
+						<tr>
+							<td align="left" style="width:50%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc; vertical-align: top;">
+								<p class="text-bold">
+									{{ data.0.customer_name }}
+								</p>
+								<p>
+									Mobile : {{ data.0.customer_mobile }}<br/>
+									Email : {{ data.0.customer_email }}
+								</p>
+							</td>
+							<td style="width: 50%; border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{ data.0.address_name }}
+								</p>
+								<p>
+									Mobile : {{ data.0.address_mobile }}<br/>
+									{{ data.0.address_line_1 }}<br/>
+									{{ data.0.address_line_2 }}<br/>
+									{{ data.0.city }}, {{ data.0.district }}<br/>
+									{{ data.0.pincode }} {{ data.0.state }}<br/>
+									India<br/>
+								</p>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<table cellspacing="0" cellpadding="3" style="width: 100%; vertical-align: middle;">
+						<tr class="bg-grey">
+							<td rowspan="2" align="center" style="width: 5%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									#
+								</p>
+							</td>
+							<td rowspan="2" align="left" style="width: 35%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Item & Description
+								</p>
+							</td>
+							<td rowspan="2" align="right" style="width: 5%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Qty
+								</p>
+							</td>
+							<td rowspan="2" align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Rate
+								</p>
+							</td>
+							<td colspan="2" align="center" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									CGST
+								</p>
+							</td>
+							<td colspan="2" align="center" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									SGST
+								</p>
+							</td>
+							<td rowspan="2" align="right" style="border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Amount
+								</p>
+							</td>
+						</tr>
+						<tr class="bg-grey">
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									%
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Amount
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									%
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									Amount
+								</p>
+							</td>
+						</tr>
+						{% if data.0.order_details|length > 0 %}
+						{% for od in data.0.order_details %}
+						<tr>
+							<td align="center" style="width: 5%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.sr_no}}
+								</p>
+							</td>
+							<td align="left" style="width: 35%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.product_name}}
+								</p>
+							</td>
+							<td align="right" style="width: 5%; border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.quantity}}
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.price_without_gst}}
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.half_gst}} %
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.gst_amount}}
+								</p>
+							</td><td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.half_gst}} %
+								</p>
+							</td>
+							<td align="right" style="border-right: 2px solid #ccc;border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.gst_amount}}
+								</p>
+							</td>
+							<td align="right" style="border-bottom: 2px solid #ccc;">
+								<p class="text-bold">
+									{{od.total}}
+								</p>
+							</td>
+						</tr>
+						{% endfor %}
+						{% endif %}
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<table cellspacing="0" cellpadding="3" style="width: 100%; vertical-align: middle;">
+						<tr>
+							<td align="left" style="width:60%; border-right: 2px solid #ccc;vertical-align: top;">
+								<br/>
+								Total In Words
+								<p class="text-bold">
+									{{rupees}}
+								</p>
+							</td>
+							<td style="width: 40%; border-bottom: 2px solid #ccc;">
+								<table width="100%" cellspacing="0" style="vertical-align: middle;">
+									<tr>
+										<td align="right">
+											&nbsp;
+										</td>
+										<td align="right">
+											&nbsp;
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p>
+												Sub Total
+											</p> 
+										</td>
+										<td align="right">
+											<p>
+												{{data.0.sub_total_without_gst}}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p>
+												CGST9 (9%)
+											</p> 
+										</td>
+										<td align="right">
+											<p>
+												{{data.0.gst_total}}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p>
+												SGST9 (9%)
+											</p> 
+										</td>
+										<td align="right">
+											<p>
+												{{data.0.gst_total}}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p>
+												Rounding
+											</p> 
+										</td>
+										<td align="right">
+											<p>
+												{{data.0.sub_total}}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p class="text-bold">
+												Total
+											</p> 
+										</td>
+										<td align="right">
+											<p class="text-bold">
+												{{data.0.sub_total}}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p>
+												Payment Made
+											</p> 
+										</td>
+										<td align="right">
+											<p style="color:red">
+												(-) {{data.0.sub_total}}
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">
+											<p class="text-bold">
+												Balance Due
+											</p> 
+										</td>
+										<td align="right">
+											<p class="text-bold">
+												00
+											</p>
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<td align="left" style="width:60%; border-right: 2px solid #ccc;vertical-align: top;"></td>
+							<td style="width: 40%; border-bottom: 2px solid #ccc;">
+								<table width="100%" cellspacing="0" style="vertical-align: bottom;">
+									<tr>
+										<td align="center"> 
+											<br/>
+											<br/>
+											<br/>
+											<br/>
+											<p class="text-bold">
+												Authorized Signature
+											</p>
+										</td>
+									</tr>
+								</table>
+							</td>
+							
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>

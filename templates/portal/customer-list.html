@@ -1,0 +1,510 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+	<div class="container-full">
+		<div class="content-header">
+			<div class="d-flex align-items-center">
+				<div class="mr-auto">
+					<h3 class="page-title">Customer List</h3>
+					<input type="hidden" name="type" id="type" value="customer">
+					{% csrf_token %}
+					<div class="d-inline-block align-items-center">
+						<nav>
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
+								<li class="breadcrumb-item active" aria-current="page">Customer List</li>
+							</ol>
+						</nav>
+					</div>
+				</div>							
+			</div>
+		</div>	  
+		<section class="content">
+			<div class="col-12">
+				<div class="box">
+					<div class="box-header with-bfeedback">
+						<div class="row">
+							<div class="col-2">
+								<h4 class="box-title">Customer List</h4>
+							</div>
+							<div class="col-10 dFlex">
+								<select class="form-control floatLeft w-p10" id="limit">
+									<option value="1">1</option>
+									<option value="5">5</option>
+									<option value="10" selected>10</option>
+									<option value="20">20</option>
+									<option value="50">50</option>
+									<option value="100">100</option>
+									<option value="250">250</option>
+									<option value="500">500</option>
+								</select> 
+								<div class="input-group_search input-group floatLeft w-p30">
+									<input id="search" type="search" class="input-sm form-control" placeholder="Search Customer">
+								</div>
+								<select class="form-control floatLeft w-p15" id="access">
+									<option value="">Sort by Access</option>	
+									<option value="All">All</option>
+									<option value="Blocked">Blocked</option>
+									<option value="Granted">Granted</option>
+								</select> 
+								<div class="btn-group floatLeft w-p30">
+									<span id="reportrange" class="btn btn-primary btnSpan pdNew">
+										<i class="fa fa-calendar"></i>&nbsp;
+										<span class="btn-date-range">
+											<span>Filter By Date</span> 
+										</span>
+										<b class="caret"></b>
+									</span>
+								</div>
+								<input type="hidden" name="from_date" id="from_date"> 
+								<input type="hidden" name="to_date" id="to_date">
+								<button type="button" class="btn btn-warning floatLeft m-0 pdNew w-p5" id="clear-filter" title="Clear filter"><i class="mdi mdi-filter-remove"></i></button>
+								<!-- <button type="submit" class="btn btn-success floatLeft m-0 pdNew w-p5" title="Import data"><i class="fa fa-upload"></i></button> -->
+								<!-- <form action="includes/downloadList.php" method="post" style="display: contents;">
+									<input type="hidden" name="table" value="customer">
+									<button type="submit" class="btn btn-danger floatLeft m-0 pdNew w-p5" title="Export to xls"><i class="fa fa-download"></i></button>
+								</form> -->
+							</div>
+						</div>
+					</div>
+					<div class="box-body no-padding">
+						<div class="row mt10 mb10 table-bot">
+							<div class="col-md-6 col-sm-12 botFlex">
+								<p class="show_p"></p>
+							</div>
+							<div class="col-md-6 col-sm-12">
+								<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+								</ul>
+							</div>
+						</div>
+						<div class="table-responsive">
+							<table class="table table-hover table-striped table-bordered nowrap" id="export_table">
+								<thead>
+									<tr>
+										<th>Sr. no.</th>
+										<th>Activation Date</th>
+										<th>Name</th>
+										<th>Mobile No.</th>
+										<th>Email</th>
+										<th>Referral Code</th>
+										<th colspan="2">Access</th>
+										<th colspan="2">Mac Reset</th>
+										<th class="ignore">View Details</th>
+									<th class="ignore">Edit</th>
+										<th colspan="2">Trading Option</th>
+										<th class="ignore">Trading Details</th>
+										<th class="ignore">Status</th>
+										<th>Demo Account</th>
+										<th>Transfer Referral</th>
+									</tr>
+								</thead>
+								<tbody class="dynamic_content">
+								</tbody>
+							</table>
+						</div>
+						<div class="row no-data mb10">
+							<div class="col-md-12 col-sm-12 text-center">
+								<p>No Record To Display</p>
+							</div>
+						</div>
+						<div class="row mt10 mb10 table-bot">
+							<div class="col-md-6 col-sm-12 botFlex">
+								<p class="show_p"></p>
+							</div>
+							<div class="col-md-6 col-sm-12">
+								<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+{% endblock %}
+{% block extraModal %}
+<!-- View Modal -->
+<div id="view-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-xxl"> 
+		<div class="modal-content"> 
+			<div class="modal-header"> 
+				<h4 class="modal-title">Customer Details</h4>
+				<button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+			</div> 
+			<div class="modal-body">
+				<div id="modal-loader" style="display: none; text-align: center;">
+					<img src="{% static 'portal/img/ajax-loader.gif' %}">
+				</div>
+				<div class="table-responsive">
+					<table class="table table-bordered table-striped table-actions">
+						<tr>
+							<th>Activation Date</th>
+							<td id="date_v"></td>
+							<th>Contact Person</th>
+							<td colspan="5" id="person_v"></td>
+						</tr>
+						<tr>
+							<th>Mobile No.</th>
+							<td id="mobile_v"></td>
+							<th>Email Id</th>
+							<td colspan="2" id="email_v"></td>
+							<th>Referral Code</th>
+							<td id="referral_code_v"></td>
+						</tr>
+						<tr>
+							<th>Aadhar Number</th>
+							<td id="aadhaar_number_v"></td>
+							<th>Aadhar Front</th>
+							<td colspan="2"><a href="" target="_blank" id="aadhaar_front_v"></a></td>
+							<th>Aadhar Back</th>
+							<td colspan="2"><a href="" target="_blank" id="aadhaar_back_v"></a></td>
+						</tr>
+						<tr>
+							<th>PAN Number</th>
+							<td id="pan_number_v"></td>
+							<th>PAN Front</th>
+							<td colspan="5"><a href="" target="_blank" id="pan_front_v"></a></td>
+						</tr>
+					</table>
+				</div>
+				<div class="customer_address_details"></div>
+			</div> 
+		</div> 
+	</div>
+</div>
+<!-- /.modal -->
+<!-- View Trading Modal -->
+<div id="trading-modal" class="modal fade franchiseModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-xxl"> 
+		<div class="modal-content"> 
+			<div class="modal-header"> 
+				<h4 class="modal-title">Trading Account Details</h4>
+				<button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+			</div> 
+			<div class="modal-body">
+				<div id="modal-loader" style="display: none; text-align: center;">
+					<img src="{% static 'portal/img/ajax-loader.gif' %}">
+				</div>
+				<div class="trading_doc_details"></div>
+				<div class="trading_bank_details"></div>
+			</div> 
+		</div> 
+	</div>
+</div>
+<!-- /.modal -->
+<!-- Transfer Modal -->
+<div id="transfer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-sm"> 
+        <div class="modal-content"> 
+            <div class="modal-header"> 
+                <h4 class="modal-title"><i class="fa fa-pencil-square-o"></i> Transfer Referral</h4>
+                <button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+            </div> 
+            <form name="frm_transferReferral" class="form-horizontal" id="frm_transferReferral" method="post" action="#" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="customer_id" id="customer_id">
+                <div class="modal-body"> 
+                    <div id="modal-loader" style="display: none; text-align: center;">
+                        <img src="{% static 'portal/img/ajax-loader.gif' %}">
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-12">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Choose Referral Agent<span class="error">*</span></label>
+                                        <select class="form-control" id="referral_agent" name="referral_agent" required>
+											<option value="">Choose Agent</option>
+										</select>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Reason For Transfer<span class="error">*</span></label>
+                                        <textarea class="form-control" id="reason_for_transfer" name="reason_for_transfer" required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> 
+                    </div>
+                </div> 
+                <div class="modal-footer"> 
+                    <div class="col-md-12 mb10 w-p100">
+                        <button type="submit" name="btn_transferReferral" id="btn_transferReferral" class="btn btn-primary pull-right">Update</button>
+                    </div>
+                </div>
+            </form> 
+        </div> 
+    </div>
+</div>
+<!-- /.modal -->
+
+<!-- Edit Customer Modal -->
+<div id="edit-customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" style="display:none;" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xxl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="fa fa-pencil"></i> Edit Customer Details</h4>
+                <button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <form id="frm_editCustomer" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="edit_unique_id" name="unique_id">
+                <div class="modal-body">
+                    <div id="edit-modal-loader" style="display:none;text-align:center;">
+                        <img src="{% static 'portal/img/ajax-loader.gif' %}">
+                    </div>
+
+                    <h5 class="mb-10">Basic Info</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Full Name <span class="error">*</span></label>
+                                <input type="text" class="form-control" id="edit_name" name="name">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Mobile <span class="error">*</span></label>
+                                <input type="text" class="form-control" id="edit_mobile" name="mobile" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Email <span class="error">*</span></label>
+                                <input type="text" class="form-control" id="edit_email" name="email">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Referral Code</label>
+                                <input type="text" class="form-control" id="edit_referral_code" name="referral_code">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Access <span class="error">*</span></label>
+                                <select class="form-control" id="edit_access" name="access">
+                                    <option value="Granted">Granted</option>
+                                    <option value="Blocked">Blocked</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Trading <span class="error">*</span></label>
+                                <select class="form-control" id="edit_trading" name="trading">
+                                    <option value="ON">ON</option>
+                                    <option value="OFF">OFF</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h5 class="mb-10">KYC Documents</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Aadhaar Number <span class="error">*</span></label>
+                                <input type="text" class="form-control" id="edit_aadhaar_number" name="aadhaar_number" maxlength="12">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Aadhaar Front</label>
+                                <div><a id="edit_aadhaar_front_link" href="#" target="_blank" class="btn btn-xs btn-info mb-5">View Current</a></div>
+                                <input type="file" class="form-control" name="aadhaar_front_image" accept=".jpg,.jpeg,.png,.pdf">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Aadhaar Back</label>
+                                <div><a id="edit_aadhaar_back_link" href="#" target="_blank" class="btn btn-xs btn-info mb-5">View Current</a></div>
+                                <input type="file" class="form-control" name="aadhaar_back_image" accept=".jpg,.jpeg,.png,.pdf">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>PAN Number <span class="error">*</span></label>
+                                <input type="text" class="form-control" id="edit_pan_number" name="pan_number" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>PAN Front</label>
+                                <div><a id="edit_pan_front_link" href="#" target="_blank" class="btn btn-xs btn-info mb-5">View Current</a></div>
+                                <input type="file" class="form-control" name="pan_front_image" accept=".jpg,.jpeg,.png,.pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h5 class="mb-10">Addresses</h5>
+                    <div id="edit_addresses_container"></div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn_updateCustomer">Update Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /.modal -->
+{% endblock %}
+{% block extraJS %}
+<script src="{% static 'portal/js/action/dataList.js' %}"></script>
+<script>
+	fill_referral_agent();
+
+    // ============ EDIT CUSTOMER ============
+    function openEditCustomerModal(unique_id) {
+        $('#edit-modal-loader').show();
+        $('#frm_editCustomer')[0].reset();
+        $('#edit_unique_id').val(unique_id);
+        $('#edit-customer-modal').modal('show');
+
+        $.ajax({
+            url: "{% url 'getCustomerForEdit' %}",
+            method: "POST",
+            data: {
+                unique_id: unique_id,
+                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').first().val()
+            },
+            success: function(res) {
+                $('#edit-modal-loader').hide();
+                if (res.success !== '1') {
+                    toastr.error(res.message || 'Failed to load customer');
+                    $('#edit-customer-modal').modal('hide');
+                    return;
+                }
+                $('#edit_name').val(res.name);
+                $('#edit_mobile').val(res.mobile);
+                $('#edit_email').val(res.email);
+                $('#edit_aadhaar_number').val(res.aadhaar_number);
+                $('#edit_pan_number').val(res.pan_number);
+                $('#edit_referral_code').val(res.referral_code);
+                $('#edit_access').val(res.access);
+                $('#edit_trading').val(res.trading);
+
+                if (res.aadhaar_front_image) $('#edit_aadhaar_front_link').attr('href', res.aadhaar_front_image).show();
+                else $('#edit_aadhaar_front_link').hide();
+
+                if (res.aadhaar_back_image) $('#edit_aadhaar_back_link').attr('href', res.aadhaar_back_image).show();
+                else $('#edit_aadhaar_back_link').hide();
+
+                if (res.pan_front_image) $('#edit_pan_front_link').attr('href', res.pan_front_image).show();
+                else $('#edit_pan_front_link').hide();
+
+                // Render addresses
+                let addrHtml = '';
+                if (res.addresses && res.addresses.length > 0) {
+                    res.addresses.forEach(function(addr, idx) {
+                        addrHtml += `
+                        <div class="card mb-10" style="border:1px solid #ddd;padding:10px;">
+                            <b>Address ${idx + 1}</b>
+                            <input type="hidden" name="addr_unique_id_${idx}" value="${addr.unique_id}">
+                            <div class="row mt-5">
+                                <div class="col-md-3">
+                                    <label>Name</label>
+                                    <input type="text" class="form-control" name="addr_name_${idx}" value="${addr.name || ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Mobile</label>
+                                    <input type="text" class="form-control" name="addr_mobile_${idx}" value="${addr.mobile || ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Pincode</label>
+                                    <input type="text" class="form-control" name="addr_pincode_${idx}" value="${addr.pincode || ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>State</label>
+                                    <input type="text" class="form-control" name="addr_state_${idx}" value="${addr.state || ''}">
+                                </div>
+                            </div>
+                            <div class="row mt-5">
+                                <div class="col-md-3">
+                                    <label>City</label>
+                                    <input type="text" class="form-control" name="addr_city_${idx}" value="${addr.city || ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>District</label>
+                                    <input type="text" class="form-control" name="addr_district_${idx}" value="${addr.district || ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Post Office</label>
+                                    <input type="text" class="form-control" name="addr_postoffice_${idx}" value="${addr.postoffice || ''}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Region</label>
+                                    <input type="text" class="form-control" name="addr_region_${idx}" value="${addr.region || ''}">
+                                </div>
+                            </div>
+                            <div class="row mt-5">
+                                <div class="col-md-6">
+                                    <label>Address Line 1</label>
+                                    <input type="text" class="form-control" name="addr_line1_${idx}" value="${addr.address_line_1 || ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Address Line 2</label>
+                                    <input type="text" class="form-control" name="addr_line2_${idx}" value="${addr.address_line_2 || ''}">
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    addrHtml += `<input type="hidden" name="addr_count" value="${res.addresses.length}">`;
+                } else {
+                    addrHtml = '<p class="text-muted">No addresses found</p>';
+                }
+                $('#edit_addresses_container').html(addrHtml);
+            },
+            error: function() {
+                $('#edit-modal-loader').hide();
+                toastr.error('Something went wrong');
+                $('#edit-customer-modal').modal('hide');
+            }
+        });
+    }
+
+    $('#frm_editCustomer').on('submit', function(e) {
+        e.preventDefault();
+        const btn = $('#btn_updateCustomer');
+        btn.prop('disabled', true).text('Updating...');
+
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: "{% url 'updateCustomer' %}",
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                btn.prop('disabled', false).text('Update Customer');
+                if (res.success === '1') {
+                    toastr.success(res.message);
+                    $('#edit-customer-modal').modal('hide');
+                    $('.dynamic_content').empty();
+                    getList();
+                } else {
+                    toastr.error(res.message || 'Update failed');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Update Customer');
+                toastr.error('Something went wrong');
+            }
+        });
+    });
+</script>
+{% endblock %}

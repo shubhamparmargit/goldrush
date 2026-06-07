@@ -1,0 +1,313 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load tz %}
+
+{% block pageTitle %}
+Profile
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                <div class="maintitle">My Profile</div>
+                <div class="subtitle">your digital investment profile</div>
+
+                <!-- BASIC DETAILS -->
+                <div class="profile-card">
+                    <h3>Basic Details</h3>
+
+                    <div class="profile-grid">
+
+                        <div>
+                            <label>Name</label>
+                            <p>{{ customer.name }}</p>
+                        </div>
+
+                        <div>
+                            <label>Customer ID</label>
+                            <p>{{ customer.unique_id }}</p>
+                        </div>
+
+                        <div>
+                            <label>Mobile</label>
+                            <p>{{ customer.mobile }}</p>
+                        </div>
+
+                        <div>
+                            <label>Email</label>
+                            <p>{{ customer.email }}</p>
+                        </div>
+
+                        <div>
+                            <label>PAN</label>
+                            <p>{{ pan_masked }}</p>
+                        </div>
+
+                        <div>
+                            <label>Aadhaar</label>
+                            <p>{{ aadhaar_masked }}</p>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ADDRESS -->
+                <div class="profile-card">
+                    <h3>Addresses</h3>
+
+                    {% for addr in addresses %}
+
+                    <div class="address-box">
+
+                        <p class="addr-name">{{ addr.name }}</p>
+
+                        <p>
+                            {{ addr.address_line_1 }},
+                            {{ addr.address_line_2 }}
+                        </p>
+
+                        <p>
+                            {{ addr.city }},
+                            {{ addr.district }},
+                            {{ addr.state }}
+                            - {{ addr.pincode }}
+                        </p>
+
+                    </div>
+
+                    {% empty %}
+
+                    <p>No address available</p>
+
+                    {% endfor %}
+
+                </div>
+
+                <!-- TRADING ACCOUNT -->
+                <div class="profile-card">
+                    <h3>Trading Account</h3>
+
+                    <div class="profile-grid">
+
+                        <div>
+                            <label>Account Type</label>
+                            <p>{{ trading_account.account_type }}</p>
+                        </div>
+
+                        <div>
+                            <label>Status</label>
+                            <p>{{ trading_account.status }}</p>
+                        </div>
+
+                        <div>
+                            <label>Trading Enabled</label>
+                            <p>{{ trading_account.trading_enabled }}</p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- BANK DETAILS -->
+                <div class="profile-card">
+                    <h3>Bank Details</h3>
+
+                    {% if bank %}
+
+                    <div class="profile-grid">
+
+                        <div>
+                            <label>Bank</label>
+                            <p>{{ bank.bank_name }}</p>
+                        </div>
+
+                        <div>
+                            <label>Account Holder</label>
+                            <p>{{ bank.account_holder_name }}</p>
+                        </div>
+
+                        <div>
+                            <label>Account Number</label>
+                            <p>{{ account_masked }}</p>
+                        </div>
+
+                        <div>
+                            <label>IFSC</label>
+                            <p>{{ bank.ifsc_code }}</p>
+                        </div>
+
+                        <div>
+                            <label>Branch</label>
+                            <p>{{ bank.branch_name }}</p>
+                        </div>
+
+                        <!-- <div>
+                            <label>Verified</label>
+                            <p>{{ bank.verified }}</p>
+                        </div> -->
+
+                    </div>
+
+                    {% else %}
+
+                    <p>No bank details available</p>
+
+                    {% endif %}
+
+                </div>
+
+                <!--DOCUMENTS -->
+                <div class="profile-card">
+                    <h3>Documents</h3>
+
+                    <div class="document-grid">
+
+                        {% for key, value in documents.items %}
+
+                        <div class="doc-box">
+
+                            <p class="doc-title">{{ key }}</p>
+
+                            {% if value %}
+
+                            {% if ".pdf" in value %}
+                            <div style="display: flex"> 
+                                <a href="{{ value }}" target="_blank" class="action-btn primary-btn">
+                                    Preview
+                                </a>
+
+                                <a href="{{ value }}" download class="action-btn btn-outline">
+                                    Download
+                                </a>
+                            </div>
+
+
+                            {% else %}
+
+                            <img src="{{ value }}" class="doc-image">
+
+                            {% endif %}
+
+                            {% else %}
+
+                            <p class="doc-missing">Not Uploaded</p>
+
+                            {% endif %}
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+                <!-- TERMS -->
+                <div class="profile-card">
+                    <h3>Terms & Compliance</h3>
+
+                    {% if terms %}
+
+                    <div class="profile-grid">
+
+                        <div>
+                            <label>Version</label>
+                            <p>{{ terms.version }}</p>
+                        </div>
+
+                        <div>
+                            <label>Accepted</label>
+                            <p>{{ terms.accepted }}</p>
+                        </div>
+
+                        <div>
+                            <label>Accepted Date</label>
+                            <p>{{ terms.accepted_date|localtime|date:"d M Y, h:i A" }}</p>
+                        </div>
+
+                    </div>
+
+                    {% else %}
+
+                    <p>Terms not accepted yet</p>
+
+                    {% endif %}
+
+                </div>
+
+                <!-- LOGIN SECURITY INFO -->
+                <div class="profile-card">
+                    <h3>Login & Security</h3>
+
+                    {% if login_info %}
+
+                    <div class="profile-grid">
+
+                        <div>
+                            <label>Last Login</label>
+                            <p>{{ login_info.last_login|localtime|date:"d M Y, h:i A" }}</p>
+                        </div>
+
+                        <div>
+                            <label>Last Login IP</label>
+                            <p>{{ ip_masked }}</p>
+                        </div>
+
+                        <div>
+                            <label>Wrong Attempts</label>
+                            <p>{{ login_info.wrong_attempts }}</p>
+                        </div>
+
+                        {% if lock_until_date %}
+                        <div>
+                            <label>Account Locked Until</label>
+                            <p>{{ lock_until_date }}</p>
+                        </div>
+                        {% endif %}
+
+                        <div>
+                            <label>PIN Set</label>
+                            <p>{% if login_info.pin_set %}Yes{% else %}No{% endif %}</p>
+                        </div>
+
+                    </div>
+
+                    {% else %}
+
+                    <p>No login activity available</p>
+
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraModal %}
+{% include "digital-investment/includes/bottom-navigation.html" %}
+{% endblock %}
+
+{% block extraJS %}
+<script>
+    document.querySelectorAll(".ingot").forEach(bar => {
+        bar.addEventListener("click", () => {
+            document.querySelectorAll(".ingot")
+                .forEach(b => b.classList.remove("active"));
+
+            bar.classList.add("active");
+
+            const metal = bar.dataset.metal;
+            // console.log("Selected:", metal);
+            // yahan se trading logic / price fetch call kar sakti ho
+        });
+    });
+</script>
+{% endblock %}

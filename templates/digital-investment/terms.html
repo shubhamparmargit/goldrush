@@ -1,0 +1,50 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Terms & Conditions
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="card-wrapper">
+    <div class="card-body">
+        <div class="maintitle">Terms & Conditions</div>
+        <div class="subtitle">Please read and accept the terms to continue digital investment</div>
+        <form method="post" class="submitTermsForm">
+            {% csrf_token %}
+            <div id="loaderAjax" style="display:none;">
+                <img src="{% static 'portal/img/ajax-loader.gif' %}" alt="Loading..." />
+            </div>
+            <div class="terms-box mb-24" style="max-height:300px; overflow-y:auto;">
+                <ul>
+                    <li>Trading involves market risk.</li>
+                    <li>Company is not responsible for profit or loss.</li>
+                    <li>User trades at their own discretion.</li>
+                    <li>Misuse of digital investment platform may lead to suspension.</li>
+                    <li>All decisions taken by RA/Admin will be final.</li>
+                </ul>
+            </div>
+            <div class="form-check mb-24 form-group">
+                <input class="form-check-input" type="checkbox" id="accept_terms" name="accept_terms" value="Yes"
+                    required>
+                <label class="form-check-label" for="accept_terms">
+                    I have read and agree to the <a target="_blank" href="{% url 'digital_terms_condition' %}"><u>Terms & Conditions</u></a><span class="error">*</span>
+                </label>
+            </div>
+            <button type="button" class="action-btn primary-btn btn_submitTermsForm">
+                Accept & Continue
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/main.js' %}"></script>
+<script src="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.js' %}"></script>
+<script src="{% static 'digital-investment/js/terms-validation.js' %}"></script>
+{% endblock %}

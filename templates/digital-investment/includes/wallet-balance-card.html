@@ -1,0 +1,19 @@
+{% load humanize %}
+<!-- Wallet Balance Card -->
+<div class="wallet-balance-card">
+    <div class="wallet-info">
+        <span class="wallet-label">Wallet Balance</span>
+        <span class="wallet-amount" id="walletBalance">₹{{ wallet_balance|intcomma }}/-</span>
+        {% if not request.is_demo_account %}
+        <span class="reward-label">
+            <span class="reward-icon">★</span>
+            {{ request.reward_points|intcomma }} Reward Points
+        </span>
+        {% endif %}
+    </div>
+    {% if not request.is_demo_account %}
+    <a href="{% url 'recharge_wallet' %}" class="wallet-add-btn">
+        Add Funds
+    </a>
+    {% endif %}
+</div>

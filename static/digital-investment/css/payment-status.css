@@ -1,0 +1,46 @@
+.status-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    font-size: 36px;
+    line-height: 72px;
+    margin: 0 auto 16px;
+    font-weight: bold;
+}
+
+.status-icon.success {
+    background: #e8f9ef;
+    color: #1fbf75;
+}
+
+.status-icon.failed {
+    background: #fdecec;
+    color: #e53935;
+}
+
+.status-info {
+    text-align: left;
+    margin-bottom: 22px;
+}
+
+.status-info div {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.reason-text.success {
+    color: #2e7d32;       /* soft green */
+    font-weight: 500;
+}
+
+.reason-text.failed {
+    color: #c62828;       /* soft red */
+    font-weight: 500;
+}
+
+.reason-text.info {
+    color: #6b7280;       /* soft gray */
+    font-weight: 500;
+}

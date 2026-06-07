@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+        <title>GoldRush Aura - {% block pageTitle %}{% endblock %}</title>
+        {% include "digital-investment/includes/head.html" %}
+		{% block extraCSS %}{% endblock %}
+		<noscript>
+			<meta http-equiv="refresh" content="0;url=/gold_mines/portal/middleware/javascript-disabled?next={{ request.path }}">
+		</noscript>
+	</head>
+	<body class="counter-scroll">
+        <div id="wrapper">
+            <div id="page" class="">
+                <div class="layout-wrap loader-off">
+                    <div id="preload" class="preload-container">
+                        <div class="preloading">
+                            <span></span>
+                        </div>
+                    </div>
+                    {% include "digital-investment/includes/sidebar.html" %}
+                    <div class="section-content-right">
+                        {% include "digital-investment/includes/header.html" %}
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% include "digital-investment/includes/loader.html" %}
+		{% block extraModal %}{% endblock %}
+        <script>
+            window.APP_URLS = {
+                live_orders: "{% url 'live_orders' %}",
+                past_orders: "{% url 'past_orders' %}",
+                wallet_history_detail: "{% url 'wallet_history_detail' %}",
+				order_calculation: "{% url 'order_calculation' %}",
+				buy_metal: "{% url 'buy_metal' %}",
+				live_order_details: "{% url 'live_order_details' %}",
+				update_auto_sell: "{% url 'update_auto_sell' %}",
+				sell_metal: "{% url 'sell_metal' %}",
+				past_order_details: "{% url 'past_order_details' %}",
+                create_wallet_order: "{% url 'create_wallet_order' %}",
+                payment_success: "{% url 'wallet_payment_success' %}",
+                payment_failed: "{% url 'wallet_payment_failed' %}",
+                getMetalLiveRate: "{% url 'getMetalData' %}",
+                withdraw_request: "{% url 'withdraw_request' %}",
+                withdraw_history: "{% url 'withdraw_history' %}",
+            };
+        </script>
+        {% include "digital-investment/includes/globaljs.html" %}
+        <script>
+            // Testing Loader
+            // showLoader();
+            // setTimeout(() => {
+            //     hideLoader();
+            // },3000); // 3 second forced delay
+        </script>
+        {% block extraJS %}{% endblock %}
+    </body>
+</html>

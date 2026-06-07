@@ -1,0 +1,330 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+	<div class="container-full">
+		<div class="content-header">
+			<div class="d-flex align-items-center">
+				<div class="mr-auto">
+					<h3 class="page-title">Customer Order List</h3>
+					<input type="hidden" name="type" id="type" value="customer_order_list">
+					{% csrf_token %}
+					<div class="d-inline-block align-items-center">
+						<nav>
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
+								<li class="breadcrumb-item active" aria-current="page">Customer Order List</li>
+							</ol>
+						</nav>
+					</div>
+				</div>							
+			</div>
+		</div>	  
+		<section class="content">
+			<div class="col-12">
+				<div class="box">
+					<div class="box-header with-bfeedback">
+						<div class="row mb-10">
+							<div class="col-2">
+								<h4 class="box-title">Data List</h4>
+							</div>
+							<div class="col-10 dFlex">
+								<select class="form-control floatLeft w-p10" id="limit">
+									<option value="1">1</option>
+									<option value="5">5</option>
+									<option value="10" selected>10</option>
+									<option value="20">20</option>
+									<option value="50">50</option>
+									<option value="100">100</option>
+									<option value="250">250</option>
+									<option value="500">500</option>
+								</select> 
+								<div class="input-group_search input-group floatLeft w-p30">
+									<input id="search" type="search" class="input-sm form-control" placeholder="Search Customer Order">
+								</div>
+								<!-- <select class="form-control floatLeft w-p15" id="access">
+									<option value="">Sort by Status</option>	
+									<option value="All">All</option>
+									<option value="Placed">Placed</option>
+									<option value="Approved">Approved</option>
+									<option value="Processed">Processed</option>
+									<option value="Dispatched">Dispatched</option>
+								</select>  -->
+								<select class="form-control floatLeft w-p15" id="access">
+									<option value="">Sort by Payment Status</option>	
+									<option value="All">All</option>
+									<option value="Pending">Pending</option>
+									<option value="Success">Success</option>
+									<option value="Failed">Failed</option>
+								</select>
+								<div class="btn-group floatLeft w-p30">
+									<span id="reportrange" class="btn btn-primary btnSpan pdNew">
+										<i class="fa fa-calendar"></i>&nbsp;
+										<span class="btn-date-range">
+											<span>Filter By Date</span> 
+										</span>
+										<b class="caret"></b>
+									</span>
+								</div>
+								<input type="hidden" name="from_date" id="from_date"> 
+								<input type="hidden" name="to_date" id="to_date">
+								<button type="button" class="btn btn-warning floatLeft m-0 pdNew w-p5" id="clear-filter" title="Clear filter"><i class="mdi mdi-filter-remove"></i></button>
+								<!-- <button type="submit" class="btn btn-success floatLeft m-0 pdNew w-p5" title="Import data"><i class="fa fa-upload"></i></button> -->
+								<!-- <form action="includes/downloadList.php" method="post" style="display: contents;">
+									<input type="hidden" name="table" value="customer_order_list">
+									<button type="submit" class="btn btn-danger floatLeft m-0 pdNew w-p5" title="Export to xls"><i class="fa fa-download"></i></button>
+								</form> -->
+							</div>
+						</div>
+						<!-- <div class="row">
+							<div class="col-2"></div>
+							<div class="col-8">
+								<select class="form-control select2 floatLeft w-p30" data-placeholder="Select a Customer" id="customer" name="customer" required>
+									<option value="">Choose Customer</option>
+								</select>
+							</div>
+						</div> -->
+					</div>
+					<div class="box-body no-padding">
+						<div class="row mt10 mb10 table-bot">
+							<div class="col-md-6 col-sm-12 botFlex">
+								<p class="show_p"></p>
+							</div>
+							<div class="col-md-6 col-sm-12">
+								<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+								</ul>
+							</div>
+						</div>
+						<div class="table-responsive freeze-table-header">
+							<table cellspacing="0" class="table table-hover table-striped table-bordered nowrap" id="export_table">
+								<thead>
+									<tr>
+										<th>Sr. no.</th>
+										<th>Order Date</th>
+										<th>Order No.</th>
+										<th>Customer Name</th>
+										<th>Customer Mobile</th>
+										<th>Total Items</th>
+										<th>Total Quantity</th>
+										<th>Sub Total</th>
+										<!-- <th>Status</th> -->
+										<th>Razorpay Order Id</th>
+										<th>Razorpay Payment Id</th>
+										<th>Payment Status</th> 
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody class="dynamic_content">
+								</tbody>
+							</table>
+						</div>
+						<div class="row no-data mb10">
+							<div class="col-md-12 col-sm-12 text-center">
+								<p>No Record To Display</p>
+							</div>
+						</div>
+						<div class="row mt10 mb10 table-bot">
+							<div class="col-md-6 col-sm-12 botFlex">
+								<p class="show_p"></p>
+							</div>
+							<div class="col-md-6 col-sm-12">
+								<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+{% endblock %}
+{% block extraModal %}
+<!-- View Modal -->
+<div id="view-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-xxl"> 
+		<div class="modal-content"> 
+			<div class="modal-header"> 
+				<h4 class="modal-title">Order Details</h4>
+				<button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+			</div> 
+			<div class="modal-body">
+				<div id="modal-loader" style="display: none; text-align: center;">
+					<img src="{% static 'portal/img/ajax-loader.gif' %}">
+				</div>
+				<div class="table-responsive">
+					<table class="table table-bordered table-striped table-actions">
+						<tr>
+							<th>Order Date</th>
+							<td id="date_v"></td>
+							<th>Order ID</th>
+							<td id="id_v"></td>
+							<th>Order Number</th>
+							<td id="num_v"></td>
+							<th>Order Status</th>
+							<td id="status_v"></td>
+						</tr>
+						<tr>
+							<th>Razorpay Order ID</th>
+							<td id="razor_id_v"></td>
+							<th>Razorpay Payment ID</th>
+							<td id="razor_payment_v"></td>
+							<th>Remark</th>
+							<td id="remark_v" colspan="3"></td>
+						</tr>
+						<tr>
+							<th>Total Items</th>
+							<td id="items_v"></td>
+							<th>Total Quantity</th>
+							<td id="quantity_v"></td>
+							<th>Sub Total</th>
+							<td id="total_v"></td>
+							<th>Payment Status</th>
+							<td id="pay_status_v"></td>
+						</tr>
+						<tr>
+							<th colspan="8" style="text-align:center">Customer Details</th>
+						</tr>
+						<tr>
+							<th>Customer Name</th>
+							<td colspan="3" id="name_v"></td>
+							<th>Mobile No.</th>
+							<td id="mobile_v"></td>
+							<th>Email Id</th>
+							<td id="email_v"></td>
+						</tr>
+						<tr>
+							<th colspan="8" style="text-align:center">Customer Delivery Address Details</th>
+						</tr>
+						<tr>
+							<th>Name</th>
+							<td id="add_name_v"></td>
+							<th>Mobile</th>
+							<td id="add_mobile_v"></td>
+							<th>Pincode</th>
+							<td id="pincode_v"></td>
+							<th>Postoffice</th>
+							<td id="postoffice_v"></td>
+						</tr>
+						<tr>
+							<th>City</th>
+							<td id="city_v"></td>
+							<th>State</th>
+							<td id="state_v"></td>
+							<th>District</th>
+							<td id="district_v"></td>
+							<th>Region</th>
+							<td id="region_v"></td>
+						</tr>
+						<tr>
+							<th>Address Line 1</th>
+							<td colspan="3" id="address_1_v"></td>
+							<th>Address Line 2</th>
+							<td colspan="3" id="address_2_v"></td>
+						</tr>
+					</table>
+				</div>
+				<div class="product_details"></div>
+				<div class="order_status_details"></div>
+			</div> 
+		</div> 
+	</div>
+</div>
+<!-- /.modal -->
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-sm"> 
+		<div class="modal-content"> 
+			<div class="modal-header"> 
+				<h4 class="modal-title"><i class="fa fa-pencil-square-o"></i> Change Order Status</h4>
+				<button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
+			</div> 
+			<form name="frm_changeStatus" class="form-horizontal" id="frm_changeStatus" method="post" action="#">
+				<div class="modal-body"> 
+					<div id="modal-loader" style="display: none; text-align: center;">
+						<img src="{% static 'portal/img/ajax-loader.gif' %}">
+					</div>
+					<div class="row">
+						<input type="hidden" id="order_id" name="order_id" value="">
+						<input type="hidden" name="chk_checked_prod_ids" id="chk_checked_prod_ids" value="">
+						<div class="col-lg-12 col-12">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="form-group">
+										<label class="form-label">Date & Time<span class="error">*</span></label>
+										<input class="form-control" type="datetime-local" id="date" name="date" required>
+									</div>
+								</div>
+								<div class="col-md-12">
+									<div class="form-group">
+										<label class="form-label">Status<span class="error">*</span></label>
+										<select class="form-control" id="order_status" name="order_status" required>
+											<option value="">Select Status</option>	
+											<option value="Approved">Approved</option>
+											<option value="Processed">Processed</option>
+											<option value="Dispatched">Dispatched</option>
+											<option value="Cancelled">Cancelled</option>
+										</select> 
+									</div>
+								</div>
+							</div>		
+						</div> 
+					</div>
+				</div> 
+				<div class="modal-footer"> 
+					<div class="col-md-12 mb10 w-p100">
+						<button type="submit" name="btn_changeStatus" id="btn_changeStatus" class="btn btn-primary pull-right">Update</button>
+					</div>
+				</div>
+			</form> 
+		</div> 
+	</div>
+</div>
+<!-- /.modal -->
+{% endblock %}
+{% block extraJS %}
+<script src="{% static 'portal/js/action/dataList.js' %}"></script>
+<script>
+	$(document).on('change', '#select_all', function(e)
+	{
+		e.preventDefault();
+		var status = this.checked; 
+		$('.check').each(function(){ 
+			this.checked = status; 
+		});
+	});
+	$(document).on('click', '#btn_updateProdStatus', function(e)
+	{
+		e.preventDefault();
+		var uid = $(this).data("id");
+		$("#order_id").val(uid);
+		var a=document.getElementsByName("product_ids");
+		var j=0;
+		for (i=0, l=a.length; i<l; i++)
+		{
+			if (a[i].checked==true)
+			{
+				var checkValues = $('input[name=product_ids]:checked').map(function()
+				{
+					var id=$(this).val();
+					return $(this).val();
+				}).get();
+				document.getElementById("chk_checked_prod_ids").value=checkValues;
+				j++;
+			}
+		}
+		if (j==0)
+		{
+			Swal.fire({
+				title: "Please select atleast one product for updating status",
+				imageUrl: 'img/invoice.png'
+			});
+		}
+		else if(j>0)
+		{
+			$('#edit-modal').modal('show'); 
+		}
+	});
+</script>
+{% endblock %}

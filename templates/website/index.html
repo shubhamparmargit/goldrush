@@ -1,0 +1,688 @@
+{% extends "website/includes/base.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Trusted Digital Destination
+{% endblock %}
+
+{% block extraCSS %}{% endblock %}
+
+<!--Override Header-->
+{% block header %}
+{% include "website/includes/header.html" with header_class="" logo_file="website/images/goldrush.png"%}
+{% endblock %}
+
+{% block content %}
+<!-- Banner-Section-Start -->
+<section class="banner_section">
+    <!-- container start -->
+    <div class="container">
+        <!-- vertical animation line -->
+        <div class="anim_line">
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+            <span><img src="{% static 'website/images/anim_line.png' %}" alt="anim_line"></span>
+        </div>
+        <!-- row start -->
+        <div class="row">
+            <div class="col-lg-6 col-md-12" data-aos="fade-right" data-aos-duration="1500">
+                <!-- banner text -->
+                <div class="banner_text">
+                    <!-- h1 -->
+                    <h1>Own Gold with Confidence. <span>Buy with Trust.</span></h1>
+                    <!-- p -->
+                    <p>GoldRush Aura Ecom LLP is your trusted digital destination for authentic gold and silver jewelry.
+                        We combine heritage, purity, and technology to deliver a secure and seamless buying experience
+                        across India.</p>
+                </div>
+                <!-- app buttons -->
+                <ul class="app_btn">
+                    <li>
+                        <a href="#">
+                            <img class="blue_img" src="{% static 'website/images/appstore_blue.png' %}" alt="image">
+                            <img class="white_img" src="{% static 'website/images/appstore_white.png' %}" alt="image">
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <img class="blue_img" src="{% static 'website/images/googleplay_blue.png' %}" alt="image">
+                            <img class="white_img" src="{% static 'website/images/googleplay_white.png' %}" alt="image">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- banner slides start -->
+            <div class="col-lg-6 col-md-12" data-aos="fade-in" data-aos-duration="1500">
+                <div class="banner_slider">
+                    <div class="left_icon">
+                        <img src="{% static 'website/images/message_icon.png' %}" alt="image">
+                    </div>
+                    <div class="right_icon">
+                        <img src="{% static 'website/images/shield_icon.png' %}" alt="image">
+                    </div>
+                    <div id="frmae_slider" class="owl-carousel owl-theme">
+                        <div class="item">
+                            <div class="slider_img">
+                                <img src="{% static 'website/images/screen.png' %}" alt="image">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="slider_img">
+                                <img src="{% static 'website/images/screen.png' %}" alt="image">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="slider_img">
+                                <img src="{% static 'website/images/screen.png' %}" alt="image">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slider_frame">
+                        <img src="{% static 'website/images/mobile_frame_svg.svg' %}" alt="image">
+                    </div>
+                </div>
+            </div>
+            <!-- banner slides end -->
+        </div>
+        <!-- row end -->
+    </div>
+    <!-- container end -->
+</section>
+<!-- Banner-Section-end -->
+
+<!-- Why we are section Start -->
+<section class="row_am why_we_section" data-aos="fade-in" id="offer">
+    <div class="why_inner">
+        <div class="container">
+            <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+                <h2><span>What We </span>Offer!</h2>
+                <p>Product availability may vary and is subject to applicable standards and regulations.</p>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-lg-3">
+                    <div class="why_box" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+                        <div class="icon">
+                            <img src="{% static 'website/images/secure.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <h3>Gold Jewellery</h3>
+                            <p>Elegant designs for daily wear, weddings, and festive occasions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="why_box" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="200">
+                        <div class="icon">
+                            <img src="{% static 'website/images/abt_functional.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <h3>Silver Jewellery</h3>
+                            <p>Jewellery & Articles – Timeless craftsmanship for tradition and gifting</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="why_box" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="300">
+                        <div class="icon">
+                            <img src="{% static 'website/images/abt_support.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <h3>Investment-Grade</h3>
+                            <p>Gold & Silver – Coins and bars for long-term value</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="why_box" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="400">
+                        <div class="icon">
+                            <img src="{% static 'website/images/communication.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <h3>Digital Convenience </h3>
+                            <p>Browse, compare, and buy with confidence from anywhere</p>
+                        </div>
+                    </div>
+                </div>
+                </di>
+            </div>
+        </div>
+</section>
+
+<!-- App-Solution-Section-Start -->
+<section class="row_am app_solution_section about" id="about">
+    <!-- container start -->
+    <div class="container">
+        <!-- row start -->
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- UI content -->
+                <div class="app_text">
+                    <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+                        <h2><span>About</span> US</h2>
+                    </div>
+                    <p data-aos="fade-up" data-aos-duration="1500">Welcome to GoldRush Aura Ecom LLP, a trusted digital
+                        destination for authentic gold and silver jewelry We blend heritage, purity, and technology to
+                        deliver a seamless and secure buying experience for customers across India. Our platform is
+                        designed to make precious metal
+                        ownership transparent, convenient, and reliable, whether you are purchasing for celebration,
+                        gifting, or long-term value creation.</p>
+                    <p data-aos="fade-up" data-aos-duration="1500">We work with certified partners and follow industry
+                        best practices to ensure that every product reflects quality, compliance, and customer
+                        confidence.</p>
+                </div>
+                <div class="app_text" data-aos="fade-up" data-aos-duration="1500">
+                    <h4>Our Vision</h4>
+                    <p>To become one of India’s most trusted and innovative digital platforms for gold and silver,
+                        empowering customers with ethical sourcing, transparent pricing, and effortless access to
+                        precious metals. We envision a future where buying gold and silver online is as secure,
+                        informed, and rewarding as buying from a traditional jeweller—enhanced by modern technology.</p>
+                </div>
+                <div class="info" data-aos="fade-up" data-aos-duration="1500">
+                    <h4>Our Mission</h4>
+                    <ul>
+                        <li><span class="icon"><i class="icofont-check-circled"></i></span> To offer hallmarked and
+                            verified gold & silver products through a secure digital platform</li>
+                        <li><span class="icon"><i class="icofont-check-circled"></i></span> To ensure price transparency
+                            aligned with prevailing market rates</li>
+                        <li><span class="icon"><i class="icofont-check-circled"></i></span> To deliver a customer-first
+                            experience backed by trust, service, and clarity</li>
+                        <li><span class="icon"><i class="icofont-check-circled"></i></span> To simplify precious metal
+                            ownership for every Indian household</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="app_images" data-aos="fade-in" data-aos-duration="1500">
+                    <ul>
+                        <li><img src="{% static 'website/images/abt_01.png' %}" alt=""></li>
+                        <li>
+                            <a class="popup-youtube play-button"
+                                data-url="https://www.youtube.com/embed/tgbNymZ7vqY?autoplay=1&mute=1"
+                                data-toggle="modal" data-target="#myModal" title="About Video">
+                                <img src="{% static 'website/images/abt_02.png' %}" alt="">
+                                <div class="waves-block">
+                                    <div class="waves wave-1"></div>
+                                    <div class="waves wave-2"></div>
+                                    <div class="waves wave-3"></div>
+                                </div>
+                                <span class="play_icon"><img src="{% static 'website/images/play_black.png' %}"
+                                        alt="image"></span>
+                            </a>
+                        </li>
+                        <li><img src="{% static 'website/images/abt_03.png' %}" alt=""></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- row end -->
+    </div>
+    <!-- container end -->
+</section>
+<!-- App-Solution-Section-end -->
+
+<!-- Features-Section-Start -->
+<section class="row_am features_section" id="features">
+    <!-- container start -->
+    <div class="container">
+        <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+            <!-- h2 -->
+            <h2><span>Features</span> that makes us different!</h2>
+            <!-- p -->
+            <p>We combine trust, transparency, and technology to redefine precious metal ownership.<br />Every feature
+                is designed to deliver security, clarity, and customer confidence.</p>
+        </div>
+        <div class="feature_detail">
+            <!-- feature box left -->
+            <div class="left_data feature_box">
+
+                <!-- feature box -->
+                <div class="data_block" data-aos="fade-right" data-aos-duration="1500">
+                    <div class="icon">
+                        <img src="{% static 'website/images/secure_data.png' %}" alt="image">
+                    </div>
+                    <div class="text">
+                        <h4>Certified & Hallmarked Products</h4>
+                        <p>Every product is sourced from verified partners and meets certified purity standards for
+                            assured quality and authenticity.</p>
+                    </div>
+                </div>
+
+                <!-- feature box -->
+                <div class="data_block" data-aos="fade-right" data-aos-duration="1500">
+                    <div class="icon">
+                        <img src="{% static 'website/images/live-chat.png' %}" alt="image">
+                    </div>
+                    <div class="text">
+                        <h4>Transparent Market-Linked Pricing</h4>
+                        <p>Our pricing follows real-time market rates, ensuring complete transparency with no hidden
+                            costs or misleading markups.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- feature box right -->
+            <div class="right_data feature_box">
+
+                <!-- feature box -->
+                <div class="data_block" data-aos="fade-left" data-aos-duration="1500">
+                    <div class="icon">
+                        <img src="{% static 'website/images/functional.png' %}" alt="image">
+                    </div>
+                    <div class="text">
+                        <h4>Secure Payments & Data Protection</h4>
+                        <p>Advanced encryption and trusted payment integrations safeguard every transaction and protect
+                            your personal information.</p>
+                    </div>
+                </div>
+
+                <!-- feature box -->
+                <div class="data_block" data-aos="fade-left" data-aos-duration="1500">
+                    <div class="icon">
+                        <img src="{% static 'website/images/support.png' %}" alt="image">
+                    </div>
+                    <div class="text">
+                        <h4>Customer-Centric Service</h4>
+                        <p>From purchase to delivery, our support team ensures a smooth, responsive, and customer-first
+                            experience.</p>
+                    </div>
+                </div>
+
+            </div>
+            <!-- feature image -->
+            <!-- <div class="feature_img" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+                <img src="{% static 'website/images/features_frame.png' %}" alt="image">
+            </div> -->
+        </div>
+    </div>
+    <!-- container end -->
+</section>
+<!-- Features-Section-end -->
+
+<!-- ModernUI-Section-Start -->
+<section class="row_am modern_ui_section" id="why">
+    <!-- container start -->
+    <div class="container">
+        <!-- row start -->
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- UI content -->
+                <div class="ui_text">
+                    <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+                        <h2>Why Choose <span>Us</span></h2>
+                    </div>
+                    <ul class="design_block">
+                        <li data-aos="fade-up" data-aos-duration="1500">
+                            <h4>Purity You Can Trust</h4>
+                            <p>All products are sourced from certified manufacturers and comply with applicable
+                                hallmarking norms.</p>
+                        </li>
+                        <li data-aos="fade-up" data-aos-duration="1500">
+                            <h4>Transparent Pricing</h4>
+                            <p>Prices are derived from prevailing market rates and displayed clearly for informed
+                                decisions.</p>
+                        </li>
+                        <li data-aos="fade-up" data-aos-duration="1500">
+                            <h4>Secure Transactions</h4>
+                            <p>We use industry-standard security measures to protect your data and payments.</p>
+                        </li>
+                        <li data-aos="fade-up" data-aos-duration="1500">
+                            <h4>Reliable Fulfilment</h4>
+                            <p>Every order is processed with care and delivered through trusted logistics partners.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <!-- UI Image -->
+                <div class="ui_images" data-aos="fade-in" data-aos-duration="1500">
+                    <div class="left_img">
+                        <img class="moving_position_animatin" src="{% static 'website/images/modern01.png' %}"
+                            alt="image">
+                    </div>
+                    <!-- UI Image -->
+                    <div class="right_img">
+                        <img class="moving_position_animatin" src="{% static 'website/images/secure_data.png' %}"
+                            alt="image">
+                        <img class="moving_position_animatin" src="{% static 'website/images/modern02.png' %}"
+                            alt="image">
+                        <img class="moving_position_animatin" src="{% static 'website/images/modern03.png' %}"
+                            alt="image">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- row end -->
+    </div>
+    <!-- container end -->
+</section>
+<!-- ModernUI-Section-end -->
+
+<!-- How-It-Workes-Section-Start -->
+<section class="row_am how_it_works" id="how_it_work">
+    <!-- container start -->
+    <div class="container">
+        <div class="how_it_inner">
+            <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="300">
+                <!-- h2 -->
+                <h2><span>Our Commitment to </span>Compliance & Trust</h2>
+                <!-- p -->
+                <p>We operate with a strong focus on regulatory compliance, customer transparency, and ethical
+                    practices. All transactions, pricing, and product descriptions are presented in a clear and
+                    provisional manner, subject to applicable laws, taxes, and market conditions.<br /></p>
+                <p><em>Gold and silver prices are dynamic and may change without prior notice.</em></p>
+            </div>
+        </div>
+    </div>
+    <!-- container end -->
+</section>
+<!-- How-It-Workes-Section-end -->
+
+<!-- FAQ-Section start -->
+<section class="row_am faq_section" id="faq">
+    <!-- container start -->
+    <div class="container">
+        <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="300">
+            <!-- h2 -->
+            <h2><span>FAQ</span> - Frequently Asked Questions</h2>
+            <!-- p -->
+            <p>GoldRush Aura Ecom LLP</p>
+        </div>
+        <!-- faq data -->
+        <div class="faq_panel">
+            <div class="accordion" id="faqSec">
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading1">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link active" data-toggle="collapse"
+                                data-target="#collapse1">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                1. How can I redeem my reward points?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse1" class="collapse show" aria-labelledby="heading1" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>Reward point redemption is available exclusively to <strong>registered and logged-in
+                                    users</strong>. Redemption windows are opened <strong>once every 60 days</strong>,
+                                during which eligible customers may redeem accumulated reward points against purchases
+                                made on the GoldRush Aura Ecom LLP platform.</p>
+                            <p>The company reserves the right to modify or discontinue the reward program in accordance
+                                with applicable laws.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading2">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse2">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                2. Are shipping or delivery charges applicable?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse2" class="collapse" aria-labelledby="heading2" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>No. GoldRush Aura Ecom LLP currently offers <strong>free shipping and delivery within
+                                    India</strong>, subject to serviceable locations.</p>
+                            <p>For more information, please refer to our <strong>Shipping, Delivery, and Logistics
+                                    Policy.</strong></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading3">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse3">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                3. What happens if my order is lost during transit?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse3" class="collapse" aria-labelledby="heading3" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>In the rare event that an order is lost during transit, we initiate tracking and
+                                investigation for up to <strong>30 days</strong> from the date of dispatch.</p>
+                            <p>If the order cannot be located within this period, a <strong>refund will be processed to
+                                    the original payment method</strong>, in accordance with our Refund Policy.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading4">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse4">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                4. Can I send products as gifts?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse4" class="collapse" aria-labelledby="heading4" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>Yes. Products purchased from our platform may be delivered as <strong>gifts</strong> to
+                                recipients across <strong>select cities in India</strong>, subject to logistics
+                                feasibility and delivery coverage.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading5">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse5">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                5. Is Cash on Delivery (COD) available?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse5" class="collapse" aria-labelledby="heading5" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>No. <strong>Cash on Delivery (COD) is not available</strong>. All orders must be prepaid
+                                using the online payment options provided at checkout.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading6">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse6">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                6. Are GST charges applicable on gold and silver products?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse6" class="collapse" aria-labelledby="heading6" data-parent="#faqSec">
+                        <div class="card-body info">
+                            <p>Yes. <strong>GST is applicable</strong> on all gold and silver purchases as per
+                                prevailing Indian tax laws. GST is charged on:</p>
+                            <ul>
+                                <li>The value of gold or silver</li>
+                                <li>Making charges, where applicable</li>
+                            </ul>
+                            <p>All tax details are clearly mentioned in the <strong>GST-compliant invoice.</strong></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading7">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse7">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                7. Are your gold and silver products BIS hallmarked?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse7" class="collapse" aria-labelledby="heading7" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>Yes. All applicable gold and silver products sold by GoldRush Aura Ecom LLP are
+                                <strong>hallmarked as per Bureau of Indian Standards (BIS) guidelines.</strong>
+                            </p>
+                            <p>Hallmarking confirms purity, authenticity, and regulatory compliance.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading8">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse8">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                8. What purity standards do you follow?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse8" class="collapse" aria-labelledby="heading8" data-parent="#faqSec">
+                        <div class="card-body info">
+                            <p>We adhere strictly to <strong>BIS-approved purity standards</strong>, including:</p>
+                            <ul>
+                                <li>Gold: 24K (999), 22K (916), 18K (750), as applicable</li>
+                                <li>Silver: 999 fine silver or other BIS-approved grades</li>
+                            </ul>
+                            <p>Purity details are clearly disclosed on the product page and invoice.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading9">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse9">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                9. Can prices change after placing an order?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse9" class="collapse" aria-labelledby="heading9" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>No. Once payment is successfully completed, the <strong>price is locked</strong> and will
+                                not change due to market fluctuations.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading10">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse10">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                10. Are making charges refundable?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse10" class="collapse" aria-labelledby="heading10" data-parent="#faqSec">
+                        <div class="card-body">
+                            <p>Making charges are <strong>non-refundable</strong>, except where refunds are initiated
+                                due to order cancellation before processing or product unavailability, as per our Refund
+                                Policy.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-aos="fade-up" data-aos-duration="1500">
+                    <div class="card-header" id="heading11">
+                        <h2 class="mb-0">
+                            <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                data-target="#collapse11">
+                                <i class="icon_faq icofont-plus"></i></i>
+                                11. Will I receive a proper tax invoice?
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse11" class="collapse" aria-labelledby="heading11" data-parent="#faqSec">
+                        <div class="card-body info">
+                            <p>Yes. A <strong>GST-compliant tax invoice</strong> is issued for every order and includes:
+                            </p>
+                            <ul>
+                                <li>GSTIN details</li>
+                                <li>Metal value</li>
+                                <li>Making charges (if applicable)</li>
+                                <li>GST amount</li>
+                                <li>Total payable amount</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- container end -->
+</section>
+<!-- FAQ-Section end -->
+
+<!-- Query Section Start -->
+<section class="row_am query_section">
+    <div class="query_inner" data-aos="fade-in" data-aos-duration="1500">
+        <div class="container">
+            <!-- shape animation  -->
+            <span class="banner_shape1"> <img src="{% static 'website/images/banner-shape1.png' %}" alt="image"> </span>
+            <span class="banner_shape2"> <img src="{% static 'website/images/banner-shape2.png' %}" alt="image"> </span>
+            <span class="banner_shape3"> <img src="{% static 'website/images/banner-shape3.png' %}" alt="image"> </span>
+
+            <div class="section_title">
+                <h2>Have any query about ?</h2>
+                <p>Our team is here to guide you with complete transparency, secure processes, and trusted support at every step.</p>
+            </div>
+            <a href="{% url 'contact' %}" class="btn white_btn">CONTACT US NOW</a>
+        </div>
+    </div>
+</section>
+
+<!-- Trusted Section start -->
+<section class="row_am trusted_section">
+    <!-- container start -->
+    <div class="container">
+        <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
+            <!-- h2 -->
+            <h2>Trusted by companies</h2>
+            <!-- p -->
+            <p>We collaborate with trusted industry leaders including Razorpay, Sequel Logistics, PhonePe, and Google
+                Pay to ensure secure payments, reliable delivery, and complete transparency at every step of your gold
+                and silver buying journey.</p>
+        </div>
+        <!-- logos slider start -->
+        <div class="company_logos">
+            <div id="company_slider" class="owl-carousel owl-theme">
+                <div class="item">
+                    <div class="logo">
+                        <img src="{% static 'website/images/phonepe.png' %}" alt="image">
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="logo">
+                        <img src="{% static 'website/images/googlepay.png' %}" alt="image">
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="logo">
+                        <img src="{% static 'website/images/Razorpay_logo.svg' %}" alt="image">
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="logo">
+                        <img src="{% static 'website/images/sequel.png' %}" alt="image">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- logos slider end -->
+    </div>
+    <!-- container end -->
+</section>
+<!-- Trusted Section ends -->
+
+{% endblock %}
+
+{% block extraModal %}
+{% endblock %}
+
+{% block extraJS %}{% endblock %}

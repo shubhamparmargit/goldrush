@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+        {% include "portal/includes/head.html" %}
+		{% block extraCSS %}{% endblock %}
+		<noscript>
+			<meta http-equiv="refresh"
+				content="0;url=/gold_mines/portal/javascript-disabled?next={{ request.path }}">
+		</noscript>
+	</head>
+	<body class="hold-transition light-skin sidebar-mini theme-primary fixed">
+		<div class="wrapper">
+			<div id="loader"></div>
+            {% include "portal/includes/header.html" %}
+            {% include "portal/includes/sidebar.html" %}
+			{% block content %}{% endblock %}
+			{% include "portal/includes/footer.html" %}
+			{% block extraModal %}{% endblock %}
+		</div>
+		<script>
+            window.APP_URLS = {
+                set_product_session: "{% url 'set_product_session' %}",
+                getMetalPurityPrice: "{% url 'getMetalPurityPrice' %}",
+                uploadProductImages: "{% url 'uploadProductImages' %}",
+				deleteVideo: "{% url 'deleteVideo' %}",
+				showVideos: "{% url 'showVideos' %}",
+				uploadVideos: "{% url 'uploadVideos' %}",
+				deleteProductImage: "{% url 'deleteProductImage' %}",
+				showProductImages: "{% url 'showProductImages' %}",
+				getPurityPrice: "{% url 'getPurityPrice' %}",
+                getUnit: "{% url 'getUnit' %}",
+                getCategory: "{% url 'getCategory' %}",
+                getCustomer: "{% url 'getCustomer' %}",
+				deleteImage: "{% url 'deleteImage' %}",
+                getCustomerCartDetails: "{% url 'getCustomerCartDetails' %}",
+                getUser: "{% url 'getUser' %}",
+				franchise_hierarchy: "{% url 'franchise_hierarchy' %}",
+                getTradingDetails: "{% url 'getTradingDetails' %}",
+                getCustomerOrderDetails: "{% url 'getCustomerOrderDetails' %}",
+				getAllDataByTable: "{% url 'getAllDataByTable' %}",
+				exportData: "{% url 'exportData' %}",
+                changeAccess: "{% url 'changeAccess' %}",
+                macReset: "{% url 'macReset' %}",
+				update_franchise_status: "{% url 'update_franchise_status' %}",
+                changeTradingOption: "{% url 'changeTradingOption' %}",
+                update_trading_status: "{% url 'update_trading_status' %}",
+				changeTradingAccount: "{% url 'changeTradingAccount' %}",
+                metal_list: "{% url 'metal_list' %}",
+                purity_list: "{% url 'purity_list' %}",
+				type_list: "{% url 'type_list' %}",
+                getAllCategory: "{% url 'getAllCategory' %}",
+                getAllGenders: "{% url 'getAllGenders' %}",
+				getAllProduct: "{% url 'getAllProduct' %}",
+				saveTradingUser: "{% url 'saveTradingUser' %}",
+                getParentFranchises: "{% url 'getParentFranchises' %}",
+                addPurityPrice: "{% url 'addPurityPrice' %}",
+				updatePurityPrice: "{% url 'updatePurityPrice' %}",
+				addUnit: "{% url 'addUnit' %}",
+                updateUnit: "{% url 'updateUnit' %}",
+                addCategory: "{% url 'addCategory' %}",
+				updateCategory: "{% url 'updateCategory' %}",
+				addProduct: "{% url 'addProduct' %}",
+                updateProduct: "{% url 'updateProduct' %}",
+                addImage: "{% url 'addImage' %}",
+				updateOrderStatus: "{% url 'updateOrderStatus' %}",
+				addStock: "{% url 'addStock' %}",
+				change_login_password: "{% url 'change_login_password' %}",
+				addPortalUser: "{% url 'add_portal_user' %}",
+				updatePortalUser: "{% url 'update_portal_user' %}",
+				getPortalUser: "{% url 'get_portal_user' %}",
+				getAllAgents: "{% url 'getAllAgents' %}",
+				transferAgent: "{% url 'transferAgent' %}",
+				update_withdrawal_status: "{% url 'update_withdrawal_status' %}",
+            };
+        </script>
+		{% include "portal/includes/globaljs.html" %}
+        {% block extraJS %}{% endblock %}
+	</body>
+</html>

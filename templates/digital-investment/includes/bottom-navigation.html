@@ -1,0 +1,30 @@
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <div class="bottom-nav-item active" data-tab="live">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Live Orders</span>
+    </div>
+    <div class="bottom-nav-item" data-tab="past">
+        <span class="nav-icon">📜</span>
+        <span class="nav-text">Past Orders</span>
+    </div>
+</div>
+<script>
+    document.querySelectorAll(".bottom-nav-item").forEach(tab => {
+        tab.addEventListener("click", () => {
+
+            document.querySelectorAll(".bottom-nav-item")
+                .forEach(t => t.classList.remove("active"));
+
+            tab.classList.add("active");
+
+            const type = tab.dataset.tab;
+
+            if (type === "live") {
+                window.location.href = window.APP_URLS.live_orders;
+            } else {
+                window.location.href = window.APP_URLS.past_orders;
+            }
+        });
+    });
+</script>

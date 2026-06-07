@@ -1,0 +1,262 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+
+{% block extraCSS %}
+/* Profile page custom styles */
+.box-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+ul.list-unstyled li {
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+h4.box-title {
+    margin-top: 20px;
+    font-size: 1.25rem;
+}
+
+.table th, .table td {
+    text-align: center;
+}
+
+.text-primary {
+    color: #007bff !important;
+}
+
+hr {
+    border-top: 2px solid #007bff;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <h3 class="page-title">Profile</h3>
+        </div>
+        <section class="content">
+            <div class="row">
+                <div class="col-lg-12">
+                    <!-- Profile Section -->
+                    <div class="box">
+                        <div class="box-body">
+                            <!-- Profile Header -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2 class="box-title">{{ profile_data.name }}</h2>
+                                    <h4 class="text-danger">{{ profile_data.role }}</h4>
+                                    <hr>
+                                </div>
+                            </div>
+
+                            {% if profile_data.is_franchise %}
+                                <!-- Franchise Info Section -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Franchise Details</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped table-actions">
+                                                <tr>
+                                                    <th>Activation Date</th>
+                                                    <td>{{ profile_data.register_date_time }}</td>
+                                                    <th>Parent</th>
+                                                    <td>{{ profile_data.parent_name }}</td>
+                                                    <th>Franchise Model</th>
+                                                    <td>{{ profile_data.franchise_model }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Franchise Name</th>
+                                                    <td>{{ profile_data.franchise_name }}</td>
+                                                    <th>Holder Name</th>
+                                                    <td>{{ profile_data.name }}</td>
+                                                    <th>Access</th>
+                                                    <td>{{ profile_data.access }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Details Section -->
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Contact Details</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped table-actions">
+                                                <tr>
+                                                    <th>Mobile No.</th>
+                                                    <td>{{ profile_data.mobile }}</td>
+                                                    <th>Email Id</th>
+                                                    <td>{{ profile_data.email }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Address</th>
+                                                    <td colspan="3">{{ profile_data.address }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Identity Details Section -->
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Identity Details</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped table-actions">
+                                                <tr>
+                                                    <th>Company Id</th>
+                                                    <td>{{ profile_data.company_support_id }}</td>
+                                                    <th>Referral Id</th>
+                                                    <td>{{ profile_data.referral_id }}</td>
+                                                    <th>Agent Id</th>
+                                                    <td>{{ profile_data.agent_id }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Aadhar Number</th>
+                                                    <td>{{ profile_data.aadhaar_number }}</td>
+                                                    <th>PAN Number</th>
+                                                    <td>{{ profile_data.pan_number }}</td>
+                                                    <th>GST Number</th>
+                                                    <td>{{ profile_data.gst_number }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Commission Details Section -->
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Commission Details</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped table-actions">
+                                                <tr>
+                                                    <th>Commission Slab</th>
+                                                    <td>{{ profile_data.commission_slab }}</td>
+                                                    <th>Commission %</th>
+                                                    <td>{{ profile_data.commission_percentage }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bank Details Section -->
+                                {% if profile_data.franchiseDetails.bank_details %}
+                                <div class="row mt-4 mb-10">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Bank Details</h4>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-actions">
+                                        <tr>
+                                            <th>Sr. No.</th>
+                                            <th>Bank Name</th>
+                                            <th>Account Holder</th>
+                                            <th>Account No.</th>
+                                            <th>IFSC</th>
+                                            <th>Branch</th>
+                                            <th>Date</th>
+                                        </tr>
+                                        {% for bank in profile_data.franchiseDetails.bank_details %}
+                                        <tr>
+                                            <td>{{ bank.sr_no }}</td>
+                                            <td>{{ bank.bank_name }}</td>
+                                            <td>{{ bank.account_holder_name }}</td>
+                                            <td>{{ bank.account_number }}</td>
+                                            <td>{{ bank.ifsc_code }}</td>
+                                            <td>{{ bank.branch_name }}</td>
+                                            <td>{{ bank.date }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </table>
+                                </div>
+                                {% endif %}
+
+                                <!-- Documents Section -->
+                                {% if profile_data.franchiseDetails.documents %}
+                                <div class="row mt-4 mb-10">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Documents</h4>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-actions">
+                                        <tr>
+                                            <th>Sr. No.</th>
+                                            <th>Document Type</th>
+                                            <th>File</th>
+                                            <th>Date</th>
+                                        </tr>
+                                        {% for doc in profile_data.franchiseDetails.documents %}
+                                        <tr>
+                                            <td>{{ doc.sr_no }}</td>
+                                            <td>{{ doc.doc_type }}</td>
+                                            <td><a href="{{ doc.file_path }}" target="_blank">View</a></td>
+                                            <td>{{ doc.date }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </table>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <!-- Contact Details Section -->
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <h4 class="modal-title">Details</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped table-actions">
+                                                <tr>
+                                                    <th>Activation Date</th>
+                                                    <td>{{ profile_data.register_date_time }}</td>
+                                                    <th>Access</th>
+                                                    <td>{{ profile_data.access }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Mobile No.</th>
+                                                    <td>{{ profile_data.mobile }}</td>
+                                                    <th>Email Id</th>
+                                                    <td>{{ profile_data.email }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}    
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

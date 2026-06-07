@@ -1,0 +1,12 @@
+{% load static %}
+<div class="header-dashboard">
+    <div class="wrap">
+        <div class="header-left">
+            <div class="button-show-hide">
+                <i class="icon-menu"></i>
+            </div>
+            <h6>Digital Investement</h6>
+            {% if request.is_demo_account %}<span class="badge badge-success">Demo Account</span>{% endif %}
+        </div>
+    </div>
+</div>

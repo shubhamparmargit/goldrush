@@ -1,0 +1,121 @@
+{% extends "website/includes/base.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Contact Us
+{% endblock %}
+
+{% block extraCSS %}{% endblock %}
+
+{% block content %}
+<div class="bred_crumb">
+    <div class="container">
+        <span class="banner_shape1"> <img src="{% static 'website/images/banner-shape1.png' %}" alt="image"> </span>
+        <span class="banner_shape2"> <img src="{% static 'website/images/banner-shape2.png' %}" alt="image"> </span>
+        <span class="banner_shape3"> <img src="{% static 'website/images/banner-shape3.png' %}" alt="image"> </span>
+
+        <div class="bred_text">
+            <h1>Contact us</h1>
+            <p>If you have an query, please get in touch with us, we will revert back quickly.</p>
+        </div>
+    </div>
+</div>
+<section class="contact_page_section">
+    <div class="container">
+        <div class="contact_inner">
+            <div class="contact_form">
+                <div class="section_title">
+                    <h2>Leave a <span>message</span></h2>
+                    <p>Fill up form below, our team will get back soon</p>
+                </div>
+                <div id="formMessage"></div>
+                <form id="contactForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="text" name="name" placeholder="Name" class="form-control">
+                        <small class="error name_error"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Email" class="form-control">
+                        <small class="error email_error"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" name="phone" placeholder="Phone" class="form-control">
+                        <small class="error phone_error"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <textarea name="message" class="form-control" placeholder="Your message"></textarea>
+                        <small class="error message_error"></small>
+                    </div>
+
+                    <input type="text" name="website" style="display:none">
+
+                    <div class="form-group mb-0">
+                        <button type="submit" class="btn puprple_btn">
+                            SEND MESSAGE
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+            <div class="contact_info">
+                <div class="icon"><img src="{% static 'website/images/contact_message_icon.png' %}" alt="image"></div>
+                <div class="section_title">
+                    <h2>Have any <span>question?</span></h2>
+                    <p>If you have any question about our product, service, payment or company, Visit our <a
+                            href="{% url 'index' %}#faq">FAQs page.</a></p>
+                </div>
+                <a href="{% url 'index' %}#faq" class="btn puprple_btn">READ FAQ</a>
+                <ul class="contact_info_list">
+                    <li>
+                        <div class="img">
+                            <img src="{% static 'website/images/mail_icon.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <span>Email Us</span>
+                            <a href="mailto:support@goldrushaura.com">support@goldrushaura.com</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="img">
+                            <img src="{% static 'website/images/call_icon.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <span>Call Us</span>
+                            <a href="tel:+917435923108">+91 7435923108</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="img">
+                            <img src="{% static 'website/images/location_icon.png' %}" alt="image">
+                        </div>
+                        <div class="text">
+                            <span>Visit Us</span>
+                            <p>Shop No 5 Sai Palkhi, Chawl No.1 Alkapuri Road, Nallosapare E, Alkapuri Police Chowky,
+                                Vasai, Thane- 401209, Maharashtra, India</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="row_am map_section">
+    <div class="container">
+        <div class="map_inner">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3763.0172583163658!2d72.81817077521386!3d19.411660281863263!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDI0JzQyLjAiTiA3MsKwNDknMTQuNyJF!5e0!3m2!1sen!2sin!4v1771421871173!5m2!1sen!2sin"
+                width="100%" height="510" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'website/js/form-validation.js' %}"></script>
+<script src="{% static 'website/js/contact.js' %}"></script>
+{% endblock %}

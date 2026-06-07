@@ -1,0 +1,169 @@
+{% load static %}
+<div class="section-menu-left">
+    <div class="box-logo">
+        <a href="{% url 'digital_dashboard' %}" id="site-logo-inner">
+            <img class="" id="logo_header" alt="" src="{% static 'website/images/goldrush.png' %}"
+                data-light="{% static 'digital-investment/images/logo/logo.svg' %}"
+                data-dark="{% static 'digital-investment/images/logo/logo-dark.svg' %}">
+        </a>
+        <div class="button-show-hide">
+            <i class="icon-back"></i>
+        </div>
+    </div>
+    <div class="section-menu-left-wrap">
+        <div class="center">
+            <div class="center-item">
+                <div class="center-heading f14-regular text-Gray menu-heading mb-12">Navigation</div>
+            </div>
+            <div class="center-item">
+                <ul class="">
+                    <li class="menu-item active">
+                        <a href="{% url 'digital_dashboard' %}" class="menu-item-button active">
+                            <div class="icon">
+                                <i class="icon-category"></i>
+                            </div>
+                            <div class="text">Dashboard</div>
+                        </a>
+                    </li>
+                    {% if not request.is_demo_account %}
+                    <li class="menu-item has-children">
+                        <a href="javascript:void(0);" class="menu-item-button">
+                            <div class="icon">
+                                <i class="icon-wallet1"></i>
+                            </div>
+                            <div class="text">My Wallet</div>
+                        </a>
+                        <ul class="sub-menu">
+                            <li class="sub-menu-item">
+                                <a href="{% url 'recharge_wallet' %}" class="">
+                                    <div class="text">Recharge Wallet</div>
+                                </a>
+                            </li>
+                            <li class="sub-menu-item">
+                                <a href="{% url 'my_wallet' %}" class="">
+                                    <div class="text">Wallet History</div>
+                                </a>
+                            </li>
+                            <li class="sub-menu-item">
+                                <a href="{% url 'withdraw_amount' %}" class="">
+                                    <div class="text">Withdraw Amount</div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    <li class="menu-item has-children">
+                        <a href="javascript:void(0);" class="menu-item-button">
+                            <div class="icon">
+                                <svg class="" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.1428 8.50146V14.2182" stroke="#A4A4A9" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M10.0317 5.76562V14.2179" stroke="#A4A4A9" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M13.8572 11.522V14.2178" stroke="#A4A4A9" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                        d="M13.9047 1.6665H6.0952C3.37297 1.6665 1.66663 3.59324 1.66663 6.3208V13.6789C1.66663 16.4064 3.36504 18.3332 6.0952 18.3332H13.9047C16.6349 18.3332 18.3333 16.4064 18.3333 13.6789V6.3208C18.3333 3.59324 16.6349 1.6665 13.9047 1.6665Z"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div class="text">Orders</div>
+                        </a>
+                        <ul class="sub-menu">
+                            <li class="sub-menu-item">
+                                <a href="{% url 'live_orders' %}" class="">
+                                    <div class="text">Live Orders</div>
+                                </a>
+                            </li>
+                            <li class="sub-menu-item">
+                                <a href="{% url 'past_orders' %}" class="">
+                                    <div class="text">Past Orders</div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'digital_terms_condition' %}" class="menu-item-button">
+                            <div class="icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+
+                                    <path
+                                        d="M6 2H14L20 8V20C20 21.1046 19.1046 22 18 22H6C4.89543 22 4 21.1046 4 20V4C4 2.89543 4.89543 2 6 2Z"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+
+                                    <path d="M14 2V8H20" stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+
+                                    <path d="M9 15L11 17L15 13" stroke="#A4A4A9" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+
+                                </svg>
+                            </div>
+                            <div class="text">Terms & Conditions</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'digital_privacy_policy' %}" class="menu-item-button">
+                            <div class="icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+
+                                    <path d="M12 2L20 6V12C20 17 16.5 20.5 12 22C7.5 20.5 4 17 4 12V6L12 2Z"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+
+                                    <path d="M9 11V10C9 8.89543 9.89543 8 11 8H13C14.1046 8 15 8.89543 15 10V11"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+
+                                    <rect x="9" y="11" width="6" height="5" rx="1" stroke="#A4A4A9"
+                                        stroke-width="1.5" />
+
+                                </svg>
+                            </div>
+                            <div class="text">Privacy Policy</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'trading_profile' %}" class="menu-item-button">
+                            <div class="icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path d="M4 22C4 18.6863 7.58172 16 12 16C16.4183 16 20 18.6863 20 22"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div class="text">Profile</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'trading_logout' %}" class="menu-item-button">
+                            <div class="icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 21H5C4.44772 21 4 20.5523 4 20V4C4 3.44772 4.44772 3 5 3H9"
+                                        stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path d="M16 17L21 12L16 7" stroke="#A4A4A9" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M21 12H9" stroke="#A4A4A9" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div class="text">Logout</div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

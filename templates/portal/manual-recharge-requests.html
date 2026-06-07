@@ -1,0 +1,155 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Manual Recharge Requests</h3>
+                    <nav><ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item">Dashboard</li>
+                        <li class="breadcrumb-item active">Manual Recharge Requests</li>
+                    </ol></nav>
+                </div>
+            </div>
+        </div>
+        <section class="content">
+            <div class="col-12">
+                <div class="box">
+                    <div class="box-header with-border">
+                        <h4 class="box-title">Requests</h4>
+                        <button class="btn btn-sm btn-primary pull-right" onclick="loadList()"><i class="fa fa-refresh"></i> Refresh</button>
+                    </div>
+                    <div class="box-body no-padding">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Customer</th>
+                                        <th>Mobile</th>
+                                        <th>Amount</th>
+                                        <th>Mode</th>
+                                        <th>UTR No.</th>
+                                        <th>Membership</th>
+                                        <th>Screenshot</th>
+                                        <th>Status</th>
+                                        <th>Action By</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="requestTableBody">
+                                    <tr><td colspan="12" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Approve/Reject Modal -->
+<div id="action-modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="actionModalTitle">Action</h4>
+                <button type="button" class="close" data-dismiss="modal">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="action_unique_id">
+                <input type="hidden" id="action_type">
+                <div class="form-group">
+                    <label>Remark <span id="remarkRequired" class="text-danger">*</span></label>
+                    <textarea class="form-control" id="action_remark" rows="3" placeholder="Enter remark"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const APPROVE_URL = "{% url 'approve_manual_recharge' %}";
+    const REJECT_URL  = "{% url 'reject_manual_recharge' %}";
+    const LIST_URL    = "{% url 'get_manual_recharge_list' %}";
+    const CSRF        = "{{ csrf_token }}";
+
+    function loadList() {
+        fetch(LIST_URL)
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById('requestTableBody');
+                if (!data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="12" class="text-center">No requests found</td></tr>';
+                    return;
+                }
+                const statusBadge = { PENDING: 'badge-warning', APPROVED: 'badge-success', REJECTED: 'badge-danger' };
+                tbody.innerHTML = data.data.map((r, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${r.request_date}</td>
+                        <td>${r.customer_name}</td>
+                        <td>${r.mobile}</td>
+                        <td><b>₹${r.amount}</b></td>
+                        <td>${r.payment_mode}</td>
+                        <td>${r.utr_number}</td>
+                        <td>${r.membership}</td>
+                        <td>${r.screenshot ? `<a href="${r.screenshot}" target="_blank" class="btn btn-xs btn-info">View</a>` : '-'}</td>
+                        <td><span class="badge ${statusBadge[r.status] || ''}">${r.status}</span></td>
+                        <td>${r.action_by ? r.action_by + '<br><small>' + r.action_date + '</small>' : '-'}</td>
+                        <td>
+                            ${r.status === 'PENDING' ? `
+                                <button class="btn btn-xs btn-success mb-5" onclick="openAction('${r.unique_id}','approve')">Approve</button>
+                                <button class="btn btn-xs btn-danger" onclick="openAction('${r.unique_id}','reject')">Reject</button>
+                            ` : `<small class="text-muted">${r.remark || '-'}</small>`}
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    function openAction(unique_id, type) {
+        document.getElementById('action_unique_id').value = unique_id;
+        document.getElementById('action_type').value = type;
+        document.getElementById('actionModalTitle').textContent = type === 'approve' ? '✅ Approve Recharge' : '❌ Reject Recharge';
+        document.getElementById('action_remark').value = '';
+        document.getElementById('remarkRequired').style.display = type === 'reject' ? 'inline' : 'none';
+        $('#action-modal').modal('show');
+    }
+
+    document.getElementById('confirmActionBtn').addEventListener('click', function () {
+        const unique_id = document.getElementById('action_unique_id').value;
+        const type      = document.getElementById('action_type').value;
+        const remark    = document.getElementById('action_remark').value.trim();
+        const url       = type === 'approve' ? APPROVE_URL : REJECT_URL;
+
+        if (type === 'reject' && !remark) { alert('Remark is required for rejection'); return; }
+
+        this.disabled = true;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `unique_id=${unique_id}&remark=${encodeURIComponent(remark)}&csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            this.disabled = false;
+            alert(data.message);
+            if (data.success === '1') { $('#action-modal').modal('hide'); loadList(); }
+        })
+        .catch(() => { this.disabled = false; alert('Something went wrong'); });
+    });
+
+    loadList();
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Access Denied
+{% endblock %}
+
+{% block extraCSS %}{% endblock %}
+
+{% block content %}
+<div class="card-wrapper">
+    <div class="card-body">
+        <div class="error-icon">
+            <i class="icon-hide"></i>
+        </div>
+        <div class="maintitle">Access Restricted</div>
+        <div class="subtitle">{{ msg|default:"You are not authorized to access this page." }}</div>
+        <!-- <button class="action-btn primary-btn" onclick="closeTrading();">
+            Close Page
+        </button> -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/custom.js' %}"></script>
+{% endblock %}

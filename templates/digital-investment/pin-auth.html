@@ -1,0 +1,129 @@
+{% extends "digital-investment/includes/base-outer.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Secure PIN Verification
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/otp.css' %}">
+<link rel="stylesheet" href="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.css' %}">
+{% endblock %}
+
+{% block content %}
+<div id="wrapper">
+    <div id="page">
+        <div class="sign-in-wrap">
+            <div class="sign-in-box">
+
+                <!-- LEFT SIDE -->
+                <div class="left">
+                    <div class="content">
+
+                        <h3 class="heading">
+                            Hello {{ customer_name }}
+                        </h3>
+
+                        <div class="sub f12-regular text-GrayDark">
+                            Secure your Digital Investment account
+                        </div>
+
+                        <div class="otp-card">
+
+                            <div class="otp-header">
+                                <div class="otp-icon">🔐</div>
+
+                                {% if mode == "setup" %}
+                                    <h2>Set Your 6-Digit PIN</h2>
+                                    <p>Create a secure PIN for Digital Investment access</p>
+                                {% else %}
+                                    <h2>Enter Your 6-Digit PIN</h2>
+                                    <p>Verify your identity to continue</p>
+                                {% endif %}
+                            </div>
+
+                            <input type="hidden" id="pinMode" value="{{ mode }}">
+
+                            {% if locked_until %}
+                                <div class="alert alert-danger text-center mt-3">
+                                    Account locked due to multiple failed attempts. <br>
+                                    Try again after {{ locked_until }}
+                                </div>
+                            {% else %}
+
+                                <!-- PIN INPUT -->
+                                <form method="POST" id="pinForm">
+                                    {% csrf_token %}
+                                    
+                                    <div class="otp-input-group mt-3">
+                                        {% for i in "123456" %}
+                                            <input type="password"
+                                                   maxlength="1"
+                                                   inputmode="numeric"
+                                                   pattern="[0-9]*"
+                                                   autocomplete="off"
+                                                   class="otp-input pin-input">
+                                        {% endfor %}
+                                    </div>
+
+                                    {% if mode == "setup" %}
+                                        <div class="mt-4">
+                                            <label class="text-GrayDark f12-regular">Confirm PIN</label>
+                                            <div class="otp-input-group mt-2">
+                                                {% for i in "123456" %}
+                                                    <input type="password"
+                                                           maxlength="1"
+                                                           inputmode="numeric"
+                                                           pattern="[0-9]*"
+                                                           autocomplete="off"
+                                                           class="otp-input confirm-pin">
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
+                                    <button type="submit"
+                                            class="action-btn primary-btn w-100 mt-4">
+                                        {% if mode == "setup" %}
+                                            Set PIN & Continue
+                                        {% else %}
+                                            Verify & Continue
+                                        {% endif %}
+                                    </button>
+
+                                    {% if mode == "verify" %}
+                                    <p style="text-align:right"><a href="{% url 'trading_forgot_pin' %}" class="text-danger link-btn">Forgot PIN?</a></p>
+                                    {% endif %}
+                                    
+                                    {% if mode == "verify" and attempts_remaining is not None and attempts_remaining != 0 %}
+                                        <div class="pin-attempt-info text-danger mt-3 text-center">
+                                            {{ attempts_remaining }} attempts remaining
+                                        </div>
+                                    {% endif %}
+                                </form>
+
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDE -->
+                {% include "digital-investment/includes/login-right.html" %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.js' %}"></script>
+<script>
+    window.APP_URLS = {
+        handle_pin: "{% url 'handle_pin_action' %}",
+    }
+</script>
+<script src="{% static 'digital-investment/js/pin-text.js' %}"></script>
+<script src="{% static 'digital-investment/js/pin-auth.js' %}?v=1.1"></script>
+{% endblock %}

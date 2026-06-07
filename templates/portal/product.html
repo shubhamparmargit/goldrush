@@ -1,0 +1,246 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+	<div class="container-full">
+		<div class="content-header">
+			<div class="d-flex align-items-center">
+				<div class="me-auto">
+					<h3 class="page-title">Product</h3>
+					<div class="d-inline-block align-items-center">
+						<nav>
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
+								<li class="breadcrumb-item active" aria-current="page">Product</li>
+							</ol>
+						</nav>
+					</div>
+				</div>
+			</div>
+		</div>
+		<section class="content">
+			<form class="form" method="post" id="frm_addProduct" name="frm_addProduct">
+				<input type="hidden" name="type" id="type" value="product">
+				<input type="text" name="field" id="field" value="">
+				{% csrf_token %}
+				<div class="row">
+					<div class="col-12">
+						<div class="box">
+							<div class="box-header with-border">
+								<h4 class="box-title">About Product</h4>
+							</div>
+							<div class="box-body">
+								<div class="form-body">
+									<div class="row">
+										<div class="col-md-12">
+											<div class="form-group">
+												<label class="fw-700 fs-16 form-label">Product Name<span class="error">*</span></label>
+												<input type="text" class="form-control" placeholder="Product Name" name="name" id="name" required>
+											</div>
+										</div>
+										<div class="col-md-4">
+											<div class="form-group">
+												<label class="form-label">Category<span class="error">*</span></label>
+												<select class="form-control select2" data-placeholder="Select a Category" id="category" name="category" required>
+													<option value="">Choose Category</option>
+												</select>
+											</div>
+										</div>
+										<div class="col-md-4">
+											<div class="form-group">
+												<label class="fw-700 fs-16 form-label">Product Size<span class="error">*</span></label>
+												<input type="text" class="form-control" placeholder="Product Size" name="size" id="size" required>
+											</div>
+										</div>
+										<div class="col-md-2">
+											<div class="form-group">
+												<label class="form-label">Access Control</label><br/>
+												<input type="checkbox" class="filled-in chk-col-success"  id="access" name="access" value="Granted" checked />
+												<label for="access" style="margin-top: 7px;margin-bottom:0px;">Granted</label>
+											</div>
+										</div>
+										<div class="col-md-2">
+											<div class="form-group">
+												<label class="form-label">Is Product?</label><br/>
+												<input type="checkbox" class="filled-in chk-col-success"  id="hot_sale" name="hot_sale" value="Yes"/>
+												<label for="hot_sale" style="margin-top: 7px;margin-bottom:0px;">Hot Sale</label>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-12">
+											<div class="form-group">
+												<label class="fw-700 fs-16 form-label">Product Description</label>
+												<textarea class="form-control p-15" rows="4" name="description" id="description"></textarea>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-12">
+											<div class="form-group">
+												<label class="fw-700 fs-16 form-label">Product Category Description</label>
+												<textarea class="form-control p-15" rows="4" name="category_description" id="category_description"></textarea>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-12">
+						<div class="box">
+							<div class="box-header with-border">
+								<h4 class="box-title">Product Price Details</h4>
+							</div>
+							<div class="box-body">
+								<div class="row mb-10">
+									<div class="col-md-4">
+                                        <div class="form-group">
+                                            <label class="fw-700 fs-16 form-label">Metal<span class="error">*</span></label>
+                                            <select class="form-control select2 metal" data-placeholder="Select a Metal" id="metal" name="metal" style="width:100%" required>
+                                                <option value="">Choose Metal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+									<div class="col-md-4">
+                                        <div class="form-group">
+                                            <label class="fw-700 fs-16 form-label">Metal Type<span class="error">*</span></label>
+                                            <select class="form-control select2" data-placeholder="Select a Metal Type" id="metal_type" name="metal_type" style="width:100%" required>
+                                                <option value="">Choose Metal Type</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label class="fw-700 fs-16 form-label">Purity<span class="error">*</span></label>
+                                            <select class="form-control select2" data-placeholder="Select a Purity" id="purity" name="purity" style="width:100%" required>
+                                                <option value="">Choose Purity</option>
+                                            </select>
+                                        </div>
+                                    </div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="fw-700 fs-16 form-label">Price Per 10 Gm <span class="error">(excl. GST)</span></label>
+											<input type="number" class="form-control" placeholder="Price" name="price_per_10_gm" id="price_per_10_gm" readonly>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="fw-700 fs-16 form-label">Weight <span class="error">(in Gm)*</span></label>
+											<input type="number" class="form-control" placeholder="Weight" name="weight" id="weight" required>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="fw-700 fs-16 form-label">GST <span class="error">(in %)*</span></label>
+											<input type="number" class="form-control" placeholder="GST" name="gst" id="gst" required>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="form-label">Is Making Charge?</label><br/>
+											<input type="checkbox" class="filled-in chk-col-success"  id="making_fixed" name="making_fixed" value="Yes"/>
+											<label for="making_fixed" style="margin-top: 7px;margin-bottom:0px;">Fixed</label>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="fw-700 fs-16 form-label">Making Charge <span class="error">(in rs.)</span></label>
+											<input type="number" class="form-control" placeholder="Making Charge" name="making_charge" id="making_charge">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="fw-700 fs-16 form-label">Delivery Charge <span class="error">(in rs.)</span></label>
+											<input type="number" class="form-control" placeholder="Delivery Charge" name="delivery_charge" id="delivery_charge">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label class="fw-700 fs-16 form-label">Discount <span class="error">(in %)</span></label>
+											<input type="number" class="form-control" placeholder="Discount" name="discount" id="discount">
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="box-footer w-p100">
+								<a href="{% url 'product_list' %}" class="btn btn-warning me-1">
+									<i class="ti-trash"></i> Cancel
+								</a>
+								<button type="submit" class="btn btn-primary" id="btn_addProduct" name="btn_addProduct">
+									<i class="ti-save-alt"></i> Save
+								</button>
+							</div>
+						</div>		
+					</div> 
+				</div>
+			</form>
+		</section>
+	</div>
+</div>
+{% endblock %}
+{% block extraModal %}
+{% endblock %}
+{% block extraJS %}
+<script>
+    $(document).ready(function()
+    {
+        fill_category();
+		fill_metal();
+
+		$(document).on('change', '#purity', function(e)
+		{ 
+			var metal_id=$("#metal").val();
+			var purity_id=$(this).val();
+			// console.log("Change Event :: "+purity_id);
+			if(metal_id!="" && purity_id!="")
+			{
+				$.ajax({
+					url: window.APP_URLS.getMetalPurityPrice,
+					type: 'POST',
+					data:
+					{
+						metal_purity_price:'metal_purity_price',
+						metal_id:metal_id,
+						purity_id:purity_id,
+						csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()
+					},
+					dataType: 'json'
+				})
+				.done(function(data)
+				{
+					// console.log(data)
+					try
+					{
+						if(data.success==1)
+						{
+							$("#price_per_10_gm").val(data.price);
+						}
+						else
+						{
+							$("#price_per_10_gm").val("0");
+						}
+					}
+					catch(error) 
+					{
+						// console.log(error)
+						$.toast({
+							heading: 'Error',
+							text: "Sorry, looks like there are some errors detected, please try again.",
+							position: 'top-right',
+							loaderBg: '#ff6849',
+							icon: 'error',
+							hideAfter: 3500
+						});
+					}
+				})
+				.fail(function(jqXHR, textStatus, error)
+				{
+					// console.log(jqXHR.responseText+" | "+textStatus+" | "+error)
+				});
+			}
+		});
+    });
+</script>
+{% endblock %}

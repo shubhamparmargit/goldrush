@@ -1,0 +1,102 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Wallet History
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/order-cards.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% include "digital-investment/includes/wallet-balance-card.html" %}
+                {% csrf_token %}
+                <div class="maintitle">Past Orders</div>
+                <div class="subtitle">your digital investment report</div>
+                {% if orders %}
+
+                <div id="pastOrdersWrapper">
+                    {% for o in orders %}
+                    <div class="order-card {{o.card_icon}}" data-id="{{ o.transaction_id }}">
+
+                        <!-- HEADER -->
+                        <div class="order-header">
+                            <div class="metal-info">
+                                <span class="metal-dot {{o.card_icon}}"></span>
+                                <span class="metal-name">{{o.metal_type}}</span>
+                                <span class="metal-qty">{{o.quantity}} gm</span>
+                            </div>
+
+                            <span class="pnl-badge {{o.profit_loss_icon}}">{{o.profit_loss}}</span>
+
+                            <!-- ORDER TYPE LABEL -->
+                            <span class="order-type 
+                                {% if o.order_type == 'BOOKING' %}booking{% else %}buyback{% endif %}">
+                                {{ o.order_type }}
+                            </span>
+                        </div>
+
+                        <!-- PRICE GRID -->
+                        <div class="price-grid">
+                            <div>
+                                <small>Buy Price</small>
+                                <b>₹{{o.buy_price}}</b>
+                            </div>
+                            <div>
+                                <small>Sell Price</small>
+                                <b class="current-price">₹{{o.sell_price}}</b>
+                            </div>
+                            <div>
+                                <small>Invested</small>
+                                <b>₹{{o.invested_price}}</b>
+                            </div>
+                            <div class="pnl-value {{o.profit_loss_icon}}">
+                                <small>P/L</small>
+                                <b>{{ o.is_profit|yesno:"+,-" }}₹{{ o.pnl_amount }}</b>
+                            </div>
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div class="order-footer">
+                            <span class="order-date">{{o.sell_date}}</span>
+
+                            <div class="order-actions">
+                                <button class="btn-outline btn-details">Details</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {% include "digital-investment/includes/data-empty.html" %}
+                {% endif %}
+            </div>
+            {% include "digital-investment/includes/bottom-sheet.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}"></script>
+<script>
+    document.addEventListener("click", function (e) {
+
+        if (!e.target.classList.contains("btn-details")) return;
+
+        const card = e.target.closest(".order-card");
+        if (!card) return;
+
+        openPastOrderSheet(card);
+    });
+</script>
+{% endblock %}

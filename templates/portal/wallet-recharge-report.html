@@ -1,0 +1,118 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+	<div class="container-full">
+		<div class="content-header">
+			<div class="d-flex align-items-center">
+				<div class="mr-auto">
+					<h3 class="page-title">Wallet Recharge Report</h3>
+					<input type="hidden" name="type" id="type" value="wallet_recharge_report">
+					{% csrf_token %}
+					<div class="d-inline-block align-items-center">
+						<nav>
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
+								<li class="breadcrumb-item active" aria-current="page">Wallet Recharge Report</li>
+							</ol>
+						</nav>
+					</div>
+				</div>							
+			</div>
+		</div>	  
+		<section class="content">
+			<div class="col-12">
+				<div class="box">
+					<div class="box-header with-bfeedback">
+						<div class="row">
+							<div class="col-2">
+								<h4 class="box-title">Wallet Recharge</h4>
+							</div>
+							<div class="col-10 dFlex">
+								<select class="form-control floatLeft w-p10" id="limit">
+									<option value="1">1</option>
+									<option value="5">5</option>
+									<option value="10" selected>10</option>
+									<option value="20">20</option>
+									<option value="50">50</option>
+									<option value="100">100</option>
+									<option value="250">250</option>
+									<option value="500">500</option>
+								</select> 
+								<div class="input-group_search input-group floatLeft w-p30">
+									<input id="search" type="search" class="input-sm form-control" placeholder="Search Customer">
+								</div>
+								<div class="btn-group floatLeft w-p30">
+									<span id="reportrange" class="btn btn-primary btnSpan pdNew">
+										<i class="fa fa-calendar"></i>&nbsp;
+										<span class="btn-date-range">
+											<span>Filter By Date</span> 
+										</span>
+										<b class="caret"></b>
+									</span>
+								</div>
+								<input type="hidden" name="from_date" id="from_date"> 
+								<input type="hidden" name="to_date" id="to_date">
+								<button type="button" class="btn btn-warning floatLeft m-0 pdNew w-p5" id="clear-filter" title="Clear filter"><i class="mdi mdi-filter-remove"></i></button>
+								<button type="button" id="downloadExcel" class="btn btn-danger floatLeft m-0 pdNew w-p5" title="Export to xls"><i class="fa fa-download"></i></button>
+							</div>
+						</div>
+					</div>
+					<div class="box-body no-padding">
+						<div class="row mt10 mb10 table-bot">
+							<div class="col-md-6 col-sm-12 botFlex">
+								<p class="show_p"></p>
+							</div>
+							<div class="col-md-6 col-sm-12">
+								<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+								</ul>
+							</div>
+						</div>
+						<div class="table-responsive">
+							<table class="table table-hover table-striped table-bordered nowrap" id="export_table">
+								<thead>
+									<tr>
+										<th>Sr. No.</th>
+										<th>Full Name</th>
+										<th>Mobile Number</th>
+										<th>Registered On</th>
+										<th>Referral Code</th>
+										<th>Referral Holder Name</th>
+										<th>Transaction Amount</th>
+										<th>Transaction Date</th>
+										<th>Membership</th>
+										<th>Razorpay Order Id</th>
+										<th>Razorpay Payment Id</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody class="dynamic_content">
+								</tbody>
+							</table>
+						</div>
+						<div class="row no-data mb10">
+							<div class="col-md-12 col-sm-12 text-center">
+								<p>No Record To Display</p>
+							</div>
+						</div>
+						<div class="row mt10 mb10 table-bot">
+							<div class="col-md-6 col-sm-12 botFlex">
+								<p class="show_p"></p>
+							</div>
+							<div class="col-md-6 col-sm-12">
+								<ul class="pagination pull-right" style="margin: 10px 0px !important;">
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+{% endblock %}
+{% block extraModal %}{% endblock %}
+{% block extraJS %}
+<script src="{% static 'portal/js/action/dataList.js' %}"></script>
+{% endblock %}

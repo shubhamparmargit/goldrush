@@ -1,0 +1,572 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Product Details</h3>
+                    {% csrf_token %}
+                    <input type="hidden" name="type" id="type" value="product">
+                    <div class="d-inline-block align-items-center">
+                        <nav>
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                                <li class="breadcrumb-item" aria-current="page">Dashboard</li>
+                                <li class="breadcrumb-item active" aria-current="page">Product Details</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>							
+            </div>
+        </div>	  
+        <section class="content">
+			<div class="row">
+				<div class="col-12">
+					<div class="box">
+						<div class="box-header with-border">
+							<h4 class="box-title">Update Product Details</h4>
+						</div>
+						<!-- /.box-header -->
+						<div class="box-body prop-body">
+							{% if data|length > 0 %}
+							<!-- Nav tabs -->
+							<ul class="nav nav-tabs justify-content-center" role="tablist">
+								<li class="nav-item"> <a class="nav-link active" data-toggle="tab" href="#product" role="tab"><span><i class="fa fa-bag"></i></span> <span class="hidden-xs-down">Product Details</span></a> </li>
+								<li class="nav-item"> <a class="nav-link" data-toggle="tab" href="#pictures" role="tab"><span><i class="fa fa-file-image-o"></i></span> <span class="hidden-xs-down">Upload Pictures</span></a> </li>
+								<li class="nav-item"> <a class="nav-link" data-toggle="tab" href="#videos" role="tab"><span><i class="fa fa-video-camera"></i></span> <span class="hidden-xs-down">Upload Videos</span></a> </li>
+							</ul>
+							<!-- Tab panes -->
+							<div class="tab-content tabcontent-border">
+								<div class="tab-pane active" id="product" role="tabpanel">
+									<form class="form" method="post" id="frm_updateProduct" name="frm_updateProduct">
+										<input type="hidden" name="product_id" id="product_id" value="{{data.unique_id}}">
+										<input type="text" name="field" id="field" value="">
+										{% csrf_token %}
+										<div class="row">
+											<div class="col-12">
+												<div class="box">
+													<div class="box-header with-border">
+														<h4 class="box-title">About Product</h4>
+													</div>
+													<div class="box-body">
+														<div class="form-body">
+															<div class="row">
+																<div class="col-md-12">
+																	<div class="form-group">
+																		<label class="fw-700 fs-16 form-label">Product Name<span class="error">*</span></label>
+																		<input type="text" class="form-control" placeholder="Product Name" name="name" id="name" value="{{data.name}}" required>
+																	</div>
+																</div>
+																<div class="col-md-4">
+																	<div class="form-group">
+																		<label class="form-label">Category<span class="error">*</span></label>
+																		<select class="form-control select2" data-placeholder="Select a Category" id="category" name="category" required>
+																			<option value="">Choose Category</option>
+																		</select>
+																	</div>
+																</div>
+																<div class="col-md-4">
+																	<div class="form-group">
+																		<label class="fw-700 fs-16 form-label">Product Size<span class="error">*</span></label>
+																		<input type="text" class="form-control" placeholder="Product Size" name="size" id="size" value="{{data.size}}" required>
+																	</div>
+																</div>
+																<div class="col-md-2">
+																	<div class="form-group">
+																		<label class="form-label">Access Control</label><br/>
+																		<input type="checkbox" class="filled-in chk-col-success"  id="access" name="access" value="Granted" {{data.access_states}} />
+																		<label for="access" style="margin-top: 7px;margin-bottom:0px;">Granted</label>
+																	</div>
+																</div>
+																<div class="col-md-2">
+																	<div class="form-group">
+																		<label class="form-label">Is Product?</label><br/>
+																		<input type="checkbox" class="filled-in chk-col-success"  id="hot_sale" name="hot_sale" value="Yes" {{data.sale_states}}/>
+																		<label for="hot_sale" style="margin-top: 7px;margin-bottom:0px;">Hot Sale</label>
+																	</div>
+																</div>
+															</div>
+															<div class="row">
+																<div class="col-md-12">
+																	<div class="form-group">
+																		<label class="fw-700 fs-16 form-label">Product Description</label>
+																		<textarea class="form-control p-15" rows="4" name="description" id="description">{{data.description}}</textarea>
+																	</div>
+																</div>
+															</div>
+															<div class="row">
+																<div class="col-md-12">
+																	<div class="form-group">
+																		<label class="fw-700 fs-16 form-label">Product Category Description</label>
+																		<textarea class="form-control p-15" rows="4" name="category_description" id="category_description">{{data.category_description}}</textarea>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="col-12">
+												<div class="box">
+													<div class="box-header with-border">
+														<h4 class="box-title">Product Price Details</h4>
+													</div>
+													<div class="box-body">
+														<div class="row mb-10">
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Metal<span class="error">*</span></label>
+																	<select class="form-control select2 metal" data-placeholder="Select a Metal" id="metal" name="metal" style="width:100%" required>
+																		<option value="">Choose Metal</option>
+																	</select>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Metal Type<span class="error">*</span></label>
+																	<select class="form-control select2" data-placeholder="Select a Metal Type" id="metal_type" name="metal_type" style="width:100%" required>
+																		<option value="">Choose Metal Type</option>
+																	</select>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Purity<span class="error">*</span></label>
+																	<select class="form-control select2" data-placeholder="Select a Purity" id="purity" name="purity" style="width:100%" required>
+																		<option value="">Choose Purity</option>
+																	</select>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Price Per 10 Gm <span class="error">(excl. GST)</span></label>
+																	<input type="number" class="form-control" placeholder="Price" name="price_per_10_gm" id="price_per_10_gm" value="{{data.price_per_10_gm}}" readonly>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Weight <span class="error">(in Gm)*</span></label>
+																	<input type="number" class="form-control" placeholder="Weight" name="weight" id="weight" value="{{data.weight_in_gm}}" required>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">GST <span class="error">(in %)*</span></label>
+																	<input type="number" class="form-control" placeholder="GST" name="gst" id="gst" value="{{data.gst_in_percent}}" required>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="form-label">Is Making Charge?</label><br/>
+																	<input type="checkbox" class="filled-in chk-col-success"  id="making_fixed" name="making_fixed" value="Yes" {{data.making_states}}/>
+																	<label for="making_fixed" style="margin-top: 7px;margin-bottom:0px;">Fixed</label>
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Making Charge <span class="error">(in rs.)</span></label>
+																	<input type="number" class="form-control" placeholder="Making Charge" name="making_charge" id="making_charge" value="{{data.making_charge}}">
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Delivery Charge <span class="error">(in rs.)</span></label>
+																	<input type="number" class="form-control" placeholder="Delivery Charge" name="delivery_charge" id="delivery_charge" value="{{data.delivery_charge}}">
+																</div>
+															</div>
+															<div class="col-md-4">
+																<div class="form-group">
+																	<label class="fw-700 fs-16 form-label">Discount <span class="error">(in %)</span></label>
+																	<input type="number" class="form-control" placeholder="Discount" name="discount" id="discount" value="{{data.discount_in_percent}}">
+																</div>
+															</div>
+														</div>
+													</div>
+													<div class="box-footer w-p100">
+														<a href="{% url 'product_list' %}" class="btn btn-warning me-1">
+															<i class="ti-trash"></i> Cancel
+														</a>
+														<button type="submit" class="btn btn-primary" id="btn_updateProduct" name="btn_updateProduct">
+															<i class="ti-save-alt"></i> Save
+														</button>
+													</div>
+												</div>		
+											</div> 
+										</div>
+									</form>
+								</div>
+								<div class="tab-pane" id="pictures" role="tabpanel">
+									<div class="row mb-10 text-end">
+										<div class="col-md-6">
+											<div class="row mb-10 text-end img_div">
+												{% if data.images|length > 0 %}
+												{% for img in data.images %}
+												<div class="col-md-4 mb-10">
+													<div style="position: relative;top: 0;left: 0;" class="mb-10">
+														<a href="#" id="{{img.image_id}}" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-danger deleteProductImage" style="position: absolute;top: -10px;right: -7px;"><span class="fa fa-times"></span></a>
+														<div style="position: relative;top: 0;left: 0;">
+															<img src="{{img.image_url}}">
+															<input type="hidden" value="{{img.image_url}}" id="img_{{img.image_id}}">
+														</div>
+													</div>
+												</div>
+												{% endfor %}
+												{% endif %}
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="col-md-12 mb-10">
+												<form action="#" method="post" enctype="multipart/form-data" class="dropzone" id="myDropzone">
+													{% csrf_token %}
+												</form>
+											</div>
+											<div class="col-md-12">
+												<a href="{% url 'product_list' %}" class="btn btn-warning me-1">
+													<i class="fa fa-times"></i> Cancel
+												</a>
+												<button type="submit" name="btn_updateProductImages" id="btn_updateProductImages" class="btn btn-primary">
+													<i class="ti-save-alt"></i> Save
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="tab-pane" id="videos" role="tabpanel">
+									<div class="row mb-10 text-end">
+										<div class="col-md-6">
+											<div class="row mb-10 text-end video_div">
+												{% if data.videos|length > 0 %}
+												{% for vid in data.videos %}
+												<div class="col-md-4 mb-10">
+													<div style="position: relative;top: 0;left: 0;" class="mb-10">
+														<a href="#" id="{{vid.video_id}}" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-danger deleteVideo" style="position: absolute;top: -10px;right: -7px;"><span class="fa fa-times"></span></a>
+														<div style="position: relative;top: 0;left: 0;">
+															<a href="#" id="video1">
+																<video width="100%" controls>
+																	<source src="{{vid.video_url}}" type="video/mp4" />
+																</video>
+															</a>
+															<input type="hidden" value="{{vid.video_url}}" id="video_{{vid.video_id}}">
+														</div>
+													</div>
+												</div>
+												{% endfor %}
+												{% endif %}
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="col-md-12 mb-10">
+												<form action="#" method="post" enctype="multipart/form-data" class="dropzone" id="videoPanel">
+													{% csrf_token %}
+												</form>
+											</div>
+											<div class="col-md-12">
+												<a href="{% url 'product_list' %}" class="btn btn-warning me-1">
+													<i class="fa fa-times"></i> Cancel
+												</a>
+												<button type="submit" name="btn_updateProductVideos" id="btn_updateProductVideos" class="btn btn-primary">
+													<i class="ti-save-alt"></i> Save
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							{% else %}
+								<p>No data to display</p>
+							{% endif %}
+						</div>
+						<!-- /.box-body -->
+					</div>
+					<!-- /.box -->
+				</div>
+				<!-- /.col -->
+			</div>
+		</section>
+    </div>
+</div>
+{% endblock %}
+{% block extraModal %}
+{% endblock %}
+{% block extraJS %}
+<script>
+	// $(document).ready(function()
+    // {
+		// alert("{{data.category}}")
+		fill_category(category_id="{{data.category}}");
+		fill_metal(metal_id="{{data.metal}}");
+		fill_purity(metal_id="{{data.metal}}",purity_id="purity",purityUid="{{data.purity}}");
+		fill_type(metal_id="{{data.metal}}",typeUid="{{data.metal_type}}");
+
+		$(document).on('change', '#purity', function(e)
+		{ 
+			var metal_id=$("#metal").val();
+			var purity_id=$(this).val();
+			// console.log("Change Event :: "+purity_id);
+			if(metal_id!="" && purity_id!="")
+			{
+				$.ajax({
+					url: window.APP_URLS.getMetalPurityPrice,
+					type: 'POST',
+					data:
+					{
+						metal_purity_price:'metal_purity_price',
+						metal_id:metal_id,
+						purity_id:purity_id,
+						csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()
+					},
+					dataType: 'json'
+				})
+				.done(function(data)
+				{
+					// console.log(data)
+					try
+					{
+						if(data.success==1)
+						{
+							$("#price_per_10_gm").val(data.price);
+						}
+						else
+						{
+							$("#price_per_10_gm").val("0");
+						}
+					}
+					catch(error) 
+					{
+						// console.log(error)
+						$.toast({
+							heading: 'Error',
+							text: "Sorry, looks like there are some errors detected, please try again.",
+							position: 'top-right',
+							loaderBg: '#ff6849',
+							icon: 'error',
+							hideAfter: 3500
+						});
+					}
+				})
+				.fail(function(jqXHR, textStatus, error)
+				{
+					// console.log(jqXHR.responseText+" | "+textStatus+" | "+error)
+				});
+			}
+		});
+		
+		var count;
+		var product_id = $("#product_id").val();
+		Dropzone.options.myDropzone = 
+		{
+			url: window.APP_URLS.uploadProductImages+"?product_id="+product_id+"&csrfmiddlewaretoken="+document.getElementsByName('csrfmiddlewaretoken')[0].value,
+			autoProcessQueue: false,
+			acceptedFiles:".png,.jpg,.jpeg",
+			parallelUploads: 20,
+			init: function()
+			{
+				var submit = document.querySelector('#btn_updateProductImages');
+				mydropzone = this;
+				submit.addEventListener("click", function(){
+					$('#loading-modal').modal('show');
+					count= mydropzone.files.length;
+					if(count>0)
+					{
+						mydropzone.processQueue();
+					}
+				});
+				this.on("success", function(file,response){
+				// alert(response);
+				//showDocuments();
+				});
+				this.on("queuecomplete", function (file) {
+					$('#loading-modal').modal('hide');
+					this.removeAllFiles();
+					// console.log("test")
+					showDocuments();
+				});
+			}
+		};
+		function showDocuments()
+		{
+			var product_id = $("#product_id").val();
+			$.ajax({
+				url: window.APP_URLS.showProductImages,
+				type: 'POST',
+				data:
+				{
+					showProductImages:'showProductImages',
+					product_id:product_id,
+					csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+				}
+			})
+			.done(function(data){
+				var output="";
+				for(var i=0;i<data.length;i++)
+				{
+					output+='<div class="col-md-4 mb-10"><div style="position: relative;top: 0;left: 0;" class="mb-10"><a href="#" id="'+data[i].image_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-danger deleteProductImage" style="position: absolute;top: -10px;right: -7px;"><span class="fa fa-times"></span></a><div style="position: relative;top: 0;left: 0;"><img src="'+data[i].image_url+'"><input type="hidden" value="'+data[i].image_url+'" id="img_'+data[i].image_id+'"></div></div></div>';
+				}
+				$('.img_div').html(output);
+			})
+			.fail(function(){
+				swal({title:"Error",text:"Error Sending Request!",type:"error"});
+			});
+		}
+		$(document).on('click', '.deleteProductImage', function(e)
+		{
+			e.preventDefault();
+			var uid = this.id;
+			var image_url=$("#img_"+uid).val();
+			
+			Swal.fire({
+				title: "Are you sure?",
+				text: "You want to delete this image.",
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#3085d6',
+				cancelButtonColor: '#d33',
+				confirmButtonText: 'Yes, delete it!'
+			}).then((result) => {
+				if (result.isConfirmed) 
+				{
+					$.ajax({
+						url: window.APP_URLS.deleteProductImage,
+						type: 'POST',
+						data:
+						{
+							deleteProductImage : 'deleteProductImage',
+							image_id:uid,
+							image_url:image_url,
+							csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+						},
+						dataType: 'html'
+					})
+					.done(function(data){
+						var ref_this = $("ul.nav-tabs li a.active");
+						
+						if(ref_this.attr('href') == "#property")
+						{
+							$("#thumb_img").removeAttr("src");
+							$("#thumbnail_update").attr("id","thumbnail");
+							$(".thumb_list").html('\
+							<li><a href="#" id="setThumb" onclick="$(\'#thumbnail\').trigger(\'click\'); return false;">Set Elevation Image</a></li>')
+						}
+						else
+						{
+							Swal.fire('Success!','Image Deleted Successfully!','success');
+							showDocuments();
+						}
+					})
+					.fail(function(){
+						Swal.fire('Error!','Error Sending Request!','error');
+					});
+				}
+			})
+		});
+		var count2;
+		Dropzone.options.videoPanel = 
+		{
+			url: window.APP_URLS.uploadVideos+"?product_id="+product_id+"&csrfmiddlewaretoken="+document.getElementsByName('csrfmiddlewaretoken')[0].value,
+			autoProcessQueue: false,
+			acceptedFiles:".mp4,.m4v",
+			parallelUploads: 4,
+			init: function()
+			{
+				var submit = document.querySelector('#btn_updateProductVideos');
+				mydropzone2 = this;
+				submit.addEventListener("click", function(){
+					$('#loading-modal').modal('show');
+					count2= mydropzone2.files.length;
+					if(count2>0)
+					{
+						mydropzone2.processQueue();
+					}
+				});
+				this.on("success", function(file,response){
+				//alert(response);
+				//showDocuments();
+				});
+				this.on("queuecomplete", function (file) {
+					$('#loading-modal').modal('hide');
+					this.removeAllFiles();
+					showVideos();
+				});
+			}
+		};
+		function showVideos()
+		{
+			var product_id = $("#product_id").val();
+			$.ajax({
+				url: window.APP_URLS.showVideos,
+				type: 'POST',
+				data:{
+					showVideos : 'showVideos',
+					product_id:product_id,
+					csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+				}
+			})
+			.done(function(data){
+				var output="";
+				for(var i=0;i<data.length;i++)
+				{
+					output+='\
+					<div class="col-md-4 mb-10">\
+						<div style="position: relative;top: 0;left: 0;" class="mb-10">\
+							<a href="#" id="'+data[i].video_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-danger deleteVideo" style="position: absolute;top: -10px;right: -7px;"><span class="fa fa-times"></span></a>\
+							<div style="position: relative;top: 0;left: 0;">\
+								<a href="#" id="video1">\
+									<video width="100%" controls>\
+										<source src="'+data[i].video_url+'" type="video/mp4" />\
+									</video>\
+								</a>\
+								<input type="hidden" value="'+data[i].video_url+'" id="video_'+data[i].video_id+'">\
+							</div>\
+						</div>\
+					</div>\
+					';
+				}
+				$('.video_div').html(output);
+			})
+			.fail(function(){
+				swal({title:"Error",text:"Error Sending Request!",type:"error"});
+			});
+		}
+		$(document).on('click', '.deleteVideo', function(e)
+		{
+			e.preventDefault();
+			var uid = this.id;
+			var video_url=$("#video_"+uid).val();
+			
+			Swal.fire({
+				title: "Are you sure?",
+				text: "You want to delete this video.",
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#3085d6',
+				cancelButtonColor: '#d33',
+				confirmButtonText: 'Yes, delete it!'
+			}).then((result) => {
+				if (result.isConfirmed) 
+				{
+					$.ajax({
+						url: window.APP_URLS.deleteVideo,
+						type: 'POST',
+						data:{
+							'deleteVideo' : 'deleteVideo',
+							video_id:uid,
+							video_url:video_url,
+							csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+						},
+						dataType: 'html'
+					})
+					.done(function(data){
+						Swal.fire('Success!','Video Deleted Successfully!','success');
+						showVideos();
+					})
+					.fail(function(){
+						Swal.fire('Error!','Error Sending Request!','error');
+					});
+				}
+			})
+		});
+	// });
+</script>
+{% endblock %}

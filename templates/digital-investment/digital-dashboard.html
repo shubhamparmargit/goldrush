@@ -1,0 +1,67 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+
+{% block pageTitle %}
+Digital Investment
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/trade-buttons.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% include "digital-investment/includes/wallet-balance-card.html" %}
+                <p id="dateTime" style="font-size: 12px; text-align: center;"></p>
+                <div class="ingot-toggle">
+                    <a href="{% url 'weights' 'gold' %}" class="ingot ingot-gold" data-metal="gold">
+                        <div class="ingot-inner">
+                            <div class="ingot-text">
+                                <div class="metal-name">GOLD</div>
+                                <div class="metal-purity">24K • Digital</div>
+                                <div class="metal-rate">{{currency_icon}}<span class="gold-rate">{{current_gold_rate}}</span> / gm</div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="{% url 'weights' 'silver' %}" class="ingot ingot-silver" data-metal="silver">
+                        <div class="ingot-inner">
+                            <div class="ingot-text">
+                                <div class="metal-name">SILVER</div>
+                                <div class="metal-purity">999 • Digital</div>
+                                <div class="metal-rate">{{currency_icon}}<span class="silver-rate">{{current_silver_rate}}</span> / gm</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraModal %}
+{% include "digital-investment/includes/bottom-navigation.html" %}
+{% endblock %}
+
+{% block extraJS %}
+<script>
+    document.querySelectorAll(".ingot").forEach(bar => {
+        bar.addEventListener("click", () => {
+            document.querySelectorAll(".ingot")
+                .forEach(b => b.classList.remove("active"));
+
+            bar.classList.add("active");
+
+            const metal = bar.dataset.metal;
+            // console.log("Selected:", metal);
+            // yahan se trading logic / price fetch call kar sakti ho
+        });
+    });
+
+    setInterval(fetchLiveRate, 10000);
+</script>
+{% endblock %}

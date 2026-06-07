@@ -1,0 +1,98 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Company Bank Details</h3>
+                    <nav><ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item">Settings</li>
+                        <li class="breadcrumb-item active">Company Bank Details</li>
+                    </ol></nav>
+                </div>
+            </div>
+        </div>
+        <section class="content">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Bank / UPI Details</h4>
+                        </div>
+                        <div class="box-body">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>Account Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="account_name" value="{{ bank.account_name|default:'' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Bank Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="bank_name" value="{{ bank.bank_name|default:'' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Account Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="account_number" value="{{ bank.account_number|default:'' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>IFSC Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ifsc_code" value="{{ bank.ifsc_code|default:'' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Branch Name</label>
+                                <input type="text" class="form-control" id="branch_name" value="{{ bank.branch_name|default:'' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>UPI ID</label>
+                                <input type="text" class="form-control" id="upi_id" value="{{ bank.upi_id|default:'' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>UPI QR Code Image</label>
+                                {% if bank.qr_code_image %}
+                                <div class="mb-10">
+                                    <img src="{{ MEDIA_URL }}{{ bank.qr_code_image }}" style="width:120px;height:120px;object-fit:contain;border:1px solid #eee;padding:4px;border-radius:8px;">
+                                    <p class="text-muted" style="font-size:12px;">Current QR Code</p>
+                                </div>
+                                {% endif %}
+                                <input type="file" class="form-control" id="qr_code_image" accept=".jpg,.jpeg,.png">
+                            </div>
+                            <button class="btn btn-primary" id="saveBankBtn">Save Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    document.getElementById('saveBankBtn').addEventListener('click', function () {
+        const btn = this;
+        const formData = new FormData();
+        formData.append('account_name', document.getElementById('account_name').value.trim());
+        formData.append('bank_name', document.getElementById('bank_name').value.trim());
+        formData.append('account_number', document.getElementById('account_number').value.trim());
+        formData.append('ifsc_code', document.getElementById('ifsc_code').value.trim());
+        formData.append('branch_name', document.getElementById('branch_name').value.trim());
+        formData.append('upi_id', document.getElementById('upi_id').value.trim());
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        const qr = document.getElementById('qr_code_image').files[0];
+        if (qr) formData.append('qr_code_image', qr);
+
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        fetch("{% url 'save_company_bank' %}", { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Save Details';
+                alert(data.message);
+                if (data.success === '1') location.reload();
+            })
+            .catch(() => { btn.disabled = false; btn.textContent = 'Save Details'; alert('Something went wrong'); });
+    });
+</script>
+{% endblock %}

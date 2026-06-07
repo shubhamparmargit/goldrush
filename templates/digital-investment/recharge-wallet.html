@@ -1,0 +1,304 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Recharge Your Wallet
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+<style>
+    .payment-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 20px 0;
+        color: #aaa;
+        font-size: 13px;
+    }
+    .payment-divider::before,
+    .payment-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #ddd;
+    }
+    .upi-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 16px;
+        margin-top: 4px;
+    }
+    .upi-card h5 {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: #222;
+    }
+    .upi-qr {
+        display: block;
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        margin: 0 auto 14px;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        padding: 6px;
+    }
+    .upi-details-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 13px;
+    }
+    .upi-details-row:last-child { border-bottom: none; }
+    .upi-details-row span:first-child { color: #777; }
+    .upi-details-row span:last-child { font-weight: 600; color: #222; }
+    .copy-btn {
+        background: none;
+        border: none;
+        color: #5c7cff;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 0 4px;
+    }
+    .paid-btn {
+        width: 100%;
+        background: #22c55e;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        margin-top: 14px;
+        cursor: pointer;
+    }
+    .manual-form { display: none; margin-top: 14px; }
+    .manual-form input, .manual-form select {
+        width: 100%;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 14px;
+        margin-bottom: 10px;
+        background: #f8f9fc;
+    }
+    .manual-form label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 4px;
+        display: block;
+    }
+    .submit-utr-btn {
+        width: 100%;
+        background: #5c7cff;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .submit-utr-btn:disabled { opacity: 0.6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% include "digital-investment/includes/wallet-balance-card.html" %}
+                <div class="maintitle">Recharge Wallet</div>
+                <div class="subtitle">Choose your digital investment membership</div>
+                <div class="plan-grid">
+                    {% for m in memberships %}
+                    <div class="membership-card" data-amount="{{ m.min_amount }}" data-level="{{ m.level }}" data-fee="{{ m.service_fee }}" data-slots="{{ m.daily_slot }}">
+                        <span class="selected-badge">✓</span>
+                        <div class="plan-title">{{ m.level }}</div>
+                        <div class="plan-amount">₹{{ m.min_amount|intcomma }}/-</div>
+                        <div class="plan-meta">Service Fee: ₹{{ m.service_fee }}<br>{{ m.daily_slot }} slots/day</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="amount-box">
+                    <label class="f14-regular mb-6 d-block"><b>Recharge Amount (₹)</b></label>
+                    {% csrf_token %}
+                    <input type="number" id="rechargeAmount" placeholder="Minimum ₹5,000">
+                    <div class="amount-note">
+                        Membership depends on single recharge amount only
+                    </div>
+                </div>
+                <div id="membershipPreview" style="display:none;">
+                    <div class="preview">
+                        <h5>Membership Preview</h5>
+                        <div class="preview-row"><span>Level</span><span id="pLevel">–</span></div>
+                        <div class="preview-row"><span>Service Fee</span><span id="pFee">–</span></div>
+                        <div class="preview-row"><span>Daily Slots</span><span id="pSlots">–</span></div>
+                    </div>
+                </div>
+
+                <!-- RAZORPAY -->
+                <button id="payBtn" class="action-btn primary-btn disabled">
+                    Pay via Razorpay
+                </button>
+
+                {% if company_bank %}
+                <!-- DIVIDER -->
+                <div class="payment-divider">OR</div>
+
+                <!-- UPI / BANK TRANSFER -->
+                <div class="upi-card">
+                    <h5>Pay via UPI / Bank Transfer</h5>
+
+                    {% if company_bank.qr_code_image %}
+                    <img src="{{ MEDIA_URL }}{{ company_bank.qr_code_image }}" alt="UPI QR Code" class="upi-qr">
+                    <p style="text-align:center;font-size:12px;color:#aaa;margin-bottom:12px;">Scan to pay</p>
+                    {% endif %}
+
+                    {% if company_bank.upi_id %}
+                    <div class="upi-details-row">
+                        <span>UPI ID</span>
+                        <span>
+                            {{ company_bank.upi_id }}
+                            <button class="copy-btn" onclick="copyText('{{ company_bank.upi_id }}')">Copy</button>
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="upi-details-row">
+                        <span>Account Name</span>
+                        <span>{{ company_bank.account_name }}</span>
+                    </div>
+                    <div class="upi-details-row">
+                        <span>Bank</span>
+                        <span>{{ company_bank.bank_name }}</span>
+                    </div>
+                    <div class="upi-details-row">
+                        <span>Account Number</span>
+                        <span>
+                            {{ company_bank.account_number }}
+                            <button class="copy-btn" onclick="copyText('{{ company_bank.account_number }}')">Copy</button>
+                        </span>
+                    </div>
+                    <div class="upi-details-row">
+                        <span>IFSC Code</span>
+                        <span>
+                            {{ company_bank.ifsc_code }}
+                            <button class="copy-btn" onclick="copyText('{{ company_bank.ifsc_code }}')">Copy</button>
+                        </span>
+                    </div>
+                    {% if company_bank.branch_name %}
+                    <div class="upi-details-row">
+                        <span>Branch</span>
+                        <span>{{ company_bank.branch_name }}</span>
+                    </div>
+                    {% endif %}
+
+                    <button class="paid-btn" id="iHavePaidBtn">I Have Paid</button>
+
+                    <div class="manual-form" id="manualForm">
+                        <label>Amount Paid (₹) *</label>
+                        <input type="number" id="manualAmount" placeholder="Enter amount you paid">
+
+                        <label>Payment Mode *</label>
+                        <select id="manualPaymentMode">
+                            <option value="UPI">UPI</option>
+                            <option value="NEFT">NEFT</option>
+                            <option value="IMPS">IMPS</option>
+                            <option value="RTGS">RTGS</option>
+                        </select>
+
+                        <label>UTR / Transaction Reference Number *</label>
+                        <input type="text" id="manualUTR" placeholder="Enter 12-digit UTR or transaction ID">
+
+                        <label>Payment Screenshot (optional)</label>
+                        <input type="file" id="manualScreenshot" accept=".jpg,.jpeg,.png,.pdf">
+
+                        <button class="submit-utr-btn" id="submitManualBtn">Submit for Verification</button>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraModal %}{% endblock %}
+
+{% block extraJS %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="{% static 'digital-investment/js/wallet.js' %}"></script>
+<script>
+    // ===== COPY HELPER =====
+    function copyText(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            $.toast({ heading: 'Copied!', text: text, icon: 'success', position: 'top-right', hideAfter: 1500 });
+        });
+    }
+
+    // ===== I HAVE PAID TOGGLE =====
+    document.getElementById('iHavePaidBtn')?.addEventListener('click', function () {
+        const form = document.getElementById('manualForm');
+        const isVisible = form.style.display === 'block';
+        form.style.display = isVisible ? 'none' : 'block';
+        this.textContent = isVisible ? 'I Have Paid' : 'Cancel';
+        this.style.background = isVisible ? '#22c55e' : '#ef4444';
+    });
+
+    // ===== SUBMIT UTR =====
+    document.getElementById('submitManualBtn')?.addEventListener('click', function () {
+        const amount      = document.getElementById('manualAmount').value.trim();
+        const utr         = document.getElementById('manualUTR').value.trim();
+        const mode        = document.getElementById('manualPaymentMode').value;
+        const screenshot  = document.getElementById('manualScreenshot').files[0];
+        const btn         = this;
+
+        if (!amount || parseInt(amount) < 1) { $.toast({ heading:'Error', text:'Enter a valid amount', icon:'error', position:'top-right' }); return; }
+        if (!utr) { $.toast({ heading:'Error', text:'UTR / Transaction Reference is required', icon:'error', position:'top-right' }); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        const formData = new FormData();
+        formData.append('amount', amount);
+        formData.append('utr_number', utr);
+        formData.append('payment_mode', mode);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        if (screenshot) formData.append('screenshot', screenshot);
+
+        fetch("{% url 'submit_manual_recharge' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = 'Submit for Verification';
+            if (data.status) {
+                $.toast({ heading: 'Submitted!', text: data.message, icon: 'success', position: 'top-right' });
+                document.getElementById('manualForm').style.display = 'none';
+                document.getElementById('iHavePaidBtn').textContent = 'I Have Paid';
+                document.getElementById('iHavePaidBtn').style.background = '#22c55e';
+                document.getElementById('manualAmount').value = '';
+                document.getElementById('manualUTR').value = '';
+                document.getElementById('manualScreenshot').value = '';
+            } else {
+                $.toast({ heading: 'Error', text: data.message, icon: 'error', position: 'top-right' });
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.textContent = 'Submit for Verification';
+            $.toast({ heading: 'Error', text: 'Something went wrong', icon: 'error', position: 'top-right' });
+        });
+    });
+</script>
+{% endblock %}

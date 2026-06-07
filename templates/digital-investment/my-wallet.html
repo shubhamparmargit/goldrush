@@ -1,0 +1,94 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Wallet History
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-history.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% include "digital-investment/includes/wallet-balance-card.html" %}
+                <div class="maintitle">Wallet History</div>
+                <div class="subtitle">your digital investment report</div>
+                {% if history %}
+                    {% for h in history %}
+                    <div class="wallet-history-item {% if h.amount > 0 %}credit{% else %}debit{% endif %}" data-id="{{ h.order.razorpay_order_id }}">
+
+                        <div class="wallet-history-left">
+                            <div class="wallet-history-icon">{% if h.amount > 0 %}+{% else %}-{% endif %}</div>
+                            <div class="wallet-history-text">
+                                <div class="txn-title">Wallet Recharge</div>
+                                <div class="txn-date">{{ h.created_at|date:'d M Y • h:i A' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="wallet-history-right">
+                            <div class="txn-amount">+ ₹{{ h.amount|intcomma }}</div>
+                            <div class="txn-status">{{ h.status }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- <div class="wallet-history-item credit" data-id="TXN12345" data-type="Credit" data-amount="₹25,000"
+                        data-desc="Wallet Recharge" data-status="Success" data-date="12 Jan 2026, 11:42 AM"
+                        data-balance="₹52,800" data-gateway="Razorpay" data-membership="Silver">
+
+                        <div class="wallet-history-left">
+                            <div class="wallet-history-icon">+</div>
+                            <div class="wallet-history-text">
+                                <div class="txn-title">Wallet Recharge</div>
+                                <div class="txn-date">12 Jan 2026 • 11:42 AM</div>
+                            </div>
+                        </div>
+
+                        <div class="wallet-history-right">
+                            <div class="txn-amount">+ ₹25,000</div>
+                            <div class="txn-status">Completed</div>
+                        </div>
+                    </div>
+                    <div class="wallet-history-item debit" data-id="TXN12312" data-type="Debit" data-amount="₹3,500"
+                        data-desc="Trading Charge" data-status="Failed" data-date="11 Jan 2026, 03:10 PM"
+                        data-balance="₹27,800" data-gateway="Internal" data-membership="-">
+                        <div class="wallet-history-left">
+                            <div class="wallet-history-icon">−</div>
+                            <div class="wallet-history-text">
+                                <div class="txn-title">Trading Charge</div>
+                                <div class="txn-date">11 Jan 2026 • 03:10 PM</div>
+                            </div>
+                        </div>
+                        <div class="wallet-history-right">
+                            <div class="txn-amount">− ₹3,500</div>
+                            <div class="txn-status">Completed</div>
+                        </div>
+                    </div> -->
+                <!-- EMPTY STATE -->
+                {% include "digital-investment/includes/data-empty.html" %}
+            {% endif %}
+            </div>
+            {% include "digital-investment/includes/bottom-sheet.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}"></script>
+<script>
+    const items = document.querySelectorAll(".wallet-history-item");
+    items.forEach(item => {
+        item.addEventListener("click", () => {
+            openHistorySheet(item);
+        });
+    });
+</script>
+{% endblock %}

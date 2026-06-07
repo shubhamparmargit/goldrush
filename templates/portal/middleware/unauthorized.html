@@ -1,0 +1,75 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block extraCSS %}
+<style>
+    .unauthorized-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        text-align: center;
+        padding: 40px 20px;
+    }
+    .unauthorized-wrapper img {
+        max-width: 250px;
+        margin-bottom: 25px;
+        filter: drop-shadow(0 0 6px rgba(0,0,0,0.2));
+    }
+    .unauthorized-wrapper h2 {
+        font-size: 28px;
+        font-weight: 600;
+        color: #ff4d4d;
+        margin-bottom: 10px;
+    }
+    .unauthorized-wrapper p {
+        color: #555;
+        font-size: 18px;
+        margin-bottom: 25px;
+    }
+    .unauthorized-wrapper a {
+        display: inline-block;
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    .unauthorized-wrapper a:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Access Denied</h3>
+                    <div class="d-inline-block align-items-center">
+                        <nav>
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                                <li class="breadcrumb-item" aria-current="page">Dashboard</li>
+                                <li class="breadcrumb-item active" aria-current="page">Unauthorized</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>							
+            </div>
+        </div>	  
+
+        <section class="content">
+            <div class="unauthorized-wrapper">
+                <!-- 🔹 Use your own image here -->
+                <img src="https://cdn-icons-png.flaticon.com/512/595/595067.png" alt="Access Denied">
+                
+                <h2>Access Denied</h2>
+                <p>🚫 You don’t have permission to view this page.<br>Please contact your administrator if you believe this is a mistake.</p>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

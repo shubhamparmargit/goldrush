@@ -1,0 +1,49 @@
+<!-- Left side column. contains the logo and sidebar -->
+<aside class="main-sidebar">
+    <!-- sidebar-->
+    <section class="sidebar position-relative">	
+	  	<div class="multinav">
+		  <div class="multinav-scroll" style="height: 100%;">	
+			  <!-- sidebar menu-->
+			  <ul class="sidebar-menu" data-widget="tree">	
+				<li class="header">Dashboard</li>
+				<li>
+				  <a href="{% url 'dashboard' %}">
+					<i class="icon-Layout-4-blocks"><span class="path1"></span><span class="path2"></span></i>
+					<span>Dashboard</span></a>
+				</li>
+				<li class="header">Master</li>
+				{% for block in SIDEBAR %}
+					<li class="treeview">
+						<a href="#">
+							<i class="{{ block.icon }}"></i>
+							<span>{{ block.name }}</span>
+							<span class="pull-right-container">
+							<i class="fa fa-angle-right pull-right"></i>
+							</span>
+						</a>
+
+						<ul class="treeview-menu">
+						{% for item in block.menu %}
+							<li>
+								<a href="{{ item.url }}">
+									<i class="{{ item.icon }}">
+									<span class="path1"></span><span class="path2"></span>
+									</i>
+									{{ item.label }}
+								</a>
+							</li>
+						{% endfor %}
+						</ul>
+					</li>
+				{% endfor %}
+			  </ul>
+		  </div>
+		</div>
+    </section>
+	<div class="sidebar-footer">
+		<a href="{% url 'show_profile' %}" class="link" data-bs-toggle="tooltip" title="Profile"><i class="fa fa-user" aria-hidden="true"></i></a>
+		<a href="{% url 'change_password' %}" class="link" data-bs-toggle="tooltip" title="Change Password"><i class="fa fa-key" aria-hidden="true"></i></a>
+		<a href="{% url 'auth_logout' %}" class="link" data-bs-toggle="tooltip" title="Logout"><i class="fa fa-sign-out" aria-hidden="true"></i></a>
+	</div>
+</aside>

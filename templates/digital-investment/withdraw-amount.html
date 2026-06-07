@@ -1,0 +1,116 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Wallet History
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/withdrawal.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% csrf_token %}
+                <!-- Wallet Balance Card -->
+                <div class="wallet-balance-card">
+                    <div class="wallet-info">
+                        <span class="wallet-label">Closing Balance</span>
+                        <span class="wallet-amount" id="walletBalance">₹{{ wallet_balance|intcomma }}/-</span>
+                    </div>
+                    {% if not request.is_demo_account %}
+                    <a href="#" class="wallet-add-btn withdrawal-request">
+                        Withdrawal Request
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="maintitle">Withdraw Amount</div>
+                <div class="subtitle">your withdrawal report</div>
+                <div class="withdrawal-container" id="withdrawalList">
+                    {% if withdrawals %}
+                        {% for w in withdrawals %}
+                        <div class="withdraw-card">
+                            <div class="card-header">
+                                <div>
+                                    <div class="title">Withdrawal</div>
+                                    <div class="date">{{ w.request_date|date:"d M Y, h:i A" }}</div>
+                                </div>
+                                <div class="amount">
+                                    ₹{{ w.request_amount }}
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <span>Status</span>
+                                    <span class="status {{ w.status|lower }}">
+                                        {{ w.status }}
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <span>Service Charge</span>
+                                    <span>₹{{ w.service_charge }}</span>
+                                </div>
+                                <div class="row">
+                                    <span>GST (18%)</span>
+                                    <span>₹{{ w.gst_amount }}</span>
+                                </div>
+                                <div class="row total">
+                                    <span>Final Amount</span>
+                                    <span>₹{{ w.final_amount }}</span>
+                                </div>
+                                <div class="row">
+                                    <span>Requested On</span>
+                                    <span>{{ w.request_date|date:"d M Y" }}</span>
+                                </div>
+                                {% if w.action_date %}
+                                <div class="row">
+                                    <span>Processed On</span>
+                                    <span>{{ w.action_date|date:"d M Y" }}</span>
+                                </div>
+                                {% endif %}
+                                {% if w.transaction_number %}
+                                <div class="row">
+                                    <span>Transaction No</span>
+                                    <span class="txn">{{ w.transaction_number }}</span>
+                                </div>
+                                {% endif %}
+                                {% if w.remark %}
+                                <div class="row">
+                                    <span>Remark</span>
+                                    <span class="remark">{{ w.remark }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% include "digital-investment/includes/data-empty.html" %}
+                    {% endif %}
+                </div>
+            </div>
+            {% include "digital-investment/includes/bottom-sheet.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}"></script>
+<script>
+    window.HAS_BANK_DETAILS = {{ has_bank_details|yesno:"true,false" }};
+    window.SAVE_BANK_URL = "{% url 'saveCutomerBankDetails' %}";
+
+    document.querySelectorAll('.withdrawal-request').forEach(btn => {
+        btn.addEventListener('click', () => {
+            openWithdrawalSheet();
+        });
+    });
+</script>
+{% endblock %}

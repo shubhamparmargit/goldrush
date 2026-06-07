@@ -1,0 +1,48 @@
+{% load static %}
+<script src="{% static 'portal/js/vendors.min.js' %}"></script>
+<script src="{% static 'portal/assets/icons/feather-icons/feather.min.js' %}"></script>	
+<script src="{% static 'portal/js/template.js' %}"></script>  
+<script type="text/javascript" src="{% static 'portal/js/FileSaver.min.js' %}"></script> 
+<script type="text/javascript" src="{% static 'portal/js/tableexport.js' %}"></script> 
+<script type='text/javascript' src="{% static 'portal/js/validation/jquery.validate.min.js' %}"></script>
+<script src="{% static 'portal/js/validation/jquery.form.min.js' %}"></script>
+<script src="{% static 'portal/js/validation/validate.js' %}"></script>
+<script src="{% static 'portal/js/validation/bootstrap-notify.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'portal/assets/vendor_components/jquery-toast-plugin-master/src/jquery.toast.js' %}"></script>
+<script src="{% static 'portal/assets/vendor_components/jquery-ui/jquery-ui.min.js' %}"></script>
+<script>
+     $(document).ready(function(){
+        $('.dropdown-toggle').dropdown();
+    });
+</script>
+<script src="{% static 'portal/assets/vendor_components/select2/dist/js/select2.full.js' %}"></script>
+<script src="{% static 'portal/js/pages/advanced-form-element.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'portal/js/daterangepicker/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'portal/js/daterangepicker/daterangepicker.js' %}"></script>
+<script type='text/javascript' src="{% static 'portal/js/action/dropdown.js' %}"></script>
+
+<script src="{% static 'portal/js/action/custom.js' %}"></script>
+<script type='text/javascript' src="{% static 'portal/js/action/export.js' %}"></script>
+
+<script>
+	$(document).ready(function(){
+        $('.treeview-menu>li').removeClass('active');
+        var url = window.location.href;
+        var url_list = url.split('/');
+        var file_name = url_list[(url_list.length)-1];
+        $('.treeview-menu>li>a').each(function(index) 
+        {
+            var href = $(this).attr('href'); 
+            if(href == file_name)
+            {
+                $(this).html();
+                $(this).parent("li").addClass('active');
+                $(this).parents(".treeview").addClass("active menu-open");
+            } 
+        });
+	});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'portal/js/dropzone.min.js' %}"></script>

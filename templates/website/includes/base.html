@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>GoldRush Aura - {% block pageTitle %}{% endblock %}</title>
+        {% include "website/includes/head.html" %}
+		{% block extraCSS %}{% endblock %}
+        <noscript>
+			<meta http-equiv="refresh" content="0;url=/gold_mines/portal/middleware/javascript-disabled?next={{ request.path }}">
+		</noscript>
+    </head>
+    <body>
+        <div class="page_wrapper">
+            {% block header %}
+                {% include "website/includes/header.html" with header_class="white_header" logo_file="website/images/goldrush.png" %}
+            {% endblock %}
+
+            {% block content %}{% endblock %}
+
+            {% include "website/includes/footer.html" %}
+
+            {% block extraModal %}{% endblock %}
+            
+        </div>
+        <script>
+            window.APP_URLS = {
+                contactsubmit: "{% url 'contact_submit' %}",
+            };
+        </script>
+        {% include "website/includes/globaljs.html" %}
+        {% block extraJS %}{% endblock %}
+    </body>
+</html>

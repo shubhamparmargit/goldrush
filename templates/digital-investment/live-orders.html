@@ -1,0 +1,162 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Wallet History
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/order-cards.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper">
+                {% include "digital-investment/includes/wallet-balance-card.html" %}
+                {% csrf_token %}
+                <div class="maintitle">Live Orders</div>
+                <div class="subtitle">your digital investment report</div>
+                <p id="dateTime" style="font-size: 12px; text-align: center;"></p>
+                {% if orders %}
+
+                <div id="liveOrdersWrapper">
+                    {% for o in orders %}
+                    <div class="order-card {{o.card_icon}}" data-id="{{ o.transaction_id }}">
+
+                        <!-- HEADER -->
+                        <div class="order-header">
+                            <div class="metal-info">
+                                <span class="metal-dot {{o.card_icon}}"></span>
+                                <span class="metal-name">{{o.metal_type}}</span>
+                                <span class="metal-qty">{{o.quantity}} gm</span>
+                            </div>
+
+                            <span class="pnl-badge loading">--</span>
+
+                            <!-- ORDER TYPE LABEL -->
+                            <span class="order-type 
+                                {% if o.order_type == 'BOOKING' %}booking{% else %}buyback{% endif %}">
+                                {{ o.order_type }}
+                            </span>
+                        </div>
+
+                        <!-- PRICE GRID -->
+                        <div class="price-grid">
+                            <div>
+                                <small>Buy Price</small>
+                                <b>₹{{o.buy_price}}</b>
+                            </div>
+                            <div>
+                                <small>Current Price</small>
+                                <b class="current-price">₹0</b>
+                            </div>
+                            <div>
+                                <small>Invested</small>
+                                <b>₹{{o.invested_price}}</b>
+                            </div>
+                            <div class="pnl-value loading">
+                                <small>P/L</small>
+                                <b>--</b>
+                            </div>
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div class="order-footer">
+                            <span class="order-date">{{o.date}}</span>
+
+                            <div class="order-actions">
+                                <button class="btn-outline btn-details w-100">Details</button>
+                                <button class="btn-sell w-100" data-id="{{ o.transaction_id }}">Close Order</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {% include "digital-investment/includes/data-empty.html" %}
+                {% endif %}
+            </div>
+            {% include "digital-investment/includes/bottom-sheet.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extraJS %}
+<script>
+    function loadLivePNL() {
+        fetch(`live-orders-pnl`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.status) return;
+
+                data.orders.forEach(o => {
+                    // console.log('live-pnl')
+                    // console.log(o.date_time)
+                    document.getElementById("dateTime").innerHTML = o.date_time
+                    const card = document.querySelector(`.order-card[data-id="${o.transaction_id}"]`);
+                    if (!card) return;
+
+                    const badge = card.querySelector(".pnl-badge");
+                    const pnlBox = card.querySelector(".pnl-value b");
+                    const priceBox = card.querySelector(".current-price");
+
+                    const percent = Number(o.pnl_percent);
+                    const amount = Number(o.pnl_amount);
+                    const difference = Number(o.difference);
+
+                    /* 🔥 CURRENT PRICE */
+                    priceBox.innerText = `₹${o.current_price}`;
+
+                    /* 🔥 BADGE */
+                    badge.classList.remove("loading");
+                    badge.classList.add(o.is_profit ? "profit" : "loss");
+
+                    // badge.innerHTML = `${o.is_profit ? "▲" : "▼"} ${Math.abs(percent).toFixed(2)}%`;
+                    badge.innerHTML = `${o.is_profit ? "▲" : "▼"} ${Math.abs(difference).toFixed(0)} Points`;
+
+                    /* 🔥 GRID P/L */
+                    pnlBox.innerText = `${amount >= 0 ? "+" : "-"}₹${Math.abs(amount).toFixed(1)}`;
+                    // pnlBox.parentElement.classList.remove("loading");
+                    // pnlBox.parentElement.classList.add(o.is_profit ? "profit" : "loss");
+                    const pnlWrapper = pnlBox.parentElement;
+                    /* RESET */
+                    pnlWrapper.classList.remove("profit", "loss");
+                    /* APPLY NEW */
+                    pnlWrapper.classList.add(o.is_profit ? "profit" : "loss");
+                });
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadLivePNL();
+
+        document.querySelectorAll(".btn-sell").forEach(btn => {
+            btn.addEventListener("click", function () {
+                const txnId = this.dataset.id;
+                openSellConfirmSheet(txnId);
+            });
+        });
+    });
+
+    setInterval(loadLivePNL, 10000);
+</script>
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}"></script>
+<script>
+    document.addEventListener("click", function (e) {
+
+        if (!e.target.classList.contains("btn-details")) return;
+
+        const card = e.target.closest(".order-card");
+        if (!card) return;
+
+        openTransactionSheet(card);
+    });
+</script>
+{% endblock %}

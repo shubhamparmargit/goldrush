@@ -1,0 +1,30 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block pageTitle %}
+Payment Failed
+{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/payment-status.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="card-wrapper">
+    <div class="card-body">
+        <div class="status-icon failed">
+            ✕
+        </div>
+        <div class="maintitle">Payment Failed</div>
+        <div class="subtitle">We couldn’t process your payment.</div>
+        <div class="status-info">
+            <div><span>Reason</span><span class="reason-text failed">{{reason}}</span></div>
+            <div><span>Amount</span><strong>₹{{ amount|intcomma }}/-</strong></div>
+        </div>
+        <button class="action-btn primary-btn" onclick="location.href='{% url 'recharge_wallet' %}'">
+            Retry Payment
+        </button>
+    </div>
+</div>
+{% endblock %}
