@@ -365,12 +365,17 @@ class Utility:
         if (
             franchise_q.filter(mobile=mobile).exists() or
             customer_q.filter(mobile=mobile).exists() or
-            login_q.filter(mobile_number=mobile).exists() or
-            franchise_q.filter(email=email).exists() or
-            customer_q.filter(email=email).exists() or
-            login_q.filter(email=email).exists()
+            login_q.filter(mobile_number=mobile).exists()
         ):
             return False
+
+        if email:
+            if (
+                franchise_q.filter(email=email).exists() or
+                customer_q.filter(email=email).exists() or
+                login_q.filter(email=email).exists()
+            ):
+                return False
 
         return True
 

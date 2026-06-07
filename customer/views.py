@@ -89,67 +89,74 @@ def customerRegistarion(request):
         # ================= GET DATA =================
         field = request.POST.get('field', '')
         name = request.POST.get('name', '').strip()
-        aadhaar_number = request.POST.get('aadhaar_number', '').strip()
-        pan_number = request.POST.get('pan_number', '').strip()
+        aadhaar_number = request.POST.get('aadhaar_number', '').strip() or None
+        pan_number = request.POST.get('pan_number', '').strip() or None
         mobile = request.POST.get('mobile', '').strip()
-        email = request.POST.get('email', '').strip()
+        email = None
         password_text = request.POST.get('password', '').strip()
-        referral_code = request.POST.get('referral_code', '').strip()
+        referral_code = request.POST.get('referral_code', '').strip() or None
 
-        pincode = request.POST.get('pincode', '').strip()
-        postoffice = request.POST.get('postoffice', '').strip()
-        state = request.POST.get('state', '').strip()
-        city = request.POST.get('city', '').strip()
-        district = request.POST.get('district', '').strip()
-        region = request.POST.get('region', '').strip()
+        pincode = request.POST.get('pincode', '').strip() or None
+        postoffice = request.POST.get('postoffice', '').strip() or None
+        state = request.POST.get('state', '').strip() or None
+        city = request.POST.get('city', '').strip() or None
+        district = request.POST.get('district', '').strip() or None
+        region = request.POST.get('region', '').strip() or None
 
-        address_line_1 = request.POST.get('address_line_1', '').strip()
-        address_line_2 = request.POST.get('address_line_2', '').strip()
+        address_line_1 = request.POST.get('address_line_1', '').strip() or None
+        address_line_2 = request.POST.get('address_line_2', '').strip() or None
 
-        latitude = float(request.POST.get('latitude') or 0)
-        longitude = float(request.POST.get('longitude') or 0)
-        location = request.POST.get('location', '').strip()
+        latitude = float(request.POST.get('latitude') or 0.0)
+        longitude = float(request.POST.get('longitude') or 0.0)
+        location = request.POST.get('location', '').strip() or None
 
         aadhaar_front_image = request.FILES.get('aadhaar_front_image')
         aadhaar_back_image = request.FILES.get('aadhaar_back_image')
         pan_front_image = request.FILES.get('pan_front_image')
 
         # ================= BASIC REQUIRED CHECK =================
-        if field != "" or not all([
-            name, aadhaar_number, pan_number, mobile, email,
-            password_text, referral_code, pincode, postoffice,
-            state, city, region, address_line_1, address_line_2,
-            location
-        ]) or latitude == 0 or longitude == 0:
-
+        # Minimal required fields for registration: name, mobile, password
+        if field != "" or not all([name, mobile, password_text]):
             return Response({'success': '0', 'message': 'Please fill all the mandatory fields.'}, status=status.HTTP_200_OK)
 
         # ================= VALIDATION =================
-        valid_obj.validate_alpha_multiple_keys(
-            name=name, postoffice=postoffice, state=state,
-            city=city, region=region, district=district
-        )
+        # Validate only provided fields
+        alpha_keys = {"name": name}
+        if postoffice: alpha_keys["postoffice"] = postoffice
+        if state: alpha_keys["state"] = state
+        if city: alpha_keys["city"] = city
+        if region: alpha_keys["region"] = region
+        if district: alpha_keys["district"] = district
+        valid_obj.validate_alpha_multiple_keys(**alpha_keys)
 
-        valid_obj.validate_aadhaar_verhoeff(aadhaar_number)
-        valid_obj.validate_pan_entity(pan_number)
+        if aadhaar_number:
+            valid_obj.validate_aadhaar_verhoeff(aadhaar_number)
+        if pan_number:
+            valid_obj.validate_pan_entity(pan_number)
+            
         valid_obj.validate_mobile_number(mobile)
-        valid_obj.validate_email(email)
+        
         valid_obj.validate_password(password_text)
-        valid_obj.validate_pincode(pincode)
+        
+        if pincode:
+            valid_obj.validate_pincode(pincode)
 
-        valid_obj.validate_address_multiple_keys(
-            address_line_1=address_line_1,
-            address_line_2=address_line_2
-        )
+        if address_line_1 or address_line_2:
+            valid_obj.validate_address_multiple_keys(
+                address_line_1=address_line_1 or "",
+                address_line_2=address_line_2 or ""
+            )
 
-        valid_obj.validate_float_multiple_keys(
-            latitude=latitude,
-            longitude=longitude
-        )
+        if latitude != 0.0 or longitude != 0.0:
+            valid_obj.validate_float_multiple_keys(
+                latitude=latitude,
+                longitude=longitude
+            )
 
         # ================= REFERRAL CHECK =================
-        if not Franchise.objects.filter(referral_id=referral_code).exists():
-            return Response({'success': '0', 'message': 'Invalid referral code'}, status=status.HTTP_200_OK)
+        if referral_code:
+            if not Franchise.objects.filter(referral_id=referral_code).exists():
+                return Response({'success': '0', 'message': 'Invalid referral code'}, status=status.HTTP_200_OK)
 
         # ================= MOBILE EMAIL CHECK =================
         if not util_obj.is_mobile_email_available(mobile, email):
@@ -162,14 +169,19 @@ def customerRegistarion(request):
             "pan_front_image": pan_front_image
         }
 
+        # Enforce validation only if files are uploaded or required fields are provided
+        if aadhaar_number:
+            if not aadhaar_front_image or not aadhaar_back_image:
+                return Response({'success': '0', 'message': 'Upload of aadhaar front and back images is mandatory when Aadhaar number is provided.'}, status=status.HTTP_200_OK)
+        if pan_number:
+            if not pan_front_image:
+                return Response({'success': '0', 'message': 'Upload of pan front image is mandatory when PAN number is provided.'}, status=status.HTTP_200_OK)
+
         for key, img in images.items():
-            if not img:
-                return Response({'success': '0', 'message': f'Upload of {key.replace("_", " ")} is mandatory!'}, status=status.HTTP_200_OK)
-
-            errors = valid_obj.validate_image(img, imageType_lst, 'NA', 'NA')
-
-            if errors:
-                return Response({'success': '0', 'message': ', '.join(errors)}, status=status.HTTP_200_OK)
+            if img:
+                errors = valid_obj.validate_image(img, imageType_lst, 'NA', 'NA')
+                if errors:
+                    return Response({'success': '0', 'message': ', '.join(errors)}, status=status.HTTP_200_OK)
 
         # ================= PREPARE DATA =================
         unique_id = random_obj.generateUID()
@@ -178,15 +190,13 @@ def customerRegistarion(request):
         directory = f'customer-documents/{unique_id}/'
         upload_dir = os.path.join(settings.MEDIA_ROOT, directory)
 
-        util_obj.create_media_folder(directory)
-
         aadhaar_front_name = f'aadhaar_front_{random.randint(100000,999999)}.jpg'
         aadhaar_back_name = f'aadhaar_back_{random.randint(100000,999999)}.jpg'
         pan_front_name = f'pan_front_{random.randint(100000,999999)}.jpg'
 
-        aadhaar_front_path = directory + aadhaar_front_name
-        aadhaar_back_path = directory + aadhaar_back_name
-        pan_front_path = directory + pan_front_name
+        aadhaar_front_path = directory + aadhaar_front_name if aadhaar_front_image else ""
+        aadhaar_back_path = directory + aadhaar_back_name if aadhaar_back_image else ""
+        pan_front_path = directory + pan_front_name if pan_front_image else ""
 
         salt, password = encrypt_obj.runEncryprion(password_text)
 
@@ -209,44 +219,48 @@ def customerRegistarion(request):
                 password=password,
                 password_text=password_text,
                 salt=salt,
-                referral_code=referral_code,
+                referral_code=referral_code or "",
                 token_logged_user=logged_user,
                 latitude=latitude,
                 longitude=longitude,
-                location=bytes(location, 'utf-8')
+                location=bytes(location, 'utf-8') if location else b''
             )
 
-            CustomerAddress.objects.create(
-                date=current_date,
-                unique_id=address_unique_id,
-                name=name,
-                mobile=mobile,
-                pincode=pincode,
-                postoffice=postoffice,
-                state=state,
-                city=city,
-                district=district,
-                region=region,
-                address_line_1=address_line_1,
-                address_line_2=address_line_2,
-                token_logged_user=logged_user,
-                customer=customer
-            )
+            # Create address only if at least pincode or address_line is provided
+            if pincode or postoffice or state or city or address_line_1:
+                CustomerAddress.objects.create(
+                    date=current_date,
+                    unique_id=address_unique_id,
+                    name=name,
+                    mobile=mobile,
+                    pincode=pincode or "",
+                    postoffice=postoffice or "",
+                    state=state or "",
+                    city=city or "",
+                    district=district or "",
+                    region=region or "",
+                    address_line_1=address_line_1 or "",
+                    address_line_2=address_line_2 or "",
+                    token_logged_user=logged_user,
+                    customer=customer
+                )
 
         # ================= SAVE FILES =================
-        files = [
-            (aadhaar_front_image, aadhaar_front_name),
-            (aadhaar_back_image, aadhaar_back_name),
-            (pan_front_image, pan_front_name)
-        ]
+        files = []
+        if aadhaar_front_image:
+            files.append((aadhaar_front_image, aadhaar_front_name))
+        if aadhaar_back_image:
+            files.append((aadhaar_back_image, aadhaar_back_name))
+        if pan_front_image:
+            files.append((pan_front_image, pan_front_name))
 
-        for file, filename in files:
-
-            file_path = os.path.join(upload_dir, filename)
-
-            with default_storage.open(file_path, 'wb+') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
+        if files:
+            util_obj.create_media_folder(directory)
+            for file, filename in files:
+                file_path = os.path.join(upload_dir, filename)
+                with default_storage.open(file_path, 'wb+') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
         return Response({'success': '1', 'message': 'Registration done successfully'}, status=status.HTTP_200_OK)
     except ValidationError as e:
         return Response({'success': '0', 'message': str(e)}, status=status.HTTP_200_OK)

@@ -228,7 +228,7 @@ CACHES = {
 # python manage.py createcachetable trading_cache
 
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = True        # Production HTTPS me
+CSRF_COOKIE_SECURE = not DEBUG        # True in production (HTTPS), False in local development (HTTP)
 CSRF_COOKIE_SAMESITE = "Strict"
 
 DOMAIN_NAME = 'https://goldrushaura.com/'
