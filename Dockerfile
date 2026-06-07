@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libffi-dev \
     python3-dev \
+    pkg-config \
+    libcairo2-dev \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
