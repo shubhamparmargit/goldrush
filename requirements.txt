@@ -1,0 +1,13 @@
+Django>=4.1,<4.2
+djangorestframework
+djangorestframework-simplejwt
+PyJWT
+cryptography
+requests
+pymysql
+firebase-admin
+razorpay
+num2words
+openpyxl
+xhtml2pdf
+gunicorn
