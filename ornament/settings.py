@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-mq^4=&!y^h!^w^9d61y!y#ftczqr_i9kkvq!_pgz&p5ng-^i1f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.20.10.4', 'localhost', '10.0.2.2', 'goldrushaura.com', 'www.goldrushaura.com']
+ALLOWED_HOSTS = ['127.0.0.1', '187.127.178.97', 'localhost', '10.0.2.2', 'goldrushaura.com', 'www.goldrushaura.com']
 env_hosts = os.getenv('ALLOWED_HOSTS')
 if env_hosts:
     ALLOWED_HOSTS.extend([h.strip() for h in env_hosts.split(',') if h.strip()])
@@ -166,8 +166,8 @@ USE_TZ = True  # Enables timezone support
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
-MEDIA_URL = 'media/'
+#STATIC_URL = 'static/'
+#MEDIA_URL = 'media/'
 
 STATICFILES_DIRS=[os.path.join(BASE_DIR, 'static'),]
 
@@ -175,12 +175,16 @@ STATICFILES_DIRS=[os.path.join(BASE_DIR, 'static'),]
 #     STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
 #     MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 # else:
-STATIC_ROOT = '/directorylink/static'
-MEDIA_ROOT = '/directorylink/media'
+#STATIC_ROOT = '/directorylink/static'
+#MEDIA_ROOT = '/directorylink/media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
