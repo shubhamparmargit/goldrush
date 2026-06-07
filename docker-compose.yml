@@ -18,6 +18,7 @@ services:
       timeout: 20s
       retries: 10
 
+
   web:
     build: .
     container_name: goldmine_django_web
@@ -36,6 +37,23 @@ services:
     depends_on:
       db:
         condition: service_healthy
+#  web:
+ #   build: .
+  #  container_name: goldmine_django_web
+   # restart: always
+   # ports:
+    #  - "8000:8000"
+   # environment:
+    #  - DB_NAME=ohwqiijn_gold_mine
+    #  - DB_USER=root
+    #  - DB_PASSWORD=goldmine_secure_pass_123
+    #  - DB_HOST=db
+     # - DB_PORT=3306
+     # - DEBUG=True
+    #depends_on:
+     # db:
+      #  condition: service_healthy
+
 
 volumes:
   db_data:
