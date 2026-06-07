@@ -12,7 +12,6 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
-      # Map the SQL dump file for automatic import on container creation
       - ./ohwqiijn_gold_mine.sql:/docker-entrypoint-initdb.d/ohwqiijn_gold_mine.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -25,13 +24,15 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    volumes:
+      - ./private:/app/private
     environment:
-      - DB_NAME=ohwqiijn_gold_mine
-      - DB_USER=root
-      - DB_PASSWORD=goldmine_secure_pass_123
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DEBUG=True
+      DB_NAME: ohwqiijn_gold_mine
+      DB_USER: root
+      DB_PASSWORD: goldmine_secure_pass_123
+      DB_HOST: db
+      DB_PORT: 3306
+      DEBUG: "True"
     depends_on:
       db:
         condition: service_healthy
