@@ -1,0 +1,38 @@
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #ffffff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #eef2ff;
+    box-shadow: 0 -6px 20px rgba(0,0,0,.08);
+    z-index: 999;
+}
+
+.bottom-nav-item {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    color: #9aa3c7;
+    font-size: 12px;
+    transition: all .25s ease;
+}
+
+.bottom-nav-item .nav-icon {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.bottom-nav-item.active {
+    color: #0b0f2f;
+    font-weight: 600;
+}
+
+.bottom-nav-item.active .nav-icon {
+    transform: translateY(-2px);
+}

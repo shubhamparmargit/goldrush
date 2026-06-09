@@ -24,19 +24,5 @@ urlpatterns = [
     re_path(r'^withdraw-history$', widr_obj.getWithdrawalList, name='withdraw_history'),
     re_path(r'^update-withdrawal-status$', widr_obj.updateWithdrawalStatus, name='update_withdrawal_status'),
 
-    # Portal
-    re_path(r'^portal/manual-recharge-requests$', manual_obj.manual_recharge_list_page, name='manual_recharge_list_page'),
-    re_path(r'^portal/get-manual-recharge-list$', manual_obj.get_manual_recharge_list, name='get_manual_recharge_list'),
-    re_path(r'^portal/approve-manual-recharge$', manual_obj.approve_manual_recharge, name='approve_manual_recharge'),
-    re_path(r'^portal/reject-manual-recharge$', manual_obj.reject_manual_recharge, name='reject_manual_recharge'),
-
-    re_path(r'^portal/company-bank-details$', bank_obj.company_bank_page, name='company_bank_page'),
-    re_path(r'^portal/save-company-bank$', bank_obj.save_company_bank, name='save_company_bank'),
-
-    re_path(r'^portal/add-wallet-balance$', awb_obj.add_wallet_page, name='add_wallet_page'),
-    re_path(r'^portal/search-customer-wallet$', awb_obj.search_customer, name='search_customer_wallet'),
-    re_path(r'^portal/credit-wallet$', awb_obj.credit_wallet, name='credit_wallet'),
-    re_path(r'^portal/wallet-credit-history$', awb_obj.credit_history, name='wallet_credit_history'),
-
     path("razorpay/webhook/", razorpay_webhook, name="razorpay_webhook"),
 ]

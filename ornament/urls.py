@@ -48,6 +48,7 @@ urlpatterns = [
 	re_path(r'portal/', include('customer_reports.urls')),
 	re_path(r'portal/', include('users.urls')),
 	re_path(r'portal/', include('portal_users.urls')),
+	re_path(r'portal/', include('customer_wallet.portal_urls')),
 
 	re_path(r'', include('messaging_hub.urls')),
 	re_path(r'', include('website.urls')),

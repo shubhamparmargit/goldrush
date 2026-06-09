@@ -1,0 +1,136 @@
+.withdrawal-container {
+    padding: 12px;
+}
+
+/* CARD */
+.withdraw-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    border: 1px solid #eee;
+}
+
+/* HEADER */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+}
+
+.title {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.date {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+}
+
+.amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+}
+
+/* DIVIDER */
+.divider {
+    height: 1px;
+    background: #eee;
+    margin: 10px 0;
+}
+
+/* BODY */
+.card-body {
+    background: transparent !important;
+    padding: 0 !important;
+    text-align: left !important;
+    box-shadow: none;
+}
+
+/* ROW FIX (MAIN FIX 🔥) */
+.card-body .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    font-size: 13px;
+    flex-wrap: nowrap !important;
+}
+
+/* LEFT TEXT */
+.card-body .row span:first-child {
+    flex: 1;
+    color: #888;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* RIGHT TEXT */
+.card-body .row span:last-child {
+    flex-shrink: 0;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+    width: auto !important;   /* 🔥 main fix */
+}
+
+/* FINAL AMOUNT */
+.row.total {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-top: 8px;
+    font-weight: 600;
+}
+
+/* STATUS BADGE */
+.status {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: fit-content;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* COLORS */
+.status.pending {
+    background: #ffe9a7;
+    color: #8a6d00;
+}
+
+.status.approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status.rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* TXN */
+.txn {
+    font-size: 12px;
+    background: #f1f1f1;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+/* REMARK */
+.remark {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+}

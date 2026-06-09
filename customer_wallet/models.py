@@ -100,6 +100,7 @@ class WithdrawalRequest(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
 
     request_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    email = models.CharField(max_length=255, null=True, blank=True)
 
     service_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)

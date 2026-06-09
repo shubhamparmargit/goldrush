@@ -1,0 +1,59 @@
+/* ===============================
+   WALLET BALANCE CARD
+================================ */
+.wallet-balance-card {
+    background: linear-gradient(135deg, #0a0f2c, #1b2a6b);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 12px 0 18px;
+    color: #fff;
+}
+
+.wallet-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.wallet-label {
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+.wallet-amount {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.wallet-add-btn {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.wallet-add-btn:active {
+    transform: scale(0.96);
+}
+
+.reward-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #ffd700;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.reward-icon {
+    font-size: 12px;
+    color: #ffd700;
+}

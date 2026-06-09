@@ -216,7 +216,7 @@ Recharge Your Wallet
                         <label>UTR / Transaction Reference Number *</label>
                         <input type="text" id="manualUTR" placeholder="Enter 12-digit UTR or transaction ID">
 
-                        <label>Payment Screenshot (optional)</label>
+                        <label>Payment Screenshot *</label>
                         <input type="file" id="manualScreenshot" accept=".jpg,.jpeg,.png,.pdf">
 
                         <button class="submit-utr-btn" id="submitManualBtn">Submit for Verification</button>
@@ -262,6 +262,7 @@ Recharge Your Wallet
 
         if (!amount || parseInt(amount) < 1) { $.toast({ heading:'Error', text:'Enter a valid amount', icon:'error', position:'top-right' }); return; }
         if (!utr) { $.toast({ heading:'Error', text:'UTR / Transaction Reference is required', icon:'error', position:'top-right' }); return; }
+        if (!screenshot) { $.toast({ heading:'Error', text:'Payment screenshot is required', icon:'error', position:'top-right' }); return; }
 
         btn.disabled = true;
         btn.textContent = 'Submitting...';

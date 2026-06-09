@@ -297,7 +297,7 @@ class TradingOnboard:
 
                 required_fields = [
                     "account_holder_name",
-                    "account_number", "ifsc_code"
+                    "account_number", "ifsc_code", "email"
                 ]
 
                 # ================= REQUIRED FIELD CHECK =================
@@ -310,6 +310,13 @@ class TradingOnboard:
                     value = request.POST.get(field, "").strip()
                     if value and not re.match(pattern, value):
                         errors[field] = msg
+
+                email = request.POST.get("email", "").strip()
+                if email:
+                    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                        errors["email"] = "Please enter a valid email address"
+                    elif Customer.objects.filter(email=email).exclude(id=customer.id).exists():
+                        errors["email"] = "This email is already in use by another account"
 
                 # ================= FILE VALIDATION =================
                 # allowed_ext = (".pdf", ".doc", ".docx", ".ppt", ".pptx")
@@ -403,7 +410,13 @@ class TradingOnboard:
                 # ================= GENERATE UNIQUE IDS =================
                 bank_unique_id = random_obj.generateUID()
 
+                email = request.POST.get("email", "").strip()
+
                 with transaction.atomic():
+                    # Save email on Customer
+                    customer.email = email
+                    customer.save(update_fields=['email'])
+
                     # ================= BANK DETAILS =================
                     CustomerTradingBankDetails.objects.create(
                         customer=customer,

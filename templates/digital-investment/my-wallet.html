@@ -22,19 +22,19 @@ Wallet History
                 <div class="subtitle">your digital investment report</div>
                 {% if history %}
                     {% for h in history %}
-                    <div class="wallet-history-item {% if h.amount > 0 %}credit{% else %}debit{% endif %}" data-id="{{ h.order.razorpay_order_id }}">
+                    <div class="wallet-history-item {% if h.type == 'Credit' %}credit{% else %}debit{% endif %}" data-id="{{ h.id }}">
 
                         <div class="wallet-history-left">
-                            <div class="wallet-history-icon">{% if h.amount > 0 %}+{% else %}-{% endif %}</div>
+                            <div class="wallet-history-icon">{% if h.type == 'Credit' %}+{% else %}−{% endif %}</div>
                             <div class="wallet-history-text">
-                                <div class="txn-title">Wallet Recharge</div>
+                                <div class="txn-title">{{ h.title }}</div>
                                 <div class="txn-date">{{ h.created_at|date:'d M Y • h:i A' }}</div>
                             </div>
                         </div>
 
                         <div class="wallet-history-right">
-                            <div class="txn-amount">+ ₹{{ h.amount|intcomma }}</div>
-                            <div class="txn-status">{{ h.status }}</div>
+                            <div class="txn-amount">{% if h.type == 'Credit' %}+{% else %}−{% endif %} ₹{{ h.amount|intcomma }}</div>
+                            <div class="txn-status" style="color: {% if h.status == 'Pending' %}#eab308{% elif h.status == 'Failed' or h.status == 'Rejected' %}#dc2626{% else %}#16a34a{% endif %};">{{ h.status }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -82,7 +82,7 @@ Wallet History
 {% endblock %}
 
 {% block extraJS %}
-<script src="{% static 'digital-investment/js/bottom-sheet.js' %}"></script>
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=3.5"></script>
 <script>
     const items = document.querySelectorAll(".wallet-history-item");
     items.forEach(item => {
