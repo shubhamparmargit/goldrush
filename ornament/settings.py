@@ -232,8 +232,17 @@ CACHES = {
 # python manage.py createcachetable trading_cache
 
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = not DEBUG        # True in production (HTTPS), False in local development (HTTP)
+# CSRF_COOKIE_SECURE = not DEBUG 
+CSRF_COOKIE_SECURE = True
+       # True in production (HTTPS), False in local development (HTTP)
 CSRF_COOKIE_SAMESITE = "Strict"
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://goldrushaura.com',
+    'https://www.goldrushaura.com',
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 DOMAIN_NAME = 'https://goldrushaura.com/'
 DOMAIN_NAME_DI = 'https://goldrushaura.com/digital-investment/'

@@ -26,6 +26,7 @@ services:
       - "8000:8000"
     volumes:
       - ./private:/app/private
+      - ./staticfiles:/app/staticfiles
     environment:
       DB_NAME: ohwqiijn_gold_mine
       DB_USER: root
