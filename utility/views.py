@@ -738,6 +738,36 @@ class Validation:
         if errors:
             raise ValidationError(errors)
 
+    def validate_address_component_multiple_keys(self, **kwargs):
+        """
+        Validate multiple address fields (postoffice, state, city, district, region)
+        allowing letters, numbers, spaces, and common symbols (.,-&()/).
+        """
+        errors = {}
+        comp_regex = r'^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s.,&()/\-]+$'
+
+        for field, value in kwargs.items():
+            if not value:
+                continue
+            value = value.strip()
+            field_display = field.replace('_', ' ').title()
+            if not re.match(comp_regex, value):
+                errors[field_display] = "Only letters, numbers, spaces, and common symbols (.,-&()/) are allowed."
+            elif len(value) < 2:
+                errors[field_display] = "Data must be at least 2 characters long."
+            elif len(value) > 100:
+                errors[field_display] = "Data must not exceed 100 characters."
+
+        if errors:
+            grouped_errors = {}
+            for field, message in errors.items():
+                grouped_errors.setdefault(message, []).append(field)
+
+            error_messages = [
+                f"{', '.join(fields)}: {message}" for message, fields in grouped_errors.items()
+            ]
+            raise ValidationError("; ".join(error_messages))
+
 util_obj = Utility()
 valid_obj = Validation()
 random_obj = RandomIdGenerate()

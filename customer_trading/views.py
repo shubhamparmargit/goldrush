@@ -89,7 +89,7 @@ class Pages:
                 'access_token',
                 access_token,
                 httponly=True,
-                secure=True,      # Ensure HTTPS
+                secure=not settings.DEBUG,      # Ensure HTTPS in production
                 samesite='Strict',
                 max_age=900
             )
@@ -98,7 +98,7 @@ class Pages:
                 'refresh_token',
                 refresh_token,
                 httponly=True,
-                secure=True,
+                secure=not settings.DEBUG,
                 samesite='Strict',
                 max_age=604800
             )
@@ -1429,11 +1429,14 @@ def initiate_trading_handshake(request):
         cache.set(cache_key, payload, settings.OTT_TTL_SECONDS)
         cache.set(previous_key, ott, settings.OTT_TTL_SECONDS)
 
+        host_url = request.build_absolute_uri('/')
+        bridge_url = f"{host_url}digital-investment/bridge?token={ott}&device_id={device_id}"
+
         return Response({
             'success': '1',
             'exchange_token': ott,
             'expires_in': settings.OTT_TTL_SECONDS,
-            'bridge_url': f"{settings.DOMAIN_NAME_DI}bridge?token={ott}&device_id={device_id}"
+            'bridge_url': bridge_url
         }, status=200)
     except Exception as e:
         return Response({'success': '0','message': 'Internal server error during handshake.'}, status=500)

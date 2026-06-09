@@ -115,19 +115,22 @@ def customerRegistarion(request):
         pan_front_image = request.FILES.get('pan_front_image')
 
         # ================= BASIC REQUIRED CHECK =================
-        # Minimal required fields for registration: name, mobile, password
-        if field != "" or not all([name, mobile, password_text]):
+        # Minimal required fields for registration: name, mobile, password, referral_code
+        if field != "" or not all([name, mobile, password_text, referral_code]):
             return Response({'success': '0', 'message': 'Please fill all the mandatory fields.'}, status=status.HTTP_200_OK)
 
         # ================= VALIDATION =================
         # Validate only provided fields
-        alpha_keys = {"name": name}
-        if postoffice: alpha_keys["postoffice"] = postoffice
-        if state: alpha_keys["state"] = state
-        if city: alpha_keys["city"] = city
-        if region: alpha_keys["region"] = region
-        if district: alpha_keys["district"] = district
-        valid_obj.validate_alpha_multiple_keys(**alpha_keys)
+        valid_obj.validate_alpha_multiple_keys(name=name)
+
+        address_components = {}
+        if postoffice: address_components["postoffice"] = postoffice
+        if state: address_components["state"] = state
+        if city: address_components["city"] = city
+        if region: address_components["region"] = region
+        if district: address_components["district"] = district
+        if address_components:
+            valid_obj.validate_address_component_multiple_keys(**address_components)
 
         if aadhaar_number:
             valid_obj.validate_aadhaar_verhoeff(aadhaar_number)
@@ -587,7 +590,8 @@ def addCustomerAddress(request):
             address_line_2 = request.POST.get('address_line_2','')
             
             if field == "" and mobile != "" and user_unique_id != "" and name != "" and add_mobile != "" and pincode != "" and postoffice != "" and state != "" and city != "" and region != "" and address_line_1 != "" and address_line_2 != "":
-                valid_obj.validate_alpha_multiple_keys(name = name, postoffice = postoffice, state = state, city = city, region = region, district = district)
+                valid_obj.validate_alpha_multiple_keys(name = name)
+                valid_obj.validate_address_component_multiple_keys(postoffice = postoffice, state = state, city = city, region = region, district = district)
                 valid_obj.validate_mobile_number(mobile)
                 valid_obj.validate_mobile_number(add_mobile)
                 valid_obj.validate_pincode(pincode)
@@ -648,7 +652,8 @@ def updateCustomerAddress(request):
             address_line_2 = request.POST.get('address_line_2','')
             
             if field == "" and mobile != "" and user_unique_id != "" and unique_id != "" and name != "" and add_mobile != "" and pincode != "" and postoffice != "" and state != "" and city != "" and region != "" and address_line_1 != "" and address_line_2 != "":
-                valid_obj.validate_alpha_multiple_keys(name = name, postoffice = postoffice, state = state, city = city, region = region, district = district)
+                valid_obj.validate_alpha_multiple_keys(name = name)
+                valid_obj.validate_address_component_multiple_keys(postoffice = postoffice, state = state, city = city, region = region, district = district)
                 valid_obj.validate_mobile_number(mobile)
                 valid_obj.validate_mobile_number(add_mobile)
                 valid_obj.validate_pincode(pincode)

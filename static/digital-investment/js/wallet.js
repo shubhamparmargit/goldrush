@@ -124,7 +124,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            /* ================= RAZORPAY OPTIONS ================= */
             const options = {
                 key: data.key,
                 amount: data.amount,          // paisa
@@ -132,15 +131,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 name: "Digital Investment",
                 description: "Wallet Recharge",
                 order_id: data.order_id,
-                config: {
-                    display: {
-                        blocks: {
-                            upi: { name: "Pay via UPI", instruments: [{ method: "upi" }] },
-                            other: { name: "Other Payment Methods", instruments: [{ method: "card" }, { method: "netbanking" }, { method: "wallet" }] }
-                        },
-                        sequence: ["block.upi", "block.other"],
-                        preferences: { show_default_blocks: true }
-                    }
+                webview_intent: true,
+                notes: {
+                    webview_intent: "true"
+                },
+                prefill: data.prefill || {},
+                method: {
+                    upi: true,
+                    card: true,
+                    netbanking: true,
+                    wallet: true
                 },
 
                 handler: function (response) {

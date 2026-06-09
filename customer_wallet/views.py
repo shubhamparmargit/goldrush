@@ -185,7 +185,12 @@ class WalletOperations:
             "status": True,
             "order_id": order["id"],
             "amount": order["amount"],
-            "key": settings.RAZORPAY_KEY_ID
+            "key": settings.RAZORPAY_KEY_ID,
+            "prefill": {
+                "name": customer.name,
+                "contact": customer.mobile,
+                "email": customer.email or ""
+            }
         })
 
     def wallet_payment_failed(self, request):
