@@ -100,6 +100,7 @@ class WithdrawalRequest(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
 
     request_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    email = models.CharField(max_length=255, null=True, blank=True)
 
     service_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -178,3 +179,21 @@ class WalletManualCredit(models.Model):
 
     def __str__(self):
         return f"{self.customer} + ₹{self.amount} by {self.credited_by}"
+
+
+class WalletManualDebit(models.Model):
+    class Meta:
+        db_table = 'wallet_manual_debit'
+        ordering = ['-debited_on']
+
+    unique_id      = models.CharField(max_length=32, unique=True)
+    customer       = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    amount         = models.PositiveIntegerField()
+    remark         = models.TextField()
+    balance_before = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after  = models.DecimalField(max_digits=12, decimal_places=2)
+    debited_by     = models.CharField(max_length=50)
+    debited_on     = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.customer} - ₹{self.amount} by {self.debited_by}"

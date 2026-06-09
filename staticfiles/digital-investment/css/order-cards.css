@@ -1,0 +1,147 @@
+/* CARD */
+.order-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin: 16px 0px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+}
+
+/* GOLD / SILVER IDENTIFIER */
+.order-card.gold {
+    border-left: 4px solid #f9a825;
+}
+
+.order-card.silver {
+    border-left: 4px solid #b0bec5;
+}
+
+/* HEADER */
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.metal-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.metal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.metal-dot.gold {
+    background: linear-gradient(135deg, #fdd835, #f9a825);
+}
+
+.metal-dot.silver {
+    background: linear-gradient(135deg, #eceff1, #b0bec5);
+}
+
+.metal-name {
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    font-size: 14px;
+}
+
+.metal-qty {
+    font-size: 13px;
+    color: #666;
+}
+
+/* PROFIT / LOSS BADGE */
+.pnl-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+.pnl-badge.profit {
+    background: rgba(26, 162, 96, 0.12);
+    color: #1aa260;
+}
+
+.pnl-badge.loss {
+    background: rgba(229, 57, 53, 0.12);
+    color: #e53935;
+}
+
+/* PRICE GRID */
+.price-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
+    margin-bottom: 14px;
+}
+
+.price-grid small {
+    display: block;
+    font-size: 11px;
+    color: #777;
+}
+
+.price-grid b {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.price-grid .profit b {
+    color: #1aa260;
+}
+
+.price-grid .loss b {
+    color: #e53935;
+}
+
+/* FOOTER */
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    /* align-items: center; */
+    flex-direction: column;
+}
+
+.order-date {
+    font-size: 11px;
+    color: #777;
+}
+
+/* BUTTONS */
+.order-actions {
+    display: flex;
+    gap: 8px;
+    flex-direction: row;
+    margin-top: 10px;
+}
+
+.order-type {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* BOOKING */
+.order-type.booking {
+    background: rgba(0, 200, 0, 0.12);
+    color: #0f9d58 !important;
+}
+
+/* BUYBACK */
+.order-type.buyback {
+    background: rgba(255, 165, 0, 0.15);
+    color: #e67e22 !important;
+}

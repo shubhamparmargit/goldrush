@@ -34,6 +34,17 @@ PAGE_ACCESS = {
     "no_recharge_report":[1],
     "inactive_customer_report":[1],
     "withdrawal_report":[1],
+    'add_wallet_page': [1, 5],
+    'search_customer_wallet': [1, 5],
+    'credit_wallet': [1, 5],
+    'debit_wallet': [1, 5],
+    'wallet_credit_history': [1, 5],
+    'manual_recharge_list_page': [1, 5],
+    'get_manual_recharge_list': [1, 5],
+    'approve_manual_recharge': [1, 5],
+    'reject_manual_recharge': [1, 5],
+    'company_bank_page': [1, 5],
+    'save_company_bank': [1, 5],
 }
 
 # print("hello 2  → PAGE_ACCESS defined")

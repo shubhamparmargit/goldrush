@@ -114,6 +114,30 @@ MENU_CONFIG = [
         ]
     },
     {
+        "name": "Wallet Management",
+        "icon": "mdi mdi-wallet",
+        "menu": [
+            {
+                "label": "Add/Deduct Balance",
+                "url": "add-wallet-balance",
+                "view": "add_wallet_page",
+                "icon": "icon-Commit"
+            },
+            {
+                "label": "Recharge Requests",
+                "url": "manual-recharge-requests",
+                "view": "manual_recharge_list_page",
+                "icon": "icon-Commit"
+            },
+            {
+                "label": "Company Bank",
+                "url": "company-bank-details",
+                "view": "company_bank_page",
+                "icon": "icon-Commit"
+            }
+        ]
+    },
+    {
         "name": "Reports",
         "icon": "mdi mdi-book-open",
         "menu": [

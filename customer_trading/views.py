@@ -89,7 +89,7 @@ class Pages:
                 'access_token',
                 access_token,
                 httponly=True,
-                secure=True,      # Ensure HTTPS
+                secure=not settings.DEBUG,      # Ensure HTTPS in production
                 samesite='Strict',
                 max_age=900
             )
@@ -98,7 +98,7 @@ class Pages:
                 'refresh_token',
                 refresh_token,
                 httponly=True,
-                secure=True,
+                secure=not settings.DEBUG,
                 samesite='Strict',
                 max_age=604800
             )
@@ -297,7 +297,7 @@ class TradingOnboard:
 
                 required_fields = [
                     "account_holder_name",
-                    "account_number", "ifsc_code"
+                    "account_number", "ifsc_code", "email"
                 ]
 
                 # ================= REQUIRED FIELD CHECK =================
@@ -310,6 +310,13 @@ class TradingOnboard:
                     value = request.POST.get(field, "").strip()
                     if value and not re.match(pattern, value):
                         errors[field] = msg
+
+                email = request.POST.get("email", "").strip()
+                if email:
+                    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                        errors["email"] = "Please enter a valid email address"
+                    elif Customer.objects.filter(email=email).exclude(id=customer.id).exists():
+                        errors["email"] = "This email is already in use by another account"
 
                 # ================= FILE VALIDATION =================
                 # allowed_ext = (".pdf", ".doc", ".docx", ".ppt", ".pptx")
@@ -403,7 +410,13 @@ class TradingOnboard:
                 # ================= GENERATE UNIQUE IDS =================
                 bank_unique_id = random_obj.generateUID()
 
+                email = request.POST.get("email", "").strip()
+
                 with transaction.atomic():
+                    # Save email on Customer
+                    customer.email = email
+                    customer.save(update_fields=['email'])
+
                     # ================= BANK DETAILS =================
                     CustomerTradingBankDetails.objects.create(
                         customer=customer,
@@ -1429,11 +1442,14 @@ def initiate_trading_handshake(request):
         cache.set(cache_key, payload, settings.OTT_TTL_SECONDS)
         cache.set(previous_key, ott, settings.OTT_TTL_SECONDS)
 
+        host_url = request.build_absolute_uri('/')
+        bridge_url = f"{host_url}digital-investment/bridge?token={ott}&device_id={device_id}"
+
         return Response({
             'success': '1',
             'exchange_token': ott,
             'expires_in': settings.OTT_TTL_SECONDS,
-            'bridge_url': f"{settings.DOMAIN_NAME_DI}bridge?token={ott}&device_id={device_id}"
+            'bridge_url': bridge_url
         }, status=200)
     except Exception as e:
         return Response({'success': '0','message': 'Internal server error during handshake.'}, status=500)

@@ -5,6 +5,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from utility.views import CustomerUtil
 from django.core.cache import cache
 from django.db.models import Sum
+from django.conf import settings
 
 cust_util_obj = CustomerUtil()
 
@@ -143,7 +144,7 @@ class TradingAuthMiddleware(MiddlewareMixin):
                 "access_token",
                 new_access_token,
                 httponly=True,
-                secure=True,  # Enable in HTTPS production
+                secure=not settings.DEBUG,  # Enable in HTTPS production
                 samesite='Strict',
                 max_age=900
             )

@@ -1,0 +1,181 @@
+/* ===== Bottom Sheet Overlay ===== */
+.bottom-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: none;
+    z-index: 99;
+}
+
+/* ===== Bottom Sheet ===== */
+.bottom-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: -100%;
+    background: #ffffff;
+    border-radius: 24px 24px 0 0;
+    padding: 18px 20px 30px;
+    transition: bottom 0.3s ease;
+    z-index: 100;
+
+    /* 🔥 ADD THIS */
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#sheetContent {
+    overflow-y: auto;
+    flex: 1;                     /* 🔥 main magic */
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+}
+
+/* Active */
+.bottom-sheet.active {
+    bottom: 0;
+}
+
+.bottom-sheet-overlay.active {
+    display: block;
+}
+
+/* Drag Handle */
+.bottom-sheet .sheet-handle {
+    width: 44px;
+    height: 4px;
+    border-radius: 10px;
+    background: #cbd5f5;
+    margin: 0 auto 14px;
+}
+
+/* Sheet Title */
+.bottom-sheet h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0b0f2f;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+/* Details Rows */
+.sheet-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #eef2ff;
+}
+
+.sheet-row span:first-child {
+    color: #6b7280;
+}
+
+.sheet-row span:last-child {
+    font-weight: 600;
+    color: #0b0f2f;
+}
+
+.sheet-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f2f7;
+}
+
+.sheet-row:last-child {
+    border-bottom: none;
+}
+
+.status-pill {
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-success {
+    background: #1fbf75;
+    color: white !important;
+}
+
+.status-danger {
+    background: #e53935;
+    color: white !important;
+}
+
+.sheet-divider {
+    margin: 14px 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.sheet-row.sub {
+    font-size: 13px;
+    padding-left: 12px;
+    color: #6b7280;
+}
+
+.sheet-highlight {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.sheet-highlight.booking {
+    background: rgba(0, 180, 120, 0.12);
+    color: #00b478;
+}
+
+.sheet-highlight.buyback {
+    background: rgba(255, 140, 0, 0.12);
+    color: #ff8c00;
+}
+
+.sheet-header {
+    position: relative;
+    text-align: center;
+    padding-right: 40px; /* space for button */
+}
+
+.sheet-close {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #eef2f7;
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sheet-close:hover {
+    background: #e2e8f0;
+}
+
+/* Order Spread */
+.spread-row {
+    background: #fff8e7;
+    border-radius: 8px;
+    padding: 6px 10px !important;
+    margin: 4px 0;
+}
+
+.spread-badge {
+    background: #f59e0b;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
