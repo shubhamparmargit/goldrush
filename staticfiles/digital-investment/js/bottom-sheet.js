@@ -98,11 +98,6 @@ function openGoldSheet(gm, metal_type) {
                     <span>₹${data.order_amt}</span>
                 </div>
 
-                <div class="sheet-row spread-row">
-                    <span>Order Spread</span>
-                    <span class="spread-badge">+${data.spread} pts</span>
-                </div>
-
                 <!-- SERVICE FEE BREAKUP -->
                 <div class="sheet-divider">Service Fee Breakup</div>
 
