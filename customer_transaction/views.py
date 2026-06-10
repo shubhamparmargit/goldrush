@@ -710,7 +710,7 @@ def getMetalRate():
     url = "https://freegoldprice.org/api/v2"
     params = {
         "key": settings.METAL_API_KEY,
-        "action": "GSJT"   # Troy ounce prices (e.g. Gold ~4331 USD/troy oz)
+        "action": "GSJ"   # Gold & Silver JSON, prices per troy ounce (V2 API)
     }
 
     try:
@@ -718,21 +718,21 @@ def getMetalRate():
         response.raise_for_status()
         data = response.json()
 
-        gsjt = data.get("GSJT")
-        if not gsjt:
-            raise ValueError("GSJT missing")
+        gsj = data.get("GSJ")
+        if not gsj:
+            raise ValueError("GSJ missing")
 
-        gold = gsjt.get("Gold", {}).get("USD")
-        silver = gsjt.get("Silver", {}).get("USD")
+        gold = gsj.get("Gold", {}).get("USD")
+        silver = gsj.get("Silver", {}).get("USD")
 
         if not gold or not silver:
             raise ValueError("Metal data missing")
 
         usd_to_inr = get_dollar_rate()
 
-        # API returns prices in USD per TROY OUNCE
+        # API (GSJ action) returns prices in USD per TROY OUNCE (unit = "ounce")
         # Convert: USD/troy_oz ÷ 31.1035 g/troy_oz = USD/gram
-        # Then: USD/gram × INR/USD = INR/gram
+        # Then:    USD/gram × INR/USD = INR/gram
         ounce_weight = Decimal("31.1035")
 
         gold_ask_per_oz = Decimal(gold["ask"])
@@ -780,7 +780,7 @@ def getMetalRate():
         # Logs and console prints
         log_msg = (
             f"\n========================================\n"
-            f"METAL RATE API CONVERSION LOGS (GSJT - troy ounce):\n"
+            f"METAL RATE API CONVERSION LOGS (GSJ - troy ounce):\n"
             f"Raw API Gold Ask: {gold['ask']} USD/troy oz, Bid: {gold['bid']} USD/troy oz\n"
             f"Raw API Silver Ask: {silver['ask']} USD/troy oz, Bid: {silver['bid']} USD/troy oz\n"
             f"Exchange Rate (usd_to_inr): {usd_to_inr}\n"
