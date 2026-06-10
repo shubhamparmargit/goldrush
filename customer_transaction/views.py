@@ -710,7 +710,7 @@ def getMetalRate():
     url = "https://freegoldprice.org/api/v2"
     params = {
         "key": settings.METAL_API_KEY,
-        "action": "GSJM"
+        "action": "GSJT"   # Troy ounce prices (e.g. Gold ~4331 USD/troy oz)
     }
 
     try:
@@ -718,30 +718,33 @@ def getMetalRate():
         response.raise_for_status()
         data = response.json()
 
-        gsjm = data.get("GSJM")
-        if not gsjm:
-            raise ValueError("GSJM missing")
-        
-        # print(data)
-        # print(gsjm)
+        gsjt = data.get("GSJT")
+        if not gsjt:
+            raise ValueError("GSJT missing")
 
-        # gold = gsjm.get("Gold", {}).get("INR")
-        # silver = gsjm.get("Silver", {}).get("INR")
-        gold = gsjm.get("Gold", {}).get("USD")
-        silver = gsjm.get("Silver", {}).get("USD")
+        gold = gsjt.get("Gold", {}).get("USD")
+        silver = gsjt.get("Silver", {}).get("USD")
 
         if not gold or not silver:
             raise ValueError("Metal data missing")
-        
+
         usd_to_inr = get_dollar_rate()
 
-        # Ask and bid rates from API (converted from USD per gram directly)
+        # API returns prices in USD per TROY OUNCE
+        # Convert: USD/troy_oz ÷ 31.1035 g/troy_oz = USD/gram
+        # Then: USD/gram × INR/USD = INR/gram
         ounce_weight = Decimal("31.1035")
 
-        gold_ask = Decimal(gold["ask"])
-        gold_bid = Decimal(gold["bid"])
-        silver_ask = Decimal(silver["ask"])
-        silver_bid = Decimal(silver["bid"])
+        gold_ask_per_oz = Decimal(gold["ask"])
+        gold_bid_per_oz = Decimal(gold["bid"])
+        silver_ask_per_oz = Decimal(silver["ask"])
+        silver_bid_per_oz = Decimal(silver["bid"])
+
+        # USD per gram
+        gold_ask_per_gm = gold_ask_per_oz / ounce_weight
+        gold_bid_per_gm = gold_bid_per_oz / ounce_weight
+        silver_ask_per_gm = silver_ask_per_oz / ounce_weight
+        silver_bid_per_gm = silver_bid_per_oz / ounce_weight
 
         currency = 'INR'
         currency_icon = '₹'
@@ -755,20 +758,20 @@ def getMetalRate():
         except Exception:
             pass
 
-        # Spread in INR = (spread_points / 31.1035) * usd_to_inr
+        # Spread in INR per gram = (spread_points USD/oz) / 31.1035 * usd_to_inr
         spread_in_inr_gold = (spread_points / ounce_weight) * usd_to_inr
-        
-        # Scale the spread for Silver proportionally to maintain the same percentage margin and prevent negative rates
-        ratio = gold_ask / silver_ask if silver_ask > 0 else Decimal("65")
+
+        # Scale spread for Silver proportionally
+        ratio = gold_ask_per_gm / silver_ask_per_gm if silver_ask_per_gm > 0 else Decimal("65")
         spread_in_inr_silver = spread_in_inr_gold / ratio
 
         # Base INR rates per gram
-        base_gold_ask_inr = gold_ask * usd_to_inr
-        base_gold_bid_inr = gold_bid * usd_to_inr
-        base_silver_ask_inr = silver_ask * usd_to_inr
-        base_silver_bid_inr = silver_bid * usd_to_inr
+        base_gold_ask_inr = gold_ask_per_gm * usd_to_inr
+        base_gold_bid_inr = gold_bid_per_gm * usd_to_inr
+        base_silver_ask_inr = silver_ask_per_gm * usd_to_inr
+        base_silver_bid_inr = silver_bid_per_gm * usd_to_inr
 
-        # Rate calculations per gram in INR
+        # Final rates after spread
         buy_gold_rate = base_gold_ask_inr - spread_in_inr_gold
         sell_gold_rate = base_gold_bid_inr + spread_in_inr_gold
         buy_silver_rate = base_silver_ask_inr - spread_in_inr_silver
@@ -777,25 +780,23 @@ def getMetalRate():
         # Logs and console prints
         log_msg = (
             f"\n========================================\n"
-            f"METAL RATE API CONVERSION LOGS:\n"
-            f"Raw API Gold Ask: {gold['ask']} USD, Bid: {gold['bid']} USD\n"
-            f"Raw API Silver Ask: {silver['ask']} USD, Bid: {silver['bid']} USD\n"
+            f"METAL RATE API CONVERSION LOGS (GSJT - troy ounce):\n"
+            f"Raw API Gold Ask: {gold['ask']} USD/troy oz, Bid: {gold['bid']} USD/troy oz\n"
+            f"Raw API Silver Ask: {silver['ask']} USD/troy oz, Bid: {silver['bid']} USD/troy oz\n"
             f"Exchange Rate (usd_to_inr): {usd_to_inr}\n"
             f"Spread Points (from DB): {spread_points}\n"
             f"----------------------------------------\n"
-            f"Calculations (USD/ounce = USD/gm * 31.1035):\n"
-            f"Gold Ask (USD/ounce): {Decimal(gold['ask']) * ounce_weight}\n"
-            f"Gold Bid (USD/ounce): {Decimal(gold['bid']) * ounce_weight}\n"
-            f"----------------------------------------\n"
-            f"Conversion to USD/gm:\n"
-            f"Gold Ask: {gold_ask} USD/gm\n"
-            f"Gold Bid: {gold_bid} USD/gm\n"
+            f"Conversion to USD/gm (÷ {ounce_weight} g/troy oz):\n"
+            f"Gold Ask: {gold_ask_per_gm} USD/gm\n"
+            f"Gold Bid: {gold_bid_per_gm} USD/gm\n"
+            f"Silver Ask: {silver_ask_per_gm} USD/gm\n"
+            f"Silver Bid: {silver_bid_per_gm} USD/gm\n"
             f"----------------------------------------\n"
             f"Conversion to INR/gm (* {usd_to_inr}):\n"
             f"Base Gold Ask INR: {base_gold_ask_inr} INR/gm\n"
             f"Base Gold Bid INR: {base_gold_bid_inr} INR/gm\n"
             f"----------------------------------------\n"
-            f"Spread in INR per gram (points / 31.1035 * exchange_rate):\n"
+            f"Spread in INR per gram:\n"
             f"Gold Spread: {spread_in_inr_gold} INR/gm\n"
             f"Silver Spread: {spread_in_inr_silver} INR/gm\n"
             f"----------------------------------------\n"
