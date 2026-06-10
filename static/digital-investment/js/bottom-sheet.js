@@ -331,7 +331,7 @@ function openTransactionSheet(item) {
                 <div class="sheet-row"><span>Buy Rate</span><span>${data.currency_icon}${data.buy_rate}</span></div>
                 <div class="sheet-row"><span>Invested</span><span>₹${data.invested_amount}</span></div>
                 <div class="sheet-row"><span>Service Fee</span><span>₹${data.service_fee}</span></div>
-                <div class="sheet-row"><span>Actual Metal Invested</span><span>₹${data.market_amount}</span></div>
+                <!-- <div class="sheet-row"><span>Actual Metal Invested</span><span>₹${data.market_amount}</span></div> -->
                 <div class="sheet-row"><span>Date</span><span>${data.buy_date}</span></div>
 
                 <div class="sheet-divider">Current Value</div>
@@ -724,7 +724,7 @@ function openPastOrderSheet(item) {
                 </div>
 
                 <div class="sheet-row"><span>Service Fee</span><span>₹${data.service_fee}</span></div>
-                <div class="sheet-row"><span>Actual Metal Invested</span><span>₹${data.market_amount}</span></div>
+                <!-- <div class="sheet-row"><span>Actual Metal Invested</span><span>₹${data.market_amount}</span></div> -->
 
                 <div class="sheet-row">
                     <span>Buy Date</span>
@@ -738,10 +738,10 @@ function openPastOrderSheet(item) {
                     <span>${data.currency_icon}${data.sell_rate}</span>
                 </div>
 
-                <div class="sheet-row">
+                <!-- <div class="sheet-row">
                     <span>Sell Amount</span>
                     <span>₹${data.sell_amount}</span>
-                </div>
+                </div> -->
 
                 <div class="sheet-row">
                     <span>Sell Date</span>

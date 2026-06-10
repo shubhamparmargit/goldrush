@@ -19,6 +19,7 @@ urlpatterns = [
     re_path(r'^payment-failed$', wallet_obj.wallet_payment_failed, name='wallet_payment_failed'),
     re_path(r'^wallet-history-detail$', wallet_obj.wallet_history_detail, name='wallet_history_detail'),
     re_path(r'^submit-manual-recharge$', wallet_obj.submitManualRecharge, name='submit_manual_recharge'),
+    re_path(r'^save-stop-loss$', wallet_obj.save_stop_loss, name='save_stop_loss'),
 
     re_path(r'^withdraw-request$', widr_obj.requestWithdrawal, name='withdraw_request'),
     re_path(r'^withdraw-history$', widr_obj.getWithdrawalList, name='withdraw_history'),

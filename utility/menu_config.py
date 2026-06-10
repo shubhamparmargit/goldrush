@@ -134,6 +134,12 @@ MENU_CONFIG = [
                 "url": "company-bank-details",
                 "view": "company_bank_page",
                 "icon": "icon-Commit"
+            },
+            {
+                "label": "Spread Settings",
+                "url": "spread-settings",
+                "view": "spread_settings_page",
+                "icon": "icon-Commit"
             }
         ]
     },
@@ -199,6 +205,12 @@ MENU_CONFIG = [
                 "label": "Withdrawal",
                 "url": "withdrawal-report",
                 "view": "withdrawal_report",
+                "icon": "icon-Commit"
+            },
+            {
+                "label": "Ledger Report",
+                "url": "ledger-report",
+                "view": "ledger_report",
                 "icon": "icon-Commit"
             },
         ]

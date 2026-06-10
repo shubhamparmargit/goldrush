@@ -1,0 +1,293 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Customer Ledger Report</h3>
+                    <nav><ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item">Reports</li>
+                        <li class="breadcrumb-item active">Ledger Report</li>
+                    </ol></nav>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="row">
+                <!-- Search Panel -->
+                <div class="col-md-12">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Select Customer & Filter</h4>
+                        </div>
+                        <div class="box-body">
+                            {% csrf_token %}
+                            <div class="row">
+                                <!-- Customer Dropdown -->
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Select Customer</label>
+                                        <select class="form-control" id="search_customer">
+                                            <option value="">-- Choose Customer --</option>
+                                            {% for cust in customers %}
+                                                <option value="{{ cust.id }}">{{ cust.name }} ({{ cust.mobile }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mobile Backup -->
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Or Mobile Number</label>
+                                        <input type="text" class="form-control" id="search_mobile" placeholder="10-digit mobile number" maxlength="10">
+                                    </div>
+                                </div>
+
+                                <!-- Date Filter Presets -->
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Date Filter</label>
+                                        <select class="form-control" id="filter_type">
+                                            <option value="all">All Time</option>
+                                            <option value="today">Today</option>
+                                            <option value="week">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="custom">Custom Date Range</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Action Button -->
+                                <div class="col-md-2" style="margin-top: 25px;">
+                                    <button class="btn btn-primary btn-block" id="searchBtn">
+                                        <i class="fa fa-search"></i> Search Ledger
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Custom Date Range pickers (hidden by default) -->
+                            <div class="row" id="customDateRangeRow" style="display: none;">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Start Date</label>
+                                        <input type="date" class="form-control" id="start_date">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>End Date</label>
+                                        <input type="date" class="form-control" id="end_date">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Details & Ledger Table -->
+                <div class="col-md-12" id="ledgerSection" style="display:none;">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Customer Ledger Details</h4>
+                        </div>
+                        <div class="box-body">
+                            <!-- Customer Profile Info & Highlights -->
+                            <div class="row mb-20">
+                                <div class="col-md-4">
+                                    <div class="card p-20" style="border-radius:12px; border:1px solid #e2e8f0; background: #ffffff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); height:100%;">
+                                        <h5 class="mt-0 text-muted" style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Customer Info</h5>
+                                        <p class="mb-5" style="font-size: 14px;"><b>Name:</b> <span id="cust_name">-</span></p>
+                                        <p class="mb-5" style="font-size: 14px;"><b>Mobile:</b> <span id="cust_mobile">-</span></p>
+                                        <p class="mb-0" style="font-size: 14px;"><b>Email:</b> <span id="cust_email">-</span></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card p-20 text-white" style="border-radius:12px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3); border: none; height:100%;">
+                                        <h5 class="mt-0 text-white-50" style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Live Wallet Balance</h5>
+                                        <h2 class="mt-10 mb-0 font-weight-800 text-white" style="font-size: 28px;" id="cust_live_balance">₹0.00</h2>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card p-20 text-white" style="border-radius:12px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); border: none; height:100%;">
+                                        <h5 class="mt-0 text-white-50" style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Demo Wallet Balance</h5>
+                                        <h2 class="mt-10 mb-0 font-weight-800 text-white" style="font-size: 28px;" id="cust_demo_balance">₹0.00</h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ledger Table -->
+                            <h4 class="box-title mt-30 mb-15">Ledger Statement</h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped table-hover" style="font-size:13px;">
+                                    <thead>
+                                        <tr class="bg-gray-light">
+                                            <th style="width: 50px;">#</th>
+                                            <th>Date & Time</th>
+                                            <th>Transaction ID</th>
+                                            <th>Transaction Type</th>
+                                            <th>Direction</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Description / Details</th>
+                                            <th>Running Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ledgerBody">
+                                        <tr><td colspan="9" class="text-center">Search for a customer to view ledger</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    const LEDGER_URL = "{% url 'get_customer_ledger' %}";
+    const CSRF = "{{ csrf_token }}";
+
+    // Toggle custom date range view
+    document.getElementById('filter_type').addEventListener('change', function () {
+        const customRow = document.getElementById('customDateRangeRow');
+        if (this.value === 'custom') {
+            customRow.style.display = 'flex';
+        } else {
+            customRow.style.display = 'none';
+        }
+    });
+
+    // Handle Search/Dropdown clear actions
+    document.getElementById('search_customer').addEventListener('change', function () {
+        if (this.value) {
+            document.getElementById('search_mobile').value = '';
+        }
+    });
+
+    document.getElementById('search_mobile').addEventListener('input', function () {
+        if (this.value) {
+            document.getElementById('search_customer').value = '';
+        }
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', function () {
+        const customerId = document.getElementById('search_customer').value;
+        const mobile = document.getElementById('search_mobile').value.trim();
+        const filterType = document.getElementById('filter_type').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        if (!customerId && (!mobile || mobile.length !== 10)) {
+            alert('Please select a customer or enter a valid 10-digit mobile number');
+            return;
+        }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Searching...';
+
+        const formData = new FormData();
+        formData.append('customer_id', customerId);
+        formData.append('mobile', mobile);
+        formData.append('filter_type', filterType);
+        formData.append('start_date', startDate);
+        formData.append('end_date', endDate);
+        formData.append('csrfmiddlewaretoken', CSRF);
+
+        fetch(LEDGER_URL, {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-search"></i> Search Ledger';
+
+            if (data.success !== '1') {
+                alert(data.message || 'Something went wrong');
+                document.getElementById('ledgerSection').style.display = 'none';
+                return;
+            }
+
+            // Populate Customer Details
+            document.getElementById('cust_name').textContent = data.customer.name;
+            document.getElementById('cust_mobile').textContent = data.customer.mobile;
+            document.getElementById('cust_email').textContent = data.customer.email || 'N/A';
+            document.getElementById('cust_live_balance').textContent = '₹' + Number(data.customer.live_balance).toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('cust_demo_balance').textContent = '₹' + Number(data.customer.demo_balance).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+            // Populate Ledger Table
+            const tbody = document.getElementById('ledgerBody');
+            let tbodyHtml = '';
+
+            // If we have an opening balance (when filtered), show it as the first row
+            if (data.opening_balance && Number(data.opening_balance) !== 0) {
+                tbodyHtml += `
+                    <tr style="background-color: #f8fafc; font-style: italic;">
+                        <td>-</td>
+                        <td colspan="7" class="text-right font-weight-700">Opening Balance (Before Filter Range)</td>
+                        <td class="font-weight-700">₹${Number(data.opening_balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            }
+
+            if (!data.entries || data.entries.length === 0) {
+                tbodyHtml += '<tr><td colspan="9" class="text-center">No financial transactions found for this customer.</td></tr>';
+            } else {
+                tbodyHtml += data.entries.map((entry, index) => {
+                    const directionBadge = entry.direction === 'Credit' 
+                        ? '<span class="badge badge-success-light">Credit</span>' 
+                        : '<span class="badge badge-danger-light">Debit</span>';
+                    
+                    const amountColor = entry.direction === 'Credit' ? 'text-success' : 'text-danger';
+                    const amountSign = entry.direction === 'Credit' ? '+' : '-';
+
+                    let statusClass = 'badge-secondary';
+                    if (entry.status === 'Success' || entry.status === 'Approved') statusClass = 'badge-success';
+                    else if (entry.status === 'Failed' || entry.status === 'Rejected') statusClass = 'badge-danger';
+                    else if (entry.status === 'Pending') statusClass = 'badge-warning';
+
+                    const statusBadge = `<span class="badge ${statusClass}">${entry.status}</span>`;
+
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${entry.date}</td>
+                            <td><code>${entry.txn_id}</code></td>
+                            <td><b>${entry.type}</b></td>
+                            <td>${directionBadge}</td>
+                            <td class="${amountColor} font-weight-600">${amountSign}₹${Number(entry.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            <td>${statusBadge}</td>
+                            <td><span class="text-muted">${entry.details || '-'}</span></td>
+                            <td class="font-weight-600">₹${Number(entry.running_balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            tbody.innerHTML = tbodyHtml;
+
+            document.getElementById('ledgerSection').style.display = 'block';
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-search"></i> Search Ledger';
+            alert('An error occurred. Please try again.');
+        });
+    });
+
+    // Support enter key on search inputs
+    document.getElementById('search_mobile').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            document.getElementById('searchBtn').click();
+        }
+    });
+</script>
+{% endblock %}

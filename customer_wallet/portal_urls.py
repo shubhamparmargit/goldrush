@@ -13,6 +13,8 @@ urlpatterns = [
 
     re_path(r'^company-bank-details$', bank_obj.company_bank_page, name='company_bank_page'),
     re_path(r'^save-company-bank$', bank_obj.save_company_bank, name='save_company_bank'),
+    re_path(r'^spread-settings$', bank_obj.spread_settings_page, name='spread_settings_page'),
+    re_path(r'^save-spread-settings$', bank_obj.save_spread_settings, name='save_spread_settings'),
 
     re_path(r'^add-wallet-balance$', awb_obj.add_wallet_page, name='add_wallet_page'),
     re_path(r'^search-customer-wallet$', awb_obj.search_customer, name='search_customer_wallet'),

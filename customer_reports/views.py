@@ -104,6 +104,248 @@ class Pages:
         else:
             return util_obj.goToLogin(request)
 
+    def ledger_report(self, request):
+        if util_obj.checkSession(request) == False:
+            customers = Customer.objects.all().order_by('name')
+            return render(request, 'portal/ledger-report.html', {'customers': customers})
+        return util_obj.goToLogin(request)
+
+    def get_customer_ledger(self, request):
+        if util_obj.checkSession(request) == False:
+            if request.method != 'POST':
+                return JsonResponse({'success': '0', 'message': 'Invalid request'})
+            try:
+                from decimal import Decimal
+                from django.utils import timezone
+                from datetime import datetime, time, timedelta
+
+                customer_id = request.POST.get('customer_id', '').strip()
+                mobile = request.POST.get('mobile', '').strip()
+
+                if customer_id:
+                    customer = Customer.objects.filter(id=customer_id).first()
+                elif mobile:
+                    customer = Customer.objects.filter(mobile=mobile).first()
+                else:
+                    return JsonResponse({'success': '0', 'message': 'Customer selection is required'})
+
+                if not customer:
+                    return JsonResponse({'success': '0', 'message': 'Customer not found'})
+
+                # Parse date filters
+                filter_type = request.POST.get('filter_type', 'all').strip()
+                start_date_str = request.POST.get('start_date', '').strip()
+                end_date_str = request.POST.get('end_date', '').strip()
+
+                now = timezone.now()
+                start_datetime = None
+                end_datetime = None
+
+                if filter_type == 'today':
+                    start_datetime = timezone.make_aware(datetime.combine(now.date(), time.min))
+                    end_datetime = timezone.make_aware(datetime.combine(now.date(), time.max))
+                elif filter_type == 'week':
+                    start_datetime = now - timedelta(days=7)
+                elif filter_type == '30days':
+                    start_datetime = now - timedelta(days=30)
+                elif filter_type == 'custom':
+                    if start_date_str:
+                        start_datetime = timezone.make_aware(datetime.strptime(start_date_str, '%Y-%m-%d'))
+                    if end_date_str:
+                        parsed_end = datetime.strptime(end_date_str, '%Y-%m-%d')
+                        end_datetime = timezone.make_aware(datetime.combine(parsed_end.date(), time.max))
+
+                # Fetch all transactions
+                ledger_entries = []
+
+                # 1. Online Recharge (WalletRechargeHistory)
+                online_list = WalletRechargeHistory.objects.filter(customer=customer).select_related("order")
+                for item in online_list:
+                    status_str = 'Success' if item.status == 'Success' else 'Failed'
+                    ledger_entries.append({
+                        'date': item.created_at,
+                        'txn_id': f"ONL_{item.order.razorpay_order_id}" if item.order else f"ONL_{item.id}",
+                        'type': 'Online Recharge',
+                        'direction': 'Credit',
+                        'amount': item.amount,
+                        'status': status_str,
+                        'details': f"Gateway: Razorpay | ID: {item.id}",
+                        'is_successful': status_str == 'Success'
+                    })
+
+                # 2. Manual Recharge (ManualRechargeRequest)
+                from customer_wallet.models import ManualRechargeRequest
+                manual_list = ManualRechargeRequest.objects.filter(customer=customer)
+                for item in manual_list:
+                    status_str = 'Pending' if item.status == 'PENDING' else ('Success' if item.status == 'APPROVED' else 'Failed')
+                    ledger_entries.append({
+                        'date': item.request_date,
+                        'txn_id': f"MAN_{item.unique_id}",
+                        'type': 'Manual Recharge',
+                        'direction': 'Credit',
+                        'amount': item.amount,
+                        'status': status_str,
+                        'details': f"UTR: {item.utr_number} | Remark: {item.remark or ''}",
+                        'is_successful': status_str == 'Success'
+                    })
+
+                # 3. Admin Credit (WalletManualCredit)
+                from customer_wallet.models import WalletManualCredit
+                credit_list = WalletManualCredit.objects.filter(customer=customer)
+                for item in credit_list:
+                    ledger_entries.append({
+                        'date': item.credited_on,
+                        'txn_id': f"CR_{item.unique_id}",
+                        'type': 'Admin Credit',
+                        'direction': 'Credit',
+                        'amount': item.amount,
+                        'status': 'Success',
+                        'details': f"Remark: {item.remark or ''}",
+                        'is_successful': True
+                    })
+
+                # 4. Admin Debit (WalletManualDebit)
+                from customer_wallet.models import WalletManualDebit
+                debit_list = WalletManualDebit.objects.filter(customer=customer)
+                for item in debit_list:
+                    ledger_entries.append({
+                        'date': item.debited_on,
+                        'txn_id': f"DR_{item.unique_id}",
+                        'type': 'Admin Debit',
+                        'direction': 'Debit',
+                        'amount': item.amount,
+                        'status': 'Success',
+                        'details': f"Remark: {item.remark or ''}",
+                        'is_successful': True
+                    })
+
+                # 5. Withdrawal Requests (WithdrawalRequest)
+                from customer_wallet.models import WithdrawalRequest
+                withdraw_list = WithdrawalRequest.objects.filter(customer=customer)
+                for item in withdraw_list:
+                    status_str = 'Pending' if item.status == 'PENDING' else ('Success' if item.status == 'APPROVED' else 'Failed')
+                    ledger_entries.append({
+                        'date': item.request_date,
+                        'txn_id': f"WDR_{item.unique_id}",
+                        'type': 'Withdrawal Request',
+                        'direction': 'Debit',
+                        'amount': item.request_amount,
+                        'status': status_str,
+                        'details': f"Remark: {item.remark or ''}",
+                        'is_successful': status_str == 'Success'
+                    })
+
+                # 6. Live Buy/Sell Transactions (CustomerTransaction)
+                from customer_transaction.models import CustomerTransaction
+                txns_live = CustomerTransaction.objects.filter(customer=customer)
+                for item in txns_live:
+                    direction = 'Debit' if item.transaction_type == 'BUY' else 'Credit'
+                    txn_type_str = f"Buy {item.metal_type.title()} (Live)" if item.transaction_type == 'BUY' else f"Sell {item.metal_type.title()} (Live)"
+                    details_str = f"{item.quantity_gm} gm @ ₹{item.metal_rate_per_gm}/gm"
+                    if item.transaction_type == 'SELL' and item.profit_loss_amount:
+                        details_str += f" | {item.profit_loss}: ₹{item.profit_loss_amount}"
+                    ledger_entries.append({
+                        'date': item.created_at,
+                        'txn_id': item.transaction_id,
+                        'type': txn_type_str,
+                        'direction': direction,
+                        'amount': item.order_amount,
+                        'status': 'Success',
+                        'details': details_str,
+                        'is_successful': True
+                    })
+
+                # 7. Demo Buy/Sell Transactions (CustomerDemoTransaction)
+                from customer_transaction.models import CustomerDemoTransaction
+                txns_demo = CustomerDemoTransaction.objects.filter(customer=customer)
+                for item in txns_demo:
+                    direction = 'Debit' if item.transaction_type == 'BUY' else 'Credit'
+                    txn_type_str = f"Buy {item.metal_type.title()} (Demo)" if item.transaction_type == 'BUY' else f"Sell {item.metal_type.title()} (Demo)"
+                    details_str = f"{item.quantity_gm} gm @ ₹{item.metal_rate_per_gm}/gm"
+                    if item.transaction_type == 'SELL' and item.profit_loss_amount:
+                        details_str += f" | {item.profit_loss}: ₹{item.profit_loss_amount}"
+                    ledger_entries.append({
+                        'date': item.created_at,
+                        'txn_id': item.transaction_id,
+                        'type': txn_type_str,
+                        'direction': direction,
+                        'amount': item.order_amount,
+                        'status': 'Success',
+                        'details': details_str,
+                        'is_successful': True
+                    })
+
+                # Sort chronological ascending to calculate running balance
+                ledger_entries.sort(key=lambda x: x['date'])
+
+                filtered_entries = []
+                running_balance = Decimal("0.0")
+                opening_balance = Decimal("0.0")
+
+                for entry in ledger_entries:
+                    is_before = False
+                    is_after = False
+
+                    if start_datetime and entry['date'] < start_datetime:
+                        is_before = True
+                    if end_datetime and entry['date'] > end_datetime:
+                        is_after = True
+
+                    if entry['is_successful']:
+                        if entry['direction'] == 'Credit':
+                            running_balance += Decimal(str(entry['amount']))
+                        else:
+                            running_balance -= Decimal(str(entry['amount']))
+
+                    entry['running_balance'] = str(running_balance)
+
+                    if is_before:
+                        opening_balance = running_balance
+                    elif not is_after:
+                        filtered_entries.append(entry)
+
+                # Reverse sort descending for display (newest first)
+                filtered_entries.sort(key=lambda x: x['date'], reverse=True)
+
+                # Format dates to string
+                formatted_entries = []
+                for entry in filtered_entries:
+                    formatted_entries.append({
+                        'date': timezone.localtime(entry['date']).strftime('%d-%m-%Y %I:%M %p') if entry['date'] else '',
+                        'txn_id': entry['txn_id'],
+                        'type': entry['type'],
+                        'direction': entry['direction'],
+                        'amount': str(entry['amount']),
+                        'status': entry['status'],
+                        'details': entry['details'],
+                        'running_balance': entry['running_balance']
+                    })
+
+                # Fetch wallet balances
+                from customer_wallet.models import CustomerWallet, CustomerDemoWallet
+                wallet_live = CustomerWallet.objects.filter(customer=customer).first()
+                wallet_demo = CustomerDemoWallet.objects.filter(customer=customer).first()
+
+                customer_info = {
+                    'name': customer.name,
+                    'mobile': customer.mobile,
+                    'email': customer.email,
+                    'live_balance': str(wallet_live.balance) if wallet_live else "0.00",
+                    'demo_balance': str(wallet_demo.balance) if wallet_demo else "0.00",
+                }
+
+                return JsonResponse({
+                    'success': '1',
+                    'customer': customer_info,
+                    'opening_balance': str(opening_balance),
+                    'closing_balance': str(running_balance),
+                    'entries': formatted_entries
+                })
+
+            except Exception as e:
+                return JsonResponse({'success': '0', 'message': 'Something went wrong', 'error': str(e)})
+        return util_obj.goToLogin(request)
+
 class CustomerOperation:
     def macReset(self,request):
         if util_obj.checkSession(request) == False:

@@ -49,6 +49,10 @@
                                 <input type="text" class="form-control" id="upi_id" value="{{ bank.upi_id|default:'' }}">
                             </div>
                             <div class="form-group">
+                                <label>Dollar Rate (in INR) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="dollar_rate" value="{{ bank.dollar_rate|default:'83.00' }}">
+                            </div>
+                            <div class="form-group">
                                 <label>UPI QR Code Image</label>
                                 {% if bank.qr_code_image %}
                                 <div class="mb-10">
@@ -77,6 +81,7 @@
         formData.append('ifsc_code', document.getElementById('ifsc_code').value.trim());
         formData.append('branch_name', document.getElementById('branch_name').value.trim());
         formData.append('upi_id', document.getElementById('upi_id').value.trim());
+        formData.append('dollar_rate', document.getElementById('dollar_rate').value.trim());
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         const qr = document.getElementById('qr_code_image').files[0];
         if (qr) formData.append('qr_code_image', qr);

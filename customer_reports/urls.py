@@ -22,6 +22,8 @@ urlpatterns = [
    re_path(r'^no-recharge-report$', page_obj.no_recharge_report, name='no_recharge_report'),
    re_path(r'^inactive-customer-report$', page_obj.inactive_customer_report, name='inactive_customer_report'),
    re_path(r'^withdrawal-report$', page_obj.withdrawal_report, name='withdrawal_report'),
+   re_path(r'^ledger-report$', page_obj.ledger_report, name='ledger_report'),
+   re_path(r'^get-customer-ledger$', page_obj.get_customer_ledger, name='get_customer_ledger'),
    
    re_path(r'^mac-reset$', cust_obj.macReset, name='macReset'),
    re_path(r'^getCustomer$', cust_obj.getCustomer, name='getCustomer'),

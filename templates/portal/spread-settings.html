@@ -1,0 +1,68 @@
+{% extends "portal/includes/base.html" %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-full">
+        <div class="content-header">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="page-title">Spread Settings</h3>
+                    <nav><ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item">Settings</li>
+                        <li class="breadcrumb-item active">Spread Settings</li>
+                    </ol></nav>
+                </div>
+            </div>
+        </div>
+        <section class="content">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Order Spread Settings</h4>
+                        </div>
+                        <div class="box-body">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>Order Spread Points <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="spread" value="{{ bank.spread|default:'200' }}" min="0" step="1">
+                                <p class="text-muted mt-5" style="font-size:12px;">Spread points applied to buy rates (e.g., 200 means ₹200 markup will be added to calculated live buy gold/silver rates).</p>
+                            </div>
+                            <button class="btn btn-primary" id="saveSpreadBtn">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    document.getElementById('saveSpreadBtn').addEventListener('click', function () {
+        const btn = this;
+        const spreadVal = document.getElementById('spread').value.trim();
+        if (!spreadVal) {
+            alert('Spread value is required');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('spread', spreadVal);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        fetch("{% url 'save_spread_settings' %}", { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Save Settings';
+                alert(data.message);
+                if (data.success === '1') location.reload();
+            })
+            .catch(() => { btn.disabled = false; btn.textContent = 'Save Settings'; alert('Something went wrong'); });
+    });
+</script>
+{% endblock %}
