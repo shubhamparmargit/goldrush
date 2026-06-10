@@ -1,0 +1,1670 @@
+{
+    "GSJM": {
+        "date": "2026-06-10 21:07:00",
+        "unit": "gram",
+        "Gold": {
+            "GMD": {
+                "currencyname": "Gambian Dalasi",
+                "ask": "9765.3369",
+                "bid": "9761.4316"
+            },
+            "HRK": {
+                "currencyname": "Croatian Kuna (legacy)",
+                "ask": "859.6957",
+                "bid": "859.3519"
+            },
+            "CLF": {
+                "currencyname": "Chilean Unit of Account",
+                "ask": "3.0590",
+                "bid": "3.0578"
+            },
+            "RUB": {
+                "currencyname": "Russian Ruble",
+                "ask": "9484.5457",
+                "bid": "9480.7527"
+            },
+            "KMF": {
+                "currencyname": "Comorian Franc",
+                "ask": "56134.1271",
+                "bid": "56111.6782"
+            },
+            "SHP": {
+                "currencyname": "Saint Helena Pound",
+                "ask": "98.4387",
+                "bid": "98.3994"
+            },
+            "ALL": {
+                "currencyname": "Albanian Lek",
+                "ask": "10845.5878",
+                "bid": "10841.2505"
+            },
+            "PGK": {
+                "currencyname": "Papua New Guinean Kina",
+                "ask": "583.8223",
+                "bid": "583.5888"
+            },
+            "NIO": {
+                "currencyname": "Nicaraguan C\u00f3rdoba",
+                "ask": "4844.3752",
+                "bid": "4842.4378"
+            },
+            "KWD": {
+                "currencyname": "Kuwaiti Dinar",
+                "ask": "40.6465",
+                "bid": "40.6303"
+            },
+            "ARS": {
+                "currencyname": "Argentine Peso",
+                "ask": "190547.9701",
+                "bid": "190471.7673"
+            },
+            "MWK": {
+                "currencyname": "Malawian Kwacha",
+                "ask": "229150.2829",
+                "bid": "229058.6424"
+            },
+            "DKK": {
+                "currencyname": "Danish Krone",
+                "ask": "851.9561",
+                "bid": "851.6154"
+            },
+            "CVE": {
+                "currencyname": "Cape Verdean Escudo",
+                "ask": "12581.3725",
+                "bid": "12576.3410"
+            },
+            "HNL": {
+                "currencyname": "Honduran Lempira",
+                "ask": "3519.6974",
+                "bid": "3518.2898"
+            },
+            "XPF": {
+                "currencyname": "CFP Franc",
+                "ask": "13615.9284",
+                "bid": "13610.4832"
+            },
+            "SSP": {
+                "currencyname": "South Sudanese Pound",
+                "ask": "620946.0367",
+                "bid": "620697.7115"
+            },
+            "ILS": {
+                "currencyname": "Israeli New Shekel",
+                "ask": "391.3205",
+                "bid": "391.1640"
+            },
+            "AUD": {
+                "currencyname": "Australian Dollar",
+                "ask": "187.8791",
+                "bid": "187.8039"
+            },
+            "KYD": {
+                "currencyname": "Cayman Islands Dollar",
+                "ask": "109.8006",
+                "bid": "109.7566"
+            },
+            "BND": {
+                "currencyname": "Brunei Dollar",
+                "ask": "169.5769",
+                "bid": "169.5091"
+            },
+            "ISK": {
+                "currencyname": "Icelandic Kr\u00f3na",
+                "ask": "16355.6472",
+                "bid": "16349.1063"
+            },
+            "VUV": {
+                "currencyname": "Vanuatu Vatu",
+                "ask": "15803.9380",
+                "bid": "15797.6177"
+            },
+            "SCR": {
+                "currencyname": "Seychellois Rupee",
+                "ask": "1867.2224",
+                "bid": "1866.4756"
+            },
+            "DJF": {
+                "currencyname": "Djiboutian Franc",
+                "ask": "23416.6459",
+                "bid": "23407.2812"
+            },
+            "BRL": {
+                "currencyname": "Brazilian Real",
+                "ask": "681.5657",
+                "bid": "681.2931"
+            },
+            "XAF": {
+                "currencyname": "Central African CFA Franc",
+                "ask": "74845.5028",
+                "bid": "74815.5710"
+            },
+            "AMD": {
+                "currencyname": "Armenian Dram",
+                "ask": "48531.8428",
+                "bid": "48512.4343"
+            },
+            "GNF": {
+                "currencyname": "Guinean Franc",
+                "ask": "1153671.0159",
+                "bid": "1153209.6463"
+            },
+            "CAD": {
+                "currencyname": "Canadian Dollar",
+                "ask": "183.5943",
+                "bid": "183.5209"
+            },
+            "ZAR": {
+                "currencyname": "South African Rand",
+                "ask": "2180.1309",
+                "bid": "2179.2590"
+            },
+            "BSD": {
+                "currencyname": "Bahamian Dollar",
+                "ask": "131.7607",
+                "bid": "131.7080"
+            },
+            "RSD": {
+                "currencyname": "Serbian Dinar",
+                "ask": "13375.5615",
+                "bid": "13370.2124"
+            },
+            "SYP": {
+                "currencyname": "Syrian Pound",
+                "ask": "15108.3179",
+                "bid": "15102.2758"
+            },
+            "EGP": {
+                "currencyname": "Egyptian Pound",
+                "ask": "6821.9988",
+                "bid": "6819.2706"
+            },
+            "YER": {
+                "currencyname": "Yemeni Rial",
+                "ask": "31402.1390",
+                "bid": "31389.5808"
+            },
+            "KZT": {
+                "currencyname": "Kazakhstani Tenge",
+                "ask": "64300.0857",
+                "bid": "64274.3712"
+            },
+            "AOA": {
+                "currencyname": "Angolan Kwanza",
+                "ask": "121813.4975",
+                "bid": "121764.7825"
+            },
+            "BHD": {
+                "currencyname": "Bahraini Dinar",
+                "ask": "49.5420",
+                "bid": "49.5222"
+            },
+            "TWD": {
+                "currencyname": "New Taiwan Dollar",
+                "ask": "4168.2445",
+                "bid": "4166.5775"
+            },
+            "WST": {
+                "currencyname": "Samoan Tala",
+                "ask": "358.8117",
+                "bid": "358.6682"
+            },
+            "KID": {
+                "currencyname": "Kiribati Dollar",
+                "ask": "187.8642",
+                "bid": "187.7891"
+            },
+            "JOD": {
+                "currencyname": "Jordanian Dinar",
+                "ask": "93.4183",
+                "bid": "93.3810"
+            },
+            "BTN": {
+                "currencyname": "Bhutanese Ngultrum",
+                "ask": "12564.8859",
+                "bid": "12559.8611"
+            },
+            "LAK": {
+                "currencyname": "Laotian Kip",
+                "ask": "2892669.2848",
+                "bid": "2891512.4649"
+            },
+            "GBP": {
+                "currencyname": "British Pound Sterling",
+                "ask": "98.4421",
+                "bid": "98.4027"
+            },
+            "CUP": {
+                "currencyname": "Cuban Peso",
+                "ask": "3162.2571",
+                "bid": "3160.9925"
+            },
+            "AZN": {
+                "currencyname": "Azerbaijani Manat",
+                "ask": "223.8330",
+                "bid": "223.7435"
+            },
+            "BWP": {
+                "currencyname": "Botswana Pula",
+                "ask": "1818.0307",
+                "bid": "1817.3036"
+            },
+            "MRU": {
+                "currencyname": "Mauritanian Ouguiya",
+                "ask": "5295.5742",
+                "bid": "5293.4564"
+            },
+            "SGD": {
+                "currencyname": "Singapore Dollar",
+                "ask": "169.5785",
+                "bid": "169.5106"
+            },
+            "BAM": {
+                "currencyname": "Bosnia-Herzegovina Convertible Mark",
+                "ask": "223.1626",
+                "bid": "223.0734"
+            },
+            "CZK": {
+                "currencyname": "Czech Koruna",
+                "ask": "2757.7014",
+                "bid": "2756.5986"
+            },
+            "NGN": {
+                "currencyname": "Nigerian Naira",
+                "ask": "179074.0812",
+                "bid": "179002.4670"
+            },
+            "CLP": {
+                "currencyname": "Chilean Peso",
+                "ask": "120913.3741",
+                "bid": "120865.0191"
+            },
+            "NAD": {
+                "currencyname": "Namibian Dollar",
+                "ask": "2180.1261",
+                "bid": "2179.2542"
+            },
+            "TVD": {
+                "currencyname": "Tuvaluan Dollar",
+                "ask": "187.8642",
+                "bid": "187.7891"
+            },
+            "LSL": {
+                "currencyname": "Lesotho Loti",
+                "ask": "2180.1261",
+                "bid": "2179.2542"
+            },
+            "BDT": {
+                "currencyname": "Bangladeshi Taka",
+                "ask": "16183.9531",
+                "bid": "16177.4809"
+            },
+            "CHF": {
+                "currencyname": "Swiss Franc",
+                "ask": "105.2595",
+                "bid": "105.2174"
+            },
+            "CRC": {
+                "currencyname": "Costa Rican Col\u00f3n",
+                "ask": "60421.5262",
+                "bid": "60397.3628"
+            },
+            "CDF": {
+                "currencyname": "Congolese Franc",
+                "ask": "301500.6397",
+                "bid": "301380.0653"
+            },
+            "PHP": {
+                "currencyname": "Philippine Peso",
+                "ask": "8087.5620",
+                "bid": "8084.3277"
+            },
+            "UGX": {
+                "currencyname": "Ugandan Shilling",
+                "ask": "493075.0750",
+                "bid": "492877.8872"
+            },
+            "TJS": {
+                "currencyname": "Tajikistani Somoni",
+                "ask": "1228.6739",
+                "bid": "1228.1825"
+            },
+            "PEN": {
+                "currencyname": "Peruvian Sol",
+                "ask": "448.3971",
+                "bid": "448.2178"
+            },
+            "DOP": {
+                "currencyname": "Dominican Peso",
+                "ask": "7678.8502",
+                "bid": "7675.7793"
+            },
+            "INR": {
+                "currencyname": "Indian Rupee",
+                "ask": "12564.3358",
+                "bid": "12559.3112"
+            },
+            "CNY": {
+                "currencyname": "Chinese Yuan",
+                "ask": "894.4922",
+                "bid": "894.1345"
+            },
+            "GIP": {
+                "currencyname": "Gibraltar Pound",
+                "ask": "98.4387",
+                "bid": "98.3994"
+            },
+            "OMR": {
+                "currencyname": "Omani Rial",
+                "ask": "50.6616",
+                "bid": "50.6413"
+            },
+            "IMP": {
+                "currencyname": "Isle of Man Pound",
+                "ask": "98.4387",
+                "bid": "98.3994"
+            },
+            "NZD": {
+                "currencyname": "New Zealand Dollar",
+                "ask": "226.6605",
+                "bid": "226.5698"
+            },
+            "AED": {
+                "currencyname": "United Arab Emirates Dirham",
+                "ask": "483.8912",
+                "bid": "483.6977"
+            },
+            "MKD": {
+                "currencyname": "Macedonian Denar",
+                "ask": "7015.5326",
+                "bid": "7012.7270"
+            },
+            "EUR": {
+                "currencyname": "Euro",
+                "ask": "114.1002",
+                "bid": "114.0546"
+            },
+            "USD": {
+                "currencyname": "United States Dollar",
+                "ask": "131.7607",
+                "bid": "131.7080"
+            },
+            "IRR": {
+                "currencyname": "Iranian Rial",
+                "ask": "177692413.9935",
+                "bid": "177621352.2476"
+            },
+            "SRD": {
+                "currencyname": "Surinamese Dollar",
+                "ask": "4954.1651",
+                "bid": "4952.1839"
+            },
+            "MZN": {
+                "currencyname": "Mozambican Metical",
+                "ask": "8398.3391",
+                "bid": "8394.9805"
+            },
+            "HKD": {
+                "currencyname": "Hong Kong Dollar",
+                "ask": "1032.5941",
+                "bid": "1032.1811"
+            },
+            "TOP": {
+                "currencyname": "Tongan Pa\u02bbanga",
+                "ask": "311.4571",
+                "bid": "311.3326"
+            },
+            "PYG": {
+                "currencyname": "Paraguayan Guaran\u00ed",
+                "ask": "812088.8037",
+                "bid": "811764.0377"
+            },
+            "MXN": {
+                "currencyname": "Mexican Peso",
+                "ask": "2295.5441",
+                "bid": "2294.6261"
+            },
+            "GYD": {
+                "currencyname": "Guyanese Dollar",
+                "ask": "27538.5676",
+                "bid": "27527.5545"
+            },
+            "BGN": {
+                "currencyname": "Bulgarian Lev",
+                "ask": "223.1626",
+                "bid": "223.0734"
+            },
+            "FJD": {
+                "currencyname": "Fijian Dollar",
+                "ask": "292.3846",
+                "bid": "292.2676"
+            },
+            "FOK": {
+                "currencyname": "Faroese Kr\u00f3na",
+                "ask": "851.9576",
+                "bid": "851.6169"
+            },
+            "AWG": {
+                "currencyname": "Aruban Florin",
+                "ask": "235.8517",
+                "bid": "235.7574"
+            },
+            "UYU": {
+                "currencyname": "Uruguayan Peso",
+                "ask": "5331.2844",
+                "bid": "5329.1523"
+            },
+            "ETB": {
+                "currencyname": "Ethiopian Birr",
+                "ask": "20822.8260",
+                "bid": "20814.4987"
+            },
+            "SOS": {
+                "currencyname": "Somali Shilling",
+                "ask": "75221.0706",
+                "bid": "75190.9886"
+            },
+            "QAR": {
+                "currencyname": "Qatari Riyal",
+                "ask": "479.6090",
+                "bid": "479.4172"
+            },
+            "ANG": {
+                "currencyname": "Netherlands Antillean Guilder",
+                "ask": "235.8517",
+                "bid": "235.7574"
+            },
+            "GTQ": {
+                "currencyname": "Guatemalan Quetzal",
+                "ask": "1003.5093",
+                "bid": "1003.1080"
+            },
+            "PLN": {
+                "currencyname": "Polish Z\u0142oty",
+                "ask": "484.4678",
+                "bid": "484.2740"
+            },
+            "XOF": {
+                "currencyname": "West African CFA Franc",
+                "ask": "74845.5028",
+                "bid": "74815.5710"
+            },
+            "IDR": {
+                "currencyname": "Indonesian Rupiah",
+                "ask": "2360319.7460",
+                "bid": "2359375.8202"
+            },
+            "MNT": {
+                "currencyname": "Mongolian T\u00f6gr\u00f6g",
+                "ask": "474641.6784",
+                "bid": "474451.8624"
+            },
+            "TRY": {
+                "currencyname": "Turkish Lira",
+                "ask": "6080.1378",
+                "bid": "6077.7063"
+            },
+            "NPR": {
+                "currencyname": "Nepalese Rupee",
+                "ask": "20103.8175",
+                "bid": "20095.7777"
+            },
+            "CNH": {
+                "currencyname": "Chinese Yuan Offshore",
+                "ask": "893.0856",
+                "bid": "892.7284"
+            },
+            "LKR": {
+                "currencyname": "Sri Lankan Rupee",
+                "ask": "43713.9048",
+                "bid": "43696.4230"
+            },
+            "BOB": {
+                "currencyname": "Bolivian Boliviano",
+                "ask": "912.6325",
+                "bid": "912.2675"
+            },
+            "KHR": {
+                "currencyname": "Cambodian Riel",
+                "ask": "530255.8323",
+                "bid": "530043.7754"
+            },
+            "TTD": {
+                "currencyname": "Trinidad and Tobago Dollar",
+                "ask": "892.7074",
+                "bid": "892.3504"
+            },
+            "JEP": {
+                "currencyname": "Jersey Pound",
+                "ask": "98.4387",
+                "bid": "98.3994"
+            },
+            "LYD": {
+                "currencyname": "Libyan Dinar",
+                "ask": "838.6844",
+                "bid": "838.3490"
+            },
+            "COP": {
+                "currencyname": "Colombian Peso",
+                "ask": "470998.6394",
+                "bid": "470810.2803"
+            },
+            "BBD": {
+                "currencyname": "Barbadian Dollar",
+                "ask": "263.5214",
+                "bid": "263.4160"
+            },
+            "KES": {
+                "currencyname": "Kenyan Shilling",
+                "ask": "17033.6955",
+                "bid": "17026.8835"
+            },
+            "BYN": {
+                "currencyname": "Belarusian Ruble",
+                "ask": "363.4330",
+                "bid": "363.2877"
+            },
+            "MYR": {
+                "currencyname": "Malaysian Ringgit",
+                "ask": "535.6068",
+                "bid": "535.3926"
+            },
+            "MDL": {
+                "currencyname": "Moldovan Leu",
+                "ask": "2287.8502",
+                "bid": "2286.9352"
+            },
+            "PAB": {
+                "currencyname": "Panamanian Balboa",
+                "ask": "131.7607",
+                "bid": "131.7080"
+            },
+            "ERN": {
+                "currencyname": "Eritrean Nakfa",
+                "ask": "1976.4107",
+                "bid": "1975.6203"
+            },
+            "JPY": {
+                "currencyname": "Japanese Yen",
+                "ask": "21140.5016",
+                "bid": "21132.0472"
+            },
+            "FKP": {
+                "currencyname": "Falkland Islands Pound",
+                "ask": "98.4387",
+                "bid": "98.3994"
+            },
+            "MAD": {
+                "currencyname": "Moroccan Dirham",
+                "ask": "1219.6778",
+                "bid": "1219.1900"
+            },
+            "AFN": {
+                "currencyname": "Afghan Afghani",
+                "ask": "8445.0942",
+                "bid": "8441.7169"
+            },
+            "UZS": {
+                "currencyname": "Uzbekistani Som",
+                "ask": "1591404.1588",
+                "bid": "1590767.7334"
+            },
+            "SLL": {
+                "currencyname": "Sierra Leonean Leone (legacy)",
+                "ask": "3236338.6256",
+                "bid": "3235044.3673"
+            },
+            "ZMW": {
+                "currencyname": "Zambian Kwacha",
+                "ask": "2329.5991",
+                "bid": "2328.6674"
+            },
+            "BMD": {
+                "currencyname": "Bermudian Dollar",
+                "ask": "131.7607",
+                "bid": "131.7080"
+            },
+            "THB": {
+                "currencyname": "Thai Baht",
+                "ask": "4337.8697",
+                "bid": "4336.1349"
+            },
+            "VND": {
+                "currencyname": "Vietnamese Dong",
+                "ask": "3453697.7962",
+                "bid": "3452316.6129"
+            },
+            "RON": {
+                "currencyname": "Romanian Leu",
+                "ask": "597.3370",
+                "bid": "597.0981"
+            },
+            "STN": {
+                "currencyname": "S\u00e3o Tom\u00e9 and Pr\u00edncipe Dobra",
+                "ask": "2795.4802",
+                "bid": "2794.3623"
+            },
+            "SBD": {
+                "currencyname": "Solomon Islands Dollar",
+                "ask": "1057.3934",
+                "bid": "1056.9705"
+            },
+            "SDG": {
+                "currencyname": "Sudanese Pound",
+                "ask": "73553.5454",
+                "bid": "73524.1303"
+            },
+            "TMT": {
+                "currencyname": "Turkmenistan Manat",
+                "ask": "460.9516",
+                "bid": "460.7673"
+            },
+            "MOP": {
+                "currencyname": "Macanese Pataca",
+                "ask": "1063.5693",
+                "bid": "1063.1440"
+            },
+            "GHS": {
+                "currencyname": "Ghanaian Cedi",
+                "ask": "1518.9148",
+                "bid": "1518.3074"
+            },
+            "MVR": {
+                "currencyname": "Maldivian Rufiyaa",
+                "ask": "2034.5225",
+                "bid": "2033.7089"
+            },
+            "MUR": {
+                "currencyname": "Mauritian Rupee",
+                "ask": "6302.7665",
+                "bid": "6300.2459"
+            },
+            "GEL": {
+                "currencyname": "Georgian Lari",
+                "ask": "349.7319",
+                "bid": "349.5921"
+            },
+            "ZWG": {
+                "currencyname": "Zimbabwean Gold",
+                "ask": "3528.3148",
+                "bid": "3526.9037"
+            },
+            "SAR": {
+                "currencyname": "Saudi Riyal",
+                "ask": "494.1027",
+                "bid": "493.9051"
+            },
+            "TND": {
+                "currencyname": "Tunisian Dinar",
+                "ask": "385.1488",
+                "bid": "384.9948"
+            },
+            "KGS": {
+                "currencyname": "Kyrgyzstani Som",
+                "ask": "11523.1663",
+                "bid": "11518.5580"
+            },
+            "SZL": {
+                "currencyname": "Eswatini Lilangeni",
+                "ask": "2180.1261",
+                "bid": "2179.2542"
+            },
+            "SEK": {
+                "currencyname": "Swedish Krona",
+                "ask": "1250.5310",
+                "bid": "1250.0309"
+            },
+            "KRW": {
+                "currencyname": "South Korean Won",
+                "ask": "200520.2045",
+                "bid": "200440.0136"
+            },
+            "PKR": {
+                "currencyname": "Pakistani Rupee",
+                "ask": "36645.7686",
+                "bid": "36631.1134"
+            },
+            "MGA": {
+                "currencyname": "Malagasy Ariary",
+                "ask": "553678.7123",
+                "bid": "553457.2883"
+            },
+            "ZWL": {
+                "currencyname": "Zimbabwean Dollar",
+                "ask": "3528.3148",
+                "bid": "3526.9037"
+            },
+            "HTG": {
+                "currencyname": "Haitian Gourde",
+                "ask": "17222.3885",
+                "bid": "17215.5010"
+            },
+            "NOK": {
+                "currencyname": "Norwegian Krone",
+                "ask": "1248.0341",
+                "bid": "1247.5350"
+            },
+            "DZD": {
+                "currencyname": "Algerian Dinar",
+                "ask": "17595.8959",
+                "bid": "17588.8591"
+            },
+            "IQD": {
+                "currencyname": "Iraqi Dinar",
+                "ask": "172539.6151",
+                "bid": "172470.6140"
+            },
+            "GGP": {
+                "currencyname": "Guernsey Pound",
+                "ask": "98.4387",
+                "bid": "98.3994"
+            },
+            "XCG": {
+                "currencyname": "Netherlands Antillean Guilder",
+                "ask": "235.8517",
+                "bid": "235.7574"
+            },
+            "VES": {
+                "currencyname": "Venezuelan Bol\u00edvar Soberano",
+                "ask": "75456.5149",
+                "bid": "75426.3387"
+            },
+            "SLE": {
+                "currencyname": "Sierra Leonean Leone (new)",
+                "ask": "3236.3386",
+                "bid": "3235.0444"
+            },
+            "TZS": {
+                "currencyname": "Tanzanian Shilling",
+                "ask": "344697.2506",
+                "bid": "344559.4012"
+            },
+            "JMD": {
+                "currencyname": "Jamaican Dollar",
+                "ask": "20779.5438",
+                "bid": "20771.2337"
+            },
+            "UAH": {
+                "currencyname": "Ukrainian Hryvnia",
+                "ask": "5923.9322",
+                "bid": "5921.5631"
+            },
+            "MMK": {
+                "currencyname": "Myanmar Kyat",
+                "ask": "276544.8359",
+                "bid": "276434.2417"
+            },
+            "HUF": {
+                "currencyname": "Hungarian Forint",
+                "ask": "40629.9437",
+                "bid": "40613.6952"
+            },
+            "LBP": {
+                "currencyname": "Lebanese Pound",
+                "ask": "11792583.9030",
+                "bid": "11787867.8795"
+            },
+            "BIF": {
+                "currencyname": "Burundian Franc",
+                "ask": "393541.8266",
+                "bid": "393384.4436"
+            },
+            "RWF": {
+                "currencyname": "Rwandan Franc",
+                "ask": "193454.1832",
+                "bid": "193376.8181"
+            },
+            "XDR": {
+                "currencyname": "Special Drawing Rights",
+                "ask": "96.6252",
+                "bid": "96.5866"
+            },
+            "BZD": {
+                "currencyname": "Belize Dollar",
+                "ask": "263.5214",
+                "bid": "263.4160"
+            },
+            "LRD": {
+                "currencyname": "Liberian Dollar",
+                "ask": "23970.1567",
+                "bid": "23960.5707"
+            },
+            "XCD": {
+                "currencyname": "East Caribbean Dollar",
+                "ask": "355.7539",
+                "bid": "355.6117"
+            }
+        },
+        "Silver": {
+            "GMD": {
+                "currencyname": "Gambian Dalasi",
+                "ask": "153.8753",
+                "bid": "153.7522"
+            },
+            "HRK": {
+                "currencyname": "Croatian Kuna (legacy)",
+                "ask": "13.5465",
+                "bid": "13.5356"
+            },
+            "CLF": {
+                "currencyname": "Chilean Unit of Account",
+                "ask": "0.0482",
+                "bid": "0.0482"
+            },
+            "RUB": {
+                "currencyname": "Russian Ruble",
+                "ask": "149.4508",
+                "bid": "149.3312"
+            },
+            "KMF": {
+                "currencyname": "Comorian Franc",
+                "ask": "884.5218",
+                "bid": "883.8142"
+            },
+            "SHP": {
+                "currencyname": "Saint Helena Pound",
+                "ask": "1.5511",
+                "bid": "1.5499"
+            },
+            "ALL": {
+                "currencyname": "Albanian Lek",
+                "ask": "170.8971",
+                "bid": "170.7604"
+            },
+            "PGK": {
+                "currencyname": "Papua New Guinean Kina",
+                "ask": "9.1995",
+                "bid": "9.1921"
+            },
+            "NIO": {
+                "currencyname": "Nicaraguan C\u00f3rdoba",
+                "ask": "76.3342",
+                "bid": "76.2732"
+            },
+            "KWD": {
+                "currencyname": "Kuwaiti Dinar",
+                "ask": "0.6405",
+                "bid": "0.6400"
+            },
+            "ARS": {
+                "currencyname": "Argentine Peso",
+                "ask": "3002.5199",
+                "bid": "3000.1179"
+            },
+            "MWK": {
+                "currencyname": "Malawian Kwacha",
+                "ask": "3610.7878",
+                "bid": "3607.8991"
+            },
+            "DKK": {
+                "currencyname": "Danish Krone",
+                "ask": "13.4245",
+                "bid": "13.4138"
+            },
+            "CVE": {
+                "currencyname": "Cape Verdean Escudo",
+                "ask": "198.2484",
+                "bid": "198.0898"
+            },
+            "HNL": {
+                "currencyname": "Honduran Lempira",
+                "ask": "55.4609",
+                "bid": "55.4165"
+            },
+            "XPF": {
+                "currencyname": "CFP Franc",
+                "ask": "214.5502",
+                "bid": "214.3785"
+            },
+            "SSP": {
+                "currencyname": "South Sudanese Pound",
+                "ask": "9784.4278",
+                "bid": "9776.6000"
+            },
+            "ILS": {
+                "currencyname": "Israeli New Shekel",
+                "ask": "6.1662",
+                "bid": "6.1612"
+            },
+            "AUD": {
+                "currencyname": "Australian Dollar",
+                "ask": "2.9605",
+                "bid": "2.9581"
+            },
+            "KYD": {
+                "currencyname": "Cayman Islands Dollar",
+                "ask": "1.7302",
+                "bid": "1.7288"
+            },
+            "BND": {
+                "currencyname": "Brunei Dollar",
+                "ask": "2.6721",
+                "bid": "2.6699"
+            },
+            "ISK": {
+                "currencyname": "Icelandic Kr\u00f3na",
+                "ask": "257.7207",
+                "bid": "257.5145"
+            },
+            "VUV": {
+                "currencyname": "Vanuatu Vatu",
+                "ask": "249.0273",
+                "bid": "248.8280"
+            },
+            "SCR": {
+                "currencyname": "Seychellois Rupee",
+                "ask": "29.4224",
+                "bid": "29.3988"
+            },
+            "DJF": {
+                "currencyname": "Djiboutian Franc",
+                "ask": "368.9829",
+                "bid": "368.6877"
+            },
+            "BRL": {
+                "currencyname": "Brazilian Real",
+                "ask": "10.7396",
+                "bid": "10.7310"
+            },
+            "XAF": {
+                "currencyname": "Central African CFA Franc",
+                "ask": "1179.3624",
+                "bid": "1178.4189"
+            },
+            "AMD": {
+                "currencyname": "Armenian Dram",
+                "ask": "764.7304",
+                "bid": "764.1186"
+            },
+            "GNF": {
+                "currencyname": "Guinean Franc",
+                "ask": "18178.7307",
+                "bid": "18164.1873"
+            },
+            "CAD": {
+                "currencyname": "Canadian Dollar",
+                "ask": "2.8929",
+                "bid": "2.8906"
+            },
+            "ZAR": {
+                "currencyname": "South African Rand",
+                "ask": "34.3530",
+                "bid": "34.3255"
+            },
+            "BSD": {
+                "currencyname": "Bahamian Dollar",
+                "ask": "2.0762",
+                "bid": "2.0745"
+            },
+            "RSD": {
+                "currencyname": "Serbian Dinar",
+                "ask": "210.7626",
+                "bid": "210.5940"
+            },
+            "SYP": {
+                "currencyname": "Syrian Pound",
+                "ask": "238.0662",
+                "bid": "237.8757"
+            },
+            "EGP": {
+                "currencyname": "Egyptian Pound",
+                "ask": "107.4962",
+                "bid": "107.4102"
+            },
+            "YER": {
+                "currencyname": "Yemeni Rial",
+                "ask": "494.8127",
+                "bid": "494.4168"
+            },
+            "KZT": {
+                "currencyname": "Kazakhstani Tenge",
+                "ask": "1013.1952",
+                "bid": "1012.3846"
+            },
+            "AOA": {
+                "currencyname": "Angolan Kwanza",
+                "ask": "1919.4508",
+                "bid": "1917.9152"
+            },
+            "BHD": {
+                "currencyname": "Bahraini Dinar",
+                "ask": "0.7806",
+                "bid": "0.7800"
+            },
+            "TWD": {
+                "currencyname": "New Taiwan Dollar",
+                "ask": "65.6802",
+                "bid": "65.6277"
+            },
+            "WST": {
+                "currencyname": "Samoan Tala",
+                "ask": "5.6539",
+                "bid": "5.6494"
+            },
+            "KID": {
+                "currencyname": "Kiribati Dollar",
+                "ask": "2.9602",
+                "bid": "2.9579"
+            },
+            "JOD": {
+                "currencyname": "Jordanian Dinar",
+                "ask": "1.4720",
+                "bid": "1.4708"
+            },
+            "BTN": {
+                "currencyname": "Bhutanese Ngultrum",
+                "ask": "197.9886",
+                "bid": "197.8302"
+            },
+            "LAK": {
+                "currencyname": "Laotian Kip",
+                "ask": "45580.6336",
+                "bid": "45544.1681"
+            },
+            "GBP": {
+                "currencyname": "British Pound Sterling",
+                "ask": "1.5512",
+                "bid": "1.5499"
+            },
+            "CUP": {
+                "currencyname": "Cuban Peso",
+                "ask": "49.8286",
+                "bid": "49.7887"
+            },
+            "AZN": {
+                "currencyname": "Azerbaijani Manat",
+                "ask": "3.5270",
+                "bid": "3.5242"
+            },
+            "BWP": {
+                "currencyname": "Botswana Pula",
+                "ask": "28.6472",
+                "bid": "28.6243"
+            },
+            "MRU": {
+                "currencyname": "Mauritanian Ouguiya",
+                "ask": "83.4439",
+                "bid": "83.3772"
+            },
+            "SGD": {
+                "currencyname": "Singapore Dollar",
+                "ask": "2.6721",
+                "bid": "2.6700"
+            },
+            "BAM": {
+                "currencyname": "Bosnia-Herzegovina Convertible Mark",
+                "ask": "3.5164",
+                "bid": "3.5136"
+            },
+            "CZK": {
+                "currencyname": "Czech Koruna",
+                "ask": "43.4539",
+                "bid": "43.4191"
+            },
+            "NGN": {
+                "currencyname": "Nigerian Naira",
+                "ask": "2821.7225",
+                "bid": "2819.4651"
+            },
+            "CLP": {
+                "currencyname": "Chilean Peso",
+                "ask": "1905.2673",
+                "bid": "1903.7430"
+            },
+            "NAD": {
+                "currencyname": "Namibian Dollar",
+                "ask": "34.3529",
+                "bid": "34.3254"
+            },
+            "TVD": {
+                "currencyname": "Tuvaluan Dollar",
+                "ask": "2.9602",
+                "bid": "2.9579"
+            },
+            "LSL": {
+                "currencyname": "Lesotho Loti",
+                "ask": "34.3529",
+                "bid": "34.3254"
+            },
+            "BDT": {
+                "currencyname": "Bangladeshi Taka",
+                "ask": "255.0153",
+                "bid": "254.8113"
+            },
+            "CHF": {
+                "currencyname": "Swiss Franc",
+                "ask": "1.6586",
+                "bid": "1.6573"
+            },
+            "CRC": {
+                "currencyname": "Costa Rican Col\u00f3n",
+                "ask": "952.0796",
+                "bid": "951.3179"
+            },
+            "CDF": {
+                "currencyname": "Congolese Franc",
+                "ask": "4750.8335",
+                "bid": "4747.0327"
+            },
+            "PHP": {
+                "currencyname": "Philippine Peso",
+                "ask": "127.4381",
+                "bid": "127.3361"
+            },
+            "UGX": {
+                "currencyname": "Ugandan Shilling",
+                "ask": "7769.5278",
+                "bid": "7763.3120"
+            },
+            "TJS": {
+                "currencyname": "Tajikistani Somoni",
+                "ask": "19.3606",
+                "bid": "19.3451"
+            },
+            "PEN": {
+                "currencyname": "Peruvian Sol",
+                "ask": "7.0655",
+                "bid": "7.0599"
+            },
+            "DOP": {
+                "currencyname": "Dominican Peso",
+                "ask": "120.9979",
+                "bid": "120.9011"
+            },
+            "INR": {
+                "currencyname": "Indian Rupee",
+                "ask": "197.9799",
+                "bid": "197.8215"
+            },
+            "CNY": {
+                "currencyname": "Chinese Yuan",
+                "ask": "14.0948",
+                "bid": "14.0835"
+            },
+            "GIP": {
+                "currencyname": "Gibraltar Pound",
+                "ask": "1.5511",
+                "bid": "1.5499"
+            },
+            "OMR": {
+                "currencyname": "Omani Rial",
+                "ask": "0.7983",
+                "bid": "0.7977"
+            },
+            "IMP": {
+                "currencyname": "Isle of Man Pound",
+                "ask": "1.5511",
+                "bid": "1.5499"
+            },
+            "NZD": {
+                "currencyname": "New Zealand Dollar",
+                "ask": "3.5716",
+                "bid": "3.5687"
+            },
+            "AED": {
+                "currencyname": "United Arab Emirates Dirham",
+                "ask": "7.6248",
+                "bid": "7.6187"
+            },
+            "MKD": {
+                "currencyname": "Macedonian Denar",
+                "ask": "110.5458",
+                "bid": "110.4574"
+            },
+            "EUR": {
+                "currencyname": "Euro",
+                "ask": "1.7979",
+                "bid": "1.7965"
+            },
+            "USD": {
+                "currencyname": "United States Dollar",
+                "ask": "2.0762",
+                "bid": "2.0745"
+            },
+            "IRR": {
+                "currencyname": "Iranian Rial",
+                "ask": "2799951.1933",
+                "bid": "2797711.1698"
+            },
+            "SRD": {
+                "currencyname": "Surinamese Dollar",
+                "ask": "78.0642",
+                "bid": "78.0018"
+            },
+            "MZN": {
+                "currencyname": "Mozambican Metical",
+                "ask": "132.3351",
+                "bid": "132.2292"
+            },
+            "HKD": {
+                "currencyname": "Hong Kong Dollar",
+                "ask": "16.2709",
+                "bid": "16.2579"
+            },
+            "TOP": {
+                "currencyname": "Tongan Pa\u02bbanga",
+                "ask": "4.9077",
+                "bid": "4.9038"
+            },
+            "PYG": {
+                "currencyname": "Paraguayan Guaran\u00ed",
+                "ask": "12796.3201",
+                "bid": "12786.0828"
+            },
+            "MXN": {
+                "currencyname": "Mexican Peso",
+                "ask": "36.1716",
+                "bid": "36.1426"
+            },
+            "GYD": {
+                "currencyname": "Guyanese Dollar",
+                "ask": "433.9332",
+                "bid": "433.5861"
+            },
+            "BGN": {
+                "currencyname": "Bulgarian Lev",
+                "ask": "3.5164",
+                "bid": "3.5136"
+            },
+            "FJD": {
+                "currencyname": "Fijian Dollar",
+                "ask": "4.6072",
+                "bid": "4.6035"
+            },
+            "FOK": {
+                "currencyname": "Faroese Kr\u00f3na",
+                "ask": "13.4245",
+                "bid": "13.4138"
+            },
+            "AWG": {
+                "currencyname": "Aruban Florin",
+                "ask": "3.7164",
+                "bid": "3.7134"
+            },
+            "UYU": {
+                "currencyname": "Uruguayan Peso",
+                "ask": "84.0066",
+                "bid": "83.9394"
+            },
+            "ETB": {
+                "currencyname": "Ethiopian Birr",
+                "ask": "328.1113",
+                "bid": "327.8488"
+            },
+            "SOS": {
+                "currencyname": "Somali Shilling",
+                "ask": "1185.2803",
+                "bid": "1184.3321"
+            },
+            "QAR": {
+                "currencyname": "Qatari Riyal",
+                "ask": "7.5573",
+                "bid": "7.5513"
+            },
+            "ANG": {
+                "currencyname": "Netherlands Antillean Guilder",
+                "ask": "3.7164",
+                "bid": "3.7134"
+            },
+            "GTQ": {
+                "currencyname": "Guatemalan Quetzal",
+                "ask": "15.8126",
+                "bid": "15.7999"
+            },
+            "PLN": {
+                "currencyname": "Polish Z\u0142oty",
+                "ask": "7.6339",
+                "bid": "7.6278"
+            },
+            "XOF": {
+                "currencyname": "West African CFA Franc",
+                "ask": "1179.3624",
+                "bid": "1178.4189"
+            },
+            "IDR": {
+                "currencyname": "Indonesian Rupiah",
+                "ask": "37192.2467",
+                "bid": "37162.4920"
+            },
+            "MNT": {
+                "currencyname": "Mongolian T\u00f6gr\u00f6g",
+                "ask": "7479.0674",
+                "bid": "7473.0839"
+            },
+            "TRY": {
+                "currencyname": "Turkish Lira",
+                "ask": "95.8065",
+                "bid": "95.7299"
+            },
+            "NPR": {
+                "currencyname": "Nepalese Rupee",
+                "ask": "316.7817",
+                "bid": "316.5283"
+            },
+            "CNH": {
+                "currencyname": "Chinese Yuan Offshore",
+                "ask": "14.0726",
+                "bid": "14.0614"
+            },
+            "LKR": {
+                "currencyname": "Sri Lankan Rupee",
+                "ask": "688.8127",
+                "bid": "688.2617"
+            },
+            "BOB": {
+                "currencyname": "Bolivian Boliviano",
+                "ask": "14.3806",
+                "bid": "14.3691"
+            },
+            "KHR": {
+                "currencyname": "Cambodian Riel",
+                "ask": "8355.3958",
+                "bid": "8348.7113"
+            },
+            "TTD": {
+                "currencyname": "Trinidad and Tobago Dollar",
+                "ask": "14.0667",
+                "bid": "14.0554"
+            },
+            "JEP": {
+                "currencyname": "Jersey Pound",
+                "ask": "1.5511",
+                "bid": "1.5499"
+            },
+            "LYD": {
+                "currencyname": "Libyan Dinar",
+                "ask": "13.2154",
+                "bid": "13.2048"
+            },
+            "COP": {
+                "currencyname": "Colombian Peso",
+                "ask": "7421.6629",
+                "bid": "7415.7254"
+            },
+            "BBD": {
+                "currencyname": "Barbadian Dollar",
+                "ask": "4.1524",
+                "bid": "4.1491"
+            },
+            "KES": {
+                "currencyname": "Kenyan Shilling",
+                "ask": "268.4049",
+                "bid": "268.1902"
+            },
+            "BYN": {
+                "currencyname": "Belarusian Ruble",
+                "ask": "5.7267",
+                "bid": "5.7221"
+            },
+            "MYR": {
+                "currencyname": "Malaysian Ringgit",
+                "ask": "8.4397",
+                "bid": "8.4330"
+            },
+            "MDL": {
+                "currencyname": "Moldovan Leu",
+                "ask": "36.0503",
+                "bid": "36.0215"
+            },
+            "PAB": {
+                "currencyname": "Panamanian Balboa",
+                "ask": "2.0762",
+                "bid": "2.0745"
+            },
+            "ERN": {
+                "currencyname": "Eritrean Nakfa",
+                "ask": "31.1429",
+                "bid": "31.1180"
+            },
+            "JPY": {
+                "currencyname": "Japanese Yen",
+                "ask": "333.1170",
+                "bid": "332.8505"
+            },
+            "FKP": {
+                "currencyname": "Falkland Islands Pound",
+                "ask": "1.5511",
+                "bid": "1.5499"
+            },
+            "MAD": {
+                "currencyname": "Moroccan Dirham",
+                "ask": "19.2188",
+                "bid": "19.2034"
+            },
+            "AFN": {
+                "currencyname": "Afghan Afghani",
+                "ask": "133.0718",
+                "bid": "132.9654"
+            },
+            "UZS": {
+                "currencyname": "Uzbekistani Som",
+                "ask": "25076.2195",
+                "bid": "25056.1579"
+            },
+            "SLL": {
+                "currencyname": "Sierra Leonean Leone (legacy)",
+                "ask": "50995.9316",
+                "bid": "50955.1338"
+            },
+            "ZMW": {
+                "currencyname": "Zambian Kwacha",
+                "ask": "36.7082",
+                "bid": "36.6788"
+            },
+            "BMD": {
+                "currencyname": "Bermudian Dollar",
+                "ask": "2.0762",
+                "bid": "2.0745"
+            },
+            "THB": {
+                "currencyname": "Thai Baht",
+                "ask": "68.3531",
+                "bid": "68.2984"
+            },
+            "VND": {
+                "currencyname": "Vietnamese Dong",
+                "ask": "54420.9235",
+                "bid": "54377.3855"
+            },
+            "RON": {
+                "currencyname": "Romanian Leu",
+                "ask": "9.4124",
+                "bid": "9.4049"
+            },
+            "STN": {
+                "currencyname": "S\u00e3o Tom\u00e9 and Pr\u00edncipe Dobra",
+                "ask": "44.0492",
+                "bid": "44.0140"
+            },
+            "SBD": {
+                "currencyname": "Solomon Islands Dollar",
+                "ask": "16.6617",
+                "bid": "16.6483"
+            },
+            "SDG": {
+                "currencyname": "Sudanese Pound",
+                "ask": "1159.0047",
+                "bid": "1158.0774"
+            },
+            "TMT": {
+                "currencyname": "Turkmenistan Manat",
+                "ask": "7.2633",
+                "bid": "7.2575"
+            },
+            "MOP": {
+                "currencyname": "Macanese Pataca",
+                "ask": "16.7590",
+                "bid": "16.7456"
+            },
+            "GHS": {
+                "currencyname": "Ghanaian Cedi",
+                "ask": "23.9340",
+                "bid": "23.9148"
+            },
+            "MVR": {
+                "currencyname": "Maldivian Rufiyaa",
+                "ask": "32.0586",
+                "bid": "32.0329"
+            },
+            "MUR": {
+                "currencyname": "Mauritian Rupee",
+                "ask": "99.3145",
+                "bid": "99.2351"
+            },
+            "GEL": {
+                "currencyname": "Georgian Lari",
+                "ask": "5.5108",
+                "bid": "5.5064"
+            },
+            "ZWG": {
+                "currencyname": "Zimbabwean Gold",
+                "ask": "55.5967",
+                "bid": "55.5522"
+            },
+            "SAR": {
+                "currencyname": "Saudi Riyal",
+                "ask": "7.7857",
+                "bid": "7.7795"
+            },
+            "TND": {
+                "currencyname": "Tunisian Dinar",
+                "ask": "6.0689",
+                "bid": "6.0640"
+            },
+            "KGS": {
+                "currencyname": "Kyrgyzstani Som",
+                "ask": "181.5739",
+                "bid": "181.4286"
+            },
+            "SZL": {
+                "currencyname": "Eswatini Lilangeni",
+                "ask": "34.3529",
+                "bid": "34.3254"
+            },
+            "SEK": {
+                "currencyname": "Swedish Krona",
+                "ask": "19.7050",
+                "bid": "19.6892"
+            },
+            "KRW": {
+                "currencyname": "South Korean Won",
+                "ask": "3159.6553",
+                "bid": "3157.1276"
+            },
+            "PKR": {
+                "currencyname": "Pakistani Rupee",
+                "ask": "577.4381",
+                "bid": "576.9761"
+            },
+            "MGA": {
+                "currencyname": "Malagasy Ariary",
+                "ask": "8724.4770",
+                "bid": "8717.4972"
+            },
+            "ZWL": {
+                "currencyname": "Zimbabwean Dollar",
+                "ask": "55.5967",
+                "bid": "55.5522"
+            },
+            "HTG": {
+                "currencyname": "Haitian Gourde",
+                "ask": "271.3782",
+                "bid": "271.1611"
+            },
+            "NOK": {
+                "currencyname": "Norwegian Krone",
+                "ask": "19.6656",
+                "bid": "19.6499"
+            },
+            "DZD": {
+                "currencyname": "Algerian Dinar",
+                "ask": "277.2637",
+                "bid": "277.0418"
+            },
+            "IQD": {
+                "currencyname": "Iraqi Dinar",
+                "ask": "2718.7570",
+                "bid": "2716.5820"
+            },
+            "GGP": {
+                "currencyname": "Guernsey Pound",
+                "ask": "1.5511",
+                "bid": "1.5499"
+            },
+            "XCG": {
+                "currencyname": "Netherlands Antillean Guilder",
+                "ask": "3.7164",
+                "bid": "3.7134"
+            },
+            "VES": {
+                "currencyname": "Venezuelan Bol\u00edvar Soberano",
+                "ask": "1188.9903",
+                "bid": "1188.0391"
+            },
+            "SLE": {
+                "currencyname": "Sierra Leonean Leone (new)",
+                "ask": "50.9959",
+                "bid": "50.9551"
+            },
+            "TZS": {
+                "currencyname": "Tanzanian Shilling",
+                "ask": "5431.4951",
+                "bid": "5427.1498"
+            },
+            "JMD": {
+                "currencyname": "Jamaican Dollar",
+                "ask": "327.4293",
+                "bid": "327.1674"
+            },
+            "UAH": {
+                "currencyname": "Ukrainian Hryvnia",
+                "ask": "93.3451",
+                "bid": "93.2704"
+            },
+            "MMK": {
+                "currencyname": "Myanmar Kyat",
+                "ask": "4357.5976",
+                "bid": "4354.1115"
+            },
+            "HUF": {
+                "currencyname": "Hungarian Forint",
+                "ask": "640.2179",
+                "bid": "639.7057"
+            },
+            "LBP": {
+                "currencyname": "Lebanese Pound",
+                "ask": "185819.1840",
+                "bid": "185670.5245"
+            },
+            "BIF": {
+                "currencyname": "Burundian Franc",
+                "ask": "6201.1533",
+                "bid": "6196.1923"
+            },
+            "RWF": {
+                "currencyname": "Rwandan Franc",
+                "ask": "3048.3140",
+                "bid": "3045.8753"
+            },
+            "XDR": {
+                "currencyname": "Special Drawing Rights",
+                "ask": "1.5226",
+                "bid": "1.5213"
+            },
+            "BZD": {
+                "currencyname": "Belize Dollar",
+                "ask": "4.1524",
+                "bid": "4.1491"
+            },
+            "LRD": {
+                "currencyname": "Liberian Dollar",
+                "ask": "377.7048",
+                "bid": "377.4026"
+            },
+            "XCD": {
+                "currencyname": "East Caribbean Dollar",
+                "ask": "5.6057",
+                "bid": "5.6012"
+            }
+        }
+    }
+}
