@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from customer_wallet.models import CustomerWallet, CustomerDemoWallet
 from customer_transaction.models import CustomerTransaction, TransactionAutoSellHistory, CustomerDemoTransaction, DemoTransactionAutoSellHistory
 from utility.views import RandomIdGenerate, current_date, Utility, CustomerUtil
-import json, requests
+import json, requests, sys
 from django.http.response import JsonResponse
 from rest_framework import status
 from django.db import transaction
@@ -62,7 +62,15 @@ class Pages:
         od_obj = OrderList()
         orders = od_obj.get_live_orders(request, customer)
 
-        return render(request,'digital-investment/live-orders.html',{'wallet_balance':wallet_balance, 'orders':orders})
+        wallet_model = CustomerDemoWallet if getattr(request, "is_demo_account", False) else CustomerWallet
+        wallet, _ = wallet_model.objects.get_or_create(customer=customer)
+        stop_loss_percentage = wallet.stop_loss_percentage
+
+        return render(request,'digital-investment/live-orders.html',{
+            'wallet_balance': wallet_balance,
+            'orders': orders,
+            'stop_loss_percentage': stop_loss_percentage
+        })
     
     def past_orders(self,request):
         if request.trading_error:
@@ -185,13 +193,13 @@ class TransactionBuySell:
         membership = wallet.current_membership
 
         try:
-            # 🔥 LIVE GOLD RATE
+            # 🔥 LIVE RATE
             metal = getMetalRate()
-            metal_rate = metal["buy_gold_rate"] if metal_type == 'GOLD' else metal["buy_silver_rate"]
+            if order_type == "BOOKING":
+                metal_rate = metal["buy_gold_rate"] if metal_type == 'GOLD' else metal["buy_silver_rate"]
+            else:
+                metal_rate = metal["sell_gold_rate"] if metal_type == 'GOLD' else metal["sell_silver_rate"]
             currency = metal["currency"]
-            # metal_rate = Decimal(160.41)
-            # currency = 'USD'
-            # metal_value = metal_rate * gm
             metal_value = metal_rate
 
             # 💰 CALCULATION
@@ -299,7 +307,10 @@ class TransactionBuySell:
 
             # 🔥 Live rate
             metal = getMetalRate()
-            current_metal_rate = metal["sell_gold_rate"] if metal_type == 'GOLD' else metal["sell_silver_rate"]
+            if buy_txn.order_type == "BOOKING":
+                current_metal_rate = metal["buy_gold_rate"] if metal_type == 'GOLD' else metal["buy_silver_rate"]
+            else:
+                current_metal_rate = metal["sell_gold_rate"] if metal_type == 'GOLD' else metal["sell_silver_rate"]
             # print('current_metal_rate :: ',current_metal_rate)
             # current_metal_rate = Decimal(158.04)
 
@@ -434,11 +445,18 @@ class OrderList:
 
         orders = get_active_live_orders(request, customer)
 
+        try:
+            metal = getMetalRate()
+        except Exception:
+            return JsonResponse({"status": False, "message": "Unable to fetch gold rate"})
+
         data = []
         for o in orders:
             try:
-                metal = getMetalRate()
-                current_metal_rate = metal["sell_gold_rate"] if o.metal_type == 'GOLD' else metal["sell_silver_rate"]
+                if o.order_type == "BOOKING":
+                    current_metal_rate = metal["buy_gold_rate"] if o.metal_type == 'GOLD' else metal["buy_silver_rate"]
+                else:
+                    current_metal_rate = metal["sell_gold_rate"] if o.metal_type == 'GOLD' else metal["sell_silver_rate"]
                 # current_metal_rate = Decimal(158.04)
             except Exception:
                 return JsonResponse({"status": False, "message": "Unable to fetch gold rate"})
@@ -485,11 +503,11 @@ class OrderList:
         # 📈 Current metal rate
         try:
             metal = getMetalRate()
-            current_metal_rate = metal["sell_gold_rate"] if order.metal_type == 'GOLD' else metal["sell_silver_rate"]
-            currency = metal["currency"]
-            # current_metal_rate = Decimal(158.04)
-            # currency = 'USD'
-            currency_icon = '$' if currency == 'USD' else '₹'
+            if order.order_type == "BOOKING":
+                current_metal_rate = metal["buy_gold_rate"] if order.metal_type == 'GOLD' else metal["buy_silver_rate"]
+            else:
+                current_metal_rate = metal["sell_gold_rate"] if order.metal_type == 'GOLD' else metal["sell_silver_rate"]
+            currency_icon = metal["currency_icon"]
         except Exception:
             return JsonResponse({
                 "status": False,
@@ -662,29 +680,101 @@ def getMetalRate():
         # silver = gsjm.get("Silver", {}).get("INR")
         gold = gsjm.get("Gold", {}).get("USD")
         silver = gsjm.get("Silver", {}).get("USD")
-        currency = 'USD'
 
         if not gold or not silver:
             raise ValueError("Metal data missing")
         
-        # print('buy_gold_rate :: ',Decimal(gold["ask"]))
-        # print('sell_gold_rate :: ',Decimal(gold["bid"]))
-        # print('buy_silver_rate :: ',Decimal(silver["ask"]))
-        # print('sell_silver_rate :: ',Decimal(silver["bid"]))
+        usd_to_inr = Decimal("83.00")
+        try:
+            from portal_misc.models import CompanyBankDetails
+            bank = CompanyBankDetails.objects.first()
+            if bank and bank.dollar_rate:
+                usd_to_inr = Decimal(str(bank.dollar_rate))
+        except Exception:
+            pass
 
-        currency_icon = '$' if currency == 'USD' else '₹'
+        # Ask and bid rates from API (converted via raw per gram * 31.10 / 31.1035)
+        ounce_weight = Decimal("31.1035")
+        mult_factor = Decimal("31.10")
 
-        spread = Decimal(str(settings.ORDER_SPREAD_POINTS))
+        gold_ask = (Decimal(gold["ask"]) * mult_factor) / ounce_weight
+        gold_bid = (Decimal(gold["bid"]) * mult_factor) / ounce_weight
+        silver_ask = (Decimal(silver["ask"]) * mult_factor) / ounce_weight
+        silver_bid = (Decimal(silver["bid"]) * mult_factor) / ounce_weight
 
-        raw_buy_gold   = (Decimal(gold["ask"])   * Decimal(31.10)).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP)
-        raw_buy_silver = (Decimal(silver["ask"]) * Decimal(31.10)).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP)
+        currency = 'INR'
+        currency_icon = '₹'
+
+        spread_points = Decimal("200")
+        try:
+            from portal_misc.models import CompanyBankDetails
+            bank = CompanyBankDetails.objects.first()
+            if bank and bank.spread is not None:
+                spread_points = Decimal(str(bank.spread))
+        except Exception:
+            pass
+
+        # Spread in INR = (spread_points / 31.1035) * usd_to_inr
+        spread_in_inr_gold = (spread_points / ounce_weight) * usd_to_inr
+        
+        # Scale the spread for Silver proportionally to maintain the same percentage margin and prevent negative rates
+        ratio = gold_ask / silver_ask if silver_ask > 0 else Decimal("65")
+        spread_in_inr_silver = spread_in_inr_gold / ratio
+
+        # Base INR rates per gram
+        base_gold_ask_inr = gold_ask * usd_to_inr
+        base_gold_bid_inr = gold_bid * usd_to_inr
+        base_silver_ask_inr = silver_ask * usd_to_inr
+        base_silver_bid_inr = silver_bid * usd_to_inr
+
+        # Rate calculations per gram in INR
+        buy_gold_rate = base_gold_ask_inr - spread_in_inr_gold
+        sell_gold_rate = base_gold_bid_inr + spread_in_inr_gold
+        buy_silver_rate = base_silver_ask_inr - spread_in_inr_silver
+        sell_silver_rate = base_silver_bid_inr + spread_in_inr_silver
+
+        # Logs and console prints
+        log_msg = (
+            f"\n========================================\n"
+            f"METAL RATE API CONVERSION LOGS:\n"
+            f"Raw API Gold Ask: {gold['ask']} USD, Bid: {gold['bid']} USD\n"
+            f"Raw API Silver Ask: {silver['ask']} USD, Bid: {silver['bid']} USD\n"
+            f"Exchange Rate (usd_to_inr): {usd_to_inr}\n"
+            f"Spread Points (from DB): {spread_points}\n"
+            f"----------------------------------------\n"
+            f"Calculations (USD/ounce = USD/gm * 31.10):\n"
+            f"Gold Ask (USD/ounce): {Decimal(gold['ask']) * mult_factor}\n"
+            f"Gold Bid (USD/ounce): {Decimal(gold['bid']) * mult_factor}\n"
+            f"----------------------------------------\n"
+            f"Conversion to USD/gm (divided by 31.1035):\n"
+            f"Gold Ask: {gold_ask} USD/gm\n"
+            f"Gold Bid: {gold_bid} USD/gm\n"
+            f"----------------------------------------\n"
+            f"Conversion to INR/gm (* {usd_to_inr}):\n"
+            f"Base Gold Ask INR: {base_gold_ask_inr} INR/gm\n"
+            f"Base Gold Bid INR: {base_gold_bid_inr} INR/gm\n"
+            f"----------------------------------------\n"
+            f"Spread in INR per gram (points / 31.1035 * exchange_rate):\n"
+            f"Gold Spread: {spread_in_inr_gold} INR/gm\n"
+            f"Silver Spread: {spread_in_inr_silver} INR/gm\n"
+            f"----------------------------------------\n"
+            f"Final Rates after Spread:\n"
+            f"Buy Gold Rate: {buy_gold_rate} INR/gm\n"
+            f"Sell Gold Rate: {sell_gold_rate} INR/gm\n"
+            f"Buy Silver Rate: {buy_silver_rate} INR/gm\n"
+            f"Sell Silver Rate: {sell_silver_rate} INR/gm\n"
+            f"========================================\n"
+        )
+        logger.info(log_msg)
+        print(log_msg)
+        sys.stdout.flush()
 
         return {
-            "buy_gold_rate":    (raw_buy_gold   + spread).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "sell_gold_rate":   (Decimal(gold["bid"])   * Decimal(31.10)).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "buy_silver_rate":  (raw_buy_silver + spread).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "sell_silver_rate": (Decimal(silver["bid"]) * Decimal(31.10)).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "spread": spread,
+            "buy_gold_rate":    (buy_gold_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "sell_gold_rate":   (sell_gold_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "buy_silver_rate":  (buy_silver_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "sell_silver_rate": (sell_silver_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "spread": spread_points,
             "currency": currency,
             "currency_icon": currency_icon
         }
@@ -698,8 +788,7 @@ def getMetalData(request):
         metal = getMetalRate()
         current_gold_rate = metal["buy_gold_rate"]
         current_silver_rate = metal["buy_silver_rate"]
-        currency = metal["currency"]
-        currency_icon = '$' if currency == 'USD' else '₹'
+        currency_icon = metal["currency_icon"]
     except Exception:
         return JsonResponse({
             "status": False,
@@ -730,6 +819,15 @@ def calculate_order(gm, membership, metal_type):
     actual_service_fee = (service_fee - (Decimal(gst) + Decimal(reward))).quantize(Decimal("0.0"),rounding=ROUND_HALF_UP)
     market_amount = (order_amt - service_fee).quantize(Decimal("0"),rounding=ROUND_HALF_UP)
 
+    spread_val = 200
+    try:
+        from portal_misc.models import CompanyBankDetails
+        bank = CompanyBankDetails.objects.first()
+        if bank and bank.spread is not None:
+            spread_val = bank.spread
+    except Exception:
+        pass
+
     return {
         "status": True,
         "order_amt": order_amt,
@@ -738,7 +836,7 @@ def calculate_order(gm, membership, metal_type):
         "gst": gst,
         "reward": reward,
         "actual_service_fee": actual_service_fee,
-        "spread": str(settings.ORDER_SPREAD_POINTS),
+        "spread": str(spread_val),
     }
 
 def get_active_live_orders(request, customer, metal_type="GOLD"):
@@ -787,7 +885,19 @@ def get_active_live_orders(request, customer, metal_type="GOLD"):
 #     }
 
 def calculate_live_pnl(order, current_metal_rate):
-    buy_metal_value = (order.metal_rate_per_gm).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+    buy_rate = order.metal_rate_per_gm
+    if getattr(order, 'currency', 'INR') == 'USD':
+        usd_to_inr = Decimal("83.00")
+        try:
+            from portal_misc.models import CompanyBankDetails
+            bank = CompanyBankDetails.objects.first()
+            if bank and bank.dollar_rate:
+                usd_to_inr = Decimal(str(bank.dollar_rate))
+        except Exception:
+            pass
+        buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
+
+    buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
     sell_metal_value = (current_metal_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
     # 🔁 Direction depends on order type
@@ -799,8 +909,12 @@ def calculate_live_pnl(order, current_metal_rate):
     pnl_amount = (order.quantity_gm * diff).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP)
 
     pnl_percent = Decimal("0.0")
-    if buy_metal_value > 0:
+    if buy_metal_value > 0 and order.market_amount > 0:
         pnl_percent = (pnl_amount / order.market_amount * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if pnl_percent > Decimal("9999.99"):
+            pnl_percent = Decimal("9999.99")
+        elif pnl_percent < Decimal("-9999.99"):
+            pnl_percent = Decimal("-9999.99")
 
     # print("diff::",diff)
     # print("pnl_amount::",pnl_amount)
@@ -819,9 +933,10 @@ def calculate_live_pnl(order, current_metal_rate):
     }
 
 def execute_sell(request,buy_txn,current_metal_rate,sold_via="MANUAL"):
-    trans_model = CustomerDemoTransaction if getattr(request, "is_demo_account", False) else CustomerTransaction
-    wallet_model = CustomerDemoWallet if getattr(request, "is_demo_account", False) else CustomerWallet
-    sell_relation = "demo_sell_transactions" if getattr(request, "is_demo_account", False) else "sell_transactions"
+    is_demo = getattr(request, "is_demo_account", False) if request else False
+    trans_model = CustomerDemoTransaction if is_demo else CustomerTransaction
+    wallet_model = CustomerDemoWallet if is_demo else CustomerWallet
+    sell_relation = "demo_sell_transactions" if is_demo else "sell_transactions"
 
     with transaction.atomic():
         buy_txn = (trans_model.objects.select_for_update().get(id=buy_txn.id))

@@ -23,7 +23,7 @@ Digital Investment
                             <div class="ingot-text">
                                 <div class="metal-name">GOLD</div>
                                 <div class="metal-purity">24K • Digital</div>
-                                <div class="metal-rate">{{currency_icon}}<span class="gold-rate">{{current_gold_rate}}</span> / gm</div>
+                                <div class="metal-rate"><span class="currency-icon">{{currency_icon}}</span><span class="gold-rate">{{current_gold_rate}}</span> / gm</div>
                             </div>
                         </div>
                     </a>
@@ -32,7 +32,7 @@ Digital Investment
                             <div class="ingot-text">
                                 <div class="metal-name">SILVER</div>
                                 <div class="metal-purity">999 • Digital</div>
-                                <div class="metal-rate">{{currency_icon}}<span class="silver-rate">{{current_silver_rate}}</span> / gm</div>
+                                <div class="metal-rate"><span class="currency-icon">{{currency_icon}}</span><span class="silver-rate">{{current_silver_rate}}</span> / gm</div>
                             </div>
                         </div>
                     </a>
@@ -62,6 +62,7 @@ Digital Investment
         });
     });
 
+    fetchLiveRate();
     setInterval(fetchLiveRate, 10000);
 </script>
 {% endblock %}

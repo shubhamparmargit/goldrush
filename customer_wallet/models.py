@@ -27,6 +27,7 @@ class CustomerWallet(models.Model):
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     current_membership = models.ForeignKey(MembershipMaster, on_delete=models.SET_NULL, null=True)
+    stop_loss_percentage = models.PositiveIntegerField(default=80, help_text="Default stop loss percentage for all orders")
 
 class WalletRechargeOrder(models.Model):
     class Meta:
@@ -90,6 +91,7 @@ class CustomerDemoWallet(models.Model):
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     current_membership = models.ForeignKey(MembershipMaster, on_delete=models.SET_NULL, null=True)
+    stop_loss_percentage = models.PositiveIntegerField(default=80, help_text="Default stop loss percentage for all orders")
 
 class WithdrawalRequest(models.Model):
     class Meta:

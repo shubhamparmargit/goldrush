@@ -19,7 +19,7 @@ Digital Investment
                 {% include "digital-investment/includes/wallet-balance-card.html" %}
                 {% csrf_token %}
                 <div class="maintitle">{{ title }}</div>
-                <div class="subtitle">Live Rate :: {{currency_icon}}<span class="{{metal_type}}-rate">{{ current_metal_rate }}</span> / gm</div>
+                <div class="subtitle">Live Rate :: <span class="currency-icon">{{currency_icon}}</span><span class="{{metal_type}}-rate">{{ current_metal_rate }}</span> / gm</div>
                 <p id="dateTime" style="font-size: 12px; text-align: center;"></p>
                 <div class="weight-grid">
                     <!-- ONE BAR -->
@@ -44,7 +44,7 @@ Digital Investment
 {% block extraModal %}{% endblock %}
 
 {% block extraJS %}
-<script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=3.5"></script>
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=4.0"></script>
 <script>
     document.querySelectorAll('.weight-bar').forEach(bar => {
         bar.addEventListener('click', () => {
@@ -52,6 +52,7 @@ Digital Investment
         });
     });
 
+    fetchLiveRate();
     setInterval(fetchLiveRate, 10000);
 </script>
 {% endblock %}

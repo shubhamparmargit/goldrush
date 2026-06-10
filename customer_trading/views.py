@@ -195,9 +195,24 @@ class Pages:
 
         # 5️⃣ Final Dashboard
         wallet_balance = cust_util_obj.get_wallet_balance(customer, request)
+        
+        current_gold_rate = ""
+        current_silver_rate = ""
+        currency_icon = "₹"
+        try:
+            metal = getMetalRate()
+            current_gold_rate = metal["buy_gold_rate"]
+            current_silver_rate = metal["buy_silver_rate"]
+            currency_icon = metal["currency_icon"]
+        except Exception:
+            pass
+
         return render(request, 'digital-investment/digital-dashboard.html', {
             'wallet_balance': wallet_balance,
-            'customer_name': customer.name
+            'customer_name': customer.name,
+            'current_gold_rate': current_gold_rate,
+            'current_silver_rate': current_silver_rate,
+            'currency_icon': currency_icon,
         })
 
     @require_trading_pin

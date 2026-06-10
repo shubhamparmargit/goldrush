@@ -18,6 +18,35 @@ Wallet History
         <div class="main-content-wrap">
             <div class="main-wrapper">
                 {% include "digital-investment/includes/wallet-balance-card.html" %}
+                
+                <!-- STOP LOSS SETTINGS -->
+                <div class="stop-loss-settings-card" style="margin-bottom: 20px; padding: 16px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+                    {% csrf_token %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">🛡️</span>
+                            <span style="font-size: 16px; font-weight: 700; color: #1e293b; font-family: 'Inter', sans-serif;">Default Stop Loss</span>
+                        </div>
+                        <div>
+                            <select id="stopLossSelect" style="padding: 6px 32px 6px 12px; font-size: 14px; font-weight: 600; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #fff url(&apos;data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%2523475569%27 stroke-width=%272.5%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 d=%27M19.5 8.25l-7.5 7.5-7.5-7.5%27/%3E%3C/svg%3E&apos;) no-repeat right 10px center; background-size: 14px; color: #0f172a; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; transition: all 0.2s ease;">
+                                <option value="0" {% if stop_loss_percentage == 0 %}selected{% endif %}>Disabled</option>
+                                <option value="10" {% if stop_loss_percentage == 10 %}selected{% endif %}>10% Loss</option>
+                                <option value="20" {% if stop_loss_percentage == 20 %}selected{% endif %}>20% Loss</option>
+                                <option value="30" {% if stop_loss_percentage == 30 %}selected{% endif %}>30% Loss</option>
+                                <option value="40" {% if stop_loss_percentage == 40 %}selected{% endif %}>40% Loss</option>
+                                <option value="50" {% if stop_loss_percentage == 50 %}selected{% endif %}>50% Loss</option>
+                                <option value="60" {% if stop_loss_percentage == 60 %}selected{% endif %}>60% Loss</option>
+                                <option value="70" {% if stop_loss_percentage == 70 %}selected{% endif %}>70% Loss</option>
+                                <option value="80" {% if stop_loss_percentage == 80 %}selected{% endif %}>80% Loss</option>
+                                <option value="90" {% if stop_loss_percentage == 90 %}selected{% endif %}>90% Loss</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: #64748b; line-height: 1.5; font-family: 'Inter', sans-serif;">
+                        Automatically closes live orders when they reach this loss percentage. The remaining value will be credited back to your wallet.
+                    </div>
+                </div>
+
                 <div class="maintitle">Wallet History</div>
                 <div class="subtitle">your digital investment report</div>
                 {% if history %}
@@ -82,7 +111,7 @@ Wallet History
 {% endblock %}
 
 {% block extraJS %}
-<script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=3.5"></script>
+<script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=4.0"></script>
 <script>
     const items = document.querySelectorAll(".wallet-history-item");
     items.forEach(item => {
@@ -90,5 +119,49 @@ Wallet History
             openHistorySheet(item);
         });
     });
+
+    const stopLossSelect = document.getElementById("stopLossSelect");
+    if (stopLossSelect) {
+        stopLossSelect.addEventListener("change", function () {
+            const stopLossValue = this.value;
+            showLoader();
+            fetch("{% url 'save_stop_loss' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({ stop_loss: stopLossValue })
+            })
+            .then(res => res.json())
+            .then(data => {
+                hideLoader();
+                if (data.status) {
+                    $.toast({
+                        heading: "Success",
+                        text: data.message,
+                        position: "top-right",
+                        icon: "success"
+                    });
+                } else {
+                    $.toast({
+                        heading: "Error",
+                        text: data.message,
+                        position: "top-right",
+                        icon: "error"
+                    });
+                }
+            })
+            .catch(() => {
+                hideLoader();
+                $.toast({
+                    heading: "Error",
+                    text: "Failed to save stop loss settings",
+                    position: "top-right",
+                    icon: "error"
+                });
+            });
+        });
+    }
 </script>
 {% endblock %}

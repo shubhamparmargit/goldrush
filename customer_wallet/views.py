@@ -125,7 +125,12 @@ class Pages:
 
         unified_history.sort(key=lambda x: x['created_at'], reverse=True)
 
-        return render(request,'digital-investment/my-wallet.html', {'wallet_balance':wallet_balance,'history':unified_history})
+        wallet, _ = CustomerWallet.objects.get_or_create(customer=customer)
+        return render(request,'digital-investment/my-wallet.html', {
+            'wallet_balance': wallet_balance,
+            'history': unified_history,
+            'stop_loss_percentage': wallet.stop_loss_percentage
+        })
     
     def recharge_wallet(self,request):
         if request.trading_error:
@@ -624,7 +629,38 @@ class WalletOperations:
             return JsonResponse({'status': True, 'message': 'Payment submitted. Your wallet will be credited after admin verification.'})
 
         except Exception as e:
-            return JsonResponse({'status': False, 'message': 'Something went wrong'})
+            return JsonResponse({'status': False, 'message': f'Something went wrong: {str(e)}'})
+
+    @require_trading_pin
+    def save_stop_loss(self, request):
+        if request.trading_error:
+            return JsonResponse({'status': False, 'message': request.trading_error})
+
+        customer = request.trading_customer
+        if not customer:
+            return JsonResponse({'status': False, 'message': 'Invalid customer'})
+
+        if request.method != 'POST':
+            return JsonResponse({'status': False, 'message': 'Invalid request method'})
+
+        try:
+            data = json.loads(request.body)
+            stop_loss = int(data.get('stop_loss', 80))
+            
+            if stop_loss < 0 or stop_loss > 100:
+                return JsonResponse({'status': False, 'message': 'Stop loss must be between 0 and 100'})
+
+            wallet_model = CustomerDemoWallet if getattr(request, "is_demo_account", False) else CustomerWallet
+            wallet, _ = wallet_model.objects.get_or_create(customer=customer)
+            wallet.stop_loss_percentage = stop_loss
+            wallet.save(update_fields=['stop_loss_percentage'])
+
+            return JsonResponse({
+                'status': True,
+                'message': f'Stop loss updated successfully to {stop_loss}%'
+            })
+        except Exception as e:
+            return JsonResponse({'status': False, 'message': f'Error saving stop loss: {str(e)}'})
 
 
 class WithdrawalOperations:
@@ -971,6 +1007,7 @@ class CompanyBankPortal:
                 ifsc_code      = request.POST.get('ifsc_code', '').strip()
                 branch_name    = request.POST.get('branch_name', '').strip()
                 upi_id         = request.POST.get('upi_id', '').strip()
+                dollar_rate    = request.POST.get('dollar_rate', '83.00').strip()
 
                 if not all([account_name, bank_name, account_number, ifsc_code]):
                     return JsonResponse({'success': '0', 'message': 'Account name, bank name, account number and IFSC are required'})
@@ -982,6 +1019,8 @@ class CompanyBankPortal:
                 bank.ifsc_code      = ifsc_code
                 bank.branch_name    = branch_name
                 bank.upi_id         = upi_id
+                if dollar_rate:
+                    bank.dollar_rate = Decimal(dollar_rate)
                 bank.is_active      = True
 
                 if request.FILES.get('qr_code_image'):
@@ -1006,6 +1045,42 @@ class CompanyBankPortal:
             except Exception as e:
                 return JsonResponse({'success': '0', 'message': 'Something went wrong', 'error': str(e)})
         return util_obj.goToLogin(request)
+
+    def spread_settings_page(self, request):
+        if util_obj.checkSession(request) == False:
+            bank = CompanyBankDetails.objects.first()
+            return render(request, 'portal/spread-settings.html', {'bank': bank})
+        return util_obj.goToLogin(request)
+
+    def save_spread_settings(self, request):
+        if util_obj.checkSession(request) == False:
+            if request.method != 'POST':
+                return JsonResponse({'success': '0', 'message': 'Invalid request'})
+            try:
+                spread_val = request.POST.get('spread', '').strip()
+                if not spread_val:
+                    return JsonResponse({'success': '0', 'message': 'Spread value is required'})
+                try:
+                    spread_int = int(spread_val)
+                    if spread_int < 0:
+                        return JsonResponse({'success': '0', 'message': 'Spread value must be non-negative'})
+                except ValueError:
+                    return JsonResponse({'success': '0', 'message': 'Spread value must be an integer'})
+
+                bank, created = CompanyBankDetails.objects.get_or_create(id=1)
+                bank.spread = spread_int
+                bank.save()
+
+                username = request.session.get('logged', 'admin')
+                login_id = request.session.get('login_id')
+                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated to {spread_int}")
+
+                return JsonResponse({'success': '1', 'message': 'Spread settings saved successfully'})
+
+            except Exception as e:
+                return JsonResponse({'success': '0', 'message': 'Something went wrong', 'error': str(e)})
+        return util_obj.goToLogin(request)
+
 
 
 class AddWalletBalance:

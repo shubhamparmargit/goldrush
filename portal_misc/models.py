@@ -22,6 +22,8 @@ class CompanyBankDetails(models.Model):
     branch_name    = models.CharField(max_length=100, blank=True)
     upi_id         = models.CharField(max_length=100, blank=True)
     qr_code_image  = models.CharField(max_length=300, blank=True)
+    dollar_rate    = models.DecimalField(max_digits=10, decimal_places=2, default=83.00)
+    spread         = models.IntegerField(default=200, help_text="Order spread points applied on gold/silver buy rates")
     is_active      = models.BooleanField(default=True)
     updated_on     = models.DateTimeField(auto_now=True)
 
