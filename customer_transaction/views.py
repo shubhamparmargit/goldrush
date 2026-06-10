@@ -26,6 +26,21 @@ util_obj = Utility()
 random_obj = RandomIdGenerate()
 cust_util_obj = CustomerUtil()
 
+def get_dollar_rate():
+    from portal_misc.models import CompanyBankDetails
+    try:
+        bank = CompanyBankDetails.objects.first()
+        if bank and bank.dollar_rate:
+            return Decimal(str(bank.dollar_rate))
+    except Exception:
+        pass
+    try:
+        return Decimal(str(CompanyBankDetails._meta.get_field('dollar_rate').default))
+    except Exception:
+        pass
+    return Decimal("83.00")
+
+
 gold_weights_gm = [10, 20, 50, 100, 200, 500, 1000, 2500, 5000, 10000]
 silver_weights_gm = [500, 1000, 1500, 2000, 3000, 4000, 4500, 8000, 16000]
 
@@ -434,12 +449,18 @@ class OrderList:
 
         data = []
         for o in orders:
+            buy_rate = o.metal_rate_per_gm
+            if getattr(o, 'currency', 'INR') == 'USD':
+                usd_to_inr = get_dollar_rate()
+                buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
+            buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+
             data.append({
                 "transaction_id": o.transaction_id,
                 "card_icon": o.metal_type.lower(),
                 "metal_type": o.metal_type,
                 "quantity": o.quantity_gm,
-                "buy_price": str(o.market_amount),
+                "buy_price": str(buy_metal_value),
                 "invested_price": str(o.order_amount),
                 "date": timezone.localtime(o.created_at).strftime("%d %b %Y • %I:%M %p"),
                 "order_type": o.order_type,
@@ -481,7 +502,7 @@ class OrderList:
  
             data.append({
                 "transaction_id": o.transaction_id,
-                "current_price": str(pnl["current_value"]),
+                "current_price": str(pnl["sell_metal_value"]),
                 "pnl_amount": str(pnl["pnl_amount"]),
                 "pnl_percent": str(pnl["pnl_percent"]),
                 "is_profit": pnl["is_profit"],
@@ -586,6 +607,18 @@ class OrderList:
         for buy in orders:
             sell = getattr(buy, sell_relation).first()
 
+            buy_rate = buy.metal_rate_per_gm
+            if getattr(buy, 'currency', 'INR') == 'USD':
+                usd_to_inr = get_dollar_rate()
+                buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
+            buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+
+            sell_rate = sell.metal_rate_per_gm
+            if getattr(sell, 'currency', 'INR') == 'USD':
+                usd_to_inr = get_dollar_rate()
+                sell_rate = (sell_rate / Decimal("31.1035")) * usd_to_inr
+            sell_metal_value = (sell_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+
             data.append({
                 "transaction_id": buy.transaction_id,
                 "card_icon": buy.metal_type.lower(),
@@ -593,8 +626,8 @@ class OrderList:
                 "quantity": buy.quantity_gm,
                 "profit_loss": sell.profit_loss,
                 "profit_loss_icon": sell.profit_loss.lower(),
-                "buy_price": str(buy.market_amount),
-                "sell_price": str(sell.market_amount),
+                "buy_price": str(buy_metal_value),
+                "sell_price": str(sell_metal_value),
                 "pnl_amount": str(abs(sell.profit_loss_amount)),
                 "invested_price": str(buy.order_amount),
                 "sell_date": timezone.localtime(sell.created_at).strftime("%d %b %Y • %I:%M %p"),
@@ -700,14 +733,7 @@ def getMetalRate():
         if not gold or not silver:
             raise ValueError("Metal data missing")
         
-        usd_to_inr = Decimal("83.00")
-        try:
-            from portal_misc.models import CompanyBankDetails
-            bank = CompanyBankDetails.objects.first()
-            if bank and bank.dollar_rate:
-                usd_to_inr = Decimal(str(bank.dollar_rate))
-        except Exception:
-            pass
+        usd_to_inr = get_dollar_rate()
 
         # Ask and bid rates from API (converted via raw per gram * 31.10 / 31.1035)
         ounce_weight = Decimal("31.1035")
@@ -921,14 +947,7 @@ def get_active_live_orders(request, customer, metal_type="GOLD"):
 def calculate_live_pnl(order, current_metal_rate):
     buy_rate = order.metal_rate_per_gm
     if getattr(order, 'currency', 'INR') == 'USD':
-        usd_to_inr = Decimal("83.00")
-        try:
-            from portal_misc.models import CompanyBankDetails
-            bank = CompanyBankDetails.objects.first()
-            if bank and bank.dollar_rate:
-                usd_to_inr = Decimal(str(bank.dollar_rate))
-        except Exception:
-            pass
+        usd_to_inr = get_dollar_rate()
         buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
 
     buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
