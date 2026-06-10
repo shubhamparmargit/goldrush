@@ -735,14 +735,13 @@ def getMetalRate():
         
         usd_to_inr = get_dollar_rate()
 
-        # Ask and bid rates from API (converted via raw per gram * 31.10 / 31.1035)
+        # Ask and bid rates from API (converted from USD per gram directly)
         ounce_weight = Decimal("31.1035")
-        mult_factor = Decimal("31.10")
 
-        gold_ask = (Decimal(gold["ask"]) * mult_factor) / ounce_weight
-        gold_bid = (Decimal(gold["bid"]) * mult_factor) / ounce_weight
-        silver_ask = (Decimal(silver["ask"]) * mult_factor) / ounce_weight
-        silver_bid = (Decimal(silver["bid"]) * mult_factor) / ounce_weight
+        gold_ask = Decimal(gold["ask"])
+        gold_bid = Decimal(gold["bid"])
+        silver_ask = Decimal(silver["ask"])
+        silver_bid = Decimal(silver["bid"])
 
         currency = 'INR'
         currency_icon = '₹'
@@ -784,11 +783,11 @@ def getMetalRate():
             f"Exchange Rate (usd_to_inr): {usd_to_inr}\n"
             f"Spread Points (from DB): {spread_points}\n"
             f"----------------------------------------\n"
-            f"Calculations (USD/ounce = USD/gm * 31.10):\n"
-            f"Gold Ask (USD/ounce): {Decimal(gold['ask']) * mult_factor}\n"
-            f"Gold Bid (USD/ounce): {Decimal(gold['bid']) * mult_factor}\n"
+            f"Calculations (USD/ounce = USD/gm * 31.1035):\n"
+            f"Gold Ask (USD/ounce): {Decimal(gold['ask']) * ounce_weight}\n"
+            f"Gold Bid (USD/ounce): {Decimal(gold['bid']) * ounce_weight}\n"
             f"----------------------------------------\n"
-            f"Conversion to USD/gm (divided by 31.1035):\n"
+            f"Conversion to USD/gm:\n"
             f"Gold Ask: {gold_ask} USD/gm\n"
             f"Gold Bid: {gold_bid} USD/gm\n"
             f"----------------------------------------\n"
