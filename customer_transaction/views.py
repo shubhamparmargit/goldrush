@@ -11,6 +11,16 @@ from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 import logging
 from customer_trading.decorators import require_trading_pin, require_trading_auth
 from django.utils import timezone
+import datetime
+
+def is_market_open():
+    now = timezone.localtime(timezone.now())
+    if now.weekday() >= 5:  # Saturday or Sunday
+        return False
+    current_time = now.time()
+    start_time = datetime.time(9, 0, 0)
+    end_time = datetime.time(23, 59, 59)
+    return start_time <= current_time <= end_time
 
 util_obj = Utility()
 random_obj = RandomIdGenerate()
@@ -120,6 +130,8 @@ class TransactionBuySell:
     
     @require_trading_pin
     def buy_metal(self, request):
+        if not is_market_open():
+            return JsonResponse({"status": False, "message": "Market is closed. Trading is allowed from Monday to Friday, 09:00 AM to 11:59 PM."})
         try:
             data = json.loads(request.body)
             gm = int(data.get("gm", 0))
@@ -454,15 +466,19 @@ class OrderList:
         for o in orders:
             try:
                 if o.order_type == "BOOKING":
-                    current_metal_rate = metal["buy_gold_rate"] if o.metal_type == 'GOLD' else metal["buy_silver_rate"]
-                else:
                     current_metal_rate = metal["sell_gold_rate"] if o.metal_type == 'GOLD' else metal["sell_silver_rate"]
-                # current_metal_rate = Decimal(158.04)
+                else:
+                    current_metal_rate = metal["buy_gold_rate"] if o.metal_type == 'GOLD' else metal["buy_silver_rate"]
             except Exception:
                 return JsonResponse({"status": False, "message": "Unable to fetch gold rate"})
     
             pnl = calculate_live_pnl(o, current_metal_rate)
-
+            
+            market_open = is_market_open()
+            status_label = "<span style='color: green; font-weight: bold;'>Market Open</span>" if market_open else "<span style='color: red; font-weight: bold;'>Market Closed</span>"
+            date_time_str = timezone.localtime(timezone.now()).strftime("%d %b %Y • %I:%M:%S %p")
+            date_time_str = f"{date_time_str} • {status_label}"
+ 
             data.append({
                 "transaction_id": o.transaction_id,
                 "current_price": str(pnl["current_value"]),
@@ -470,7 +486,7 @@ class OrderList:
                 "pnl_percent": str(pnl["pnl_percent"]),
                 "is_profit": pnl["is_profit"],
                 "difference": pnl["difference"],
-                "date_time": timezone.localtime(timezone.now()).strftime("%d %b %Y • %I:%M:%S %p"),
+                "date_time": date_time_str,
             })
 
         return JsonResponse({"status": True, "orders": data})
@@ -795,11 +811,15 @@ def getMetalData(request):
             "message": "Unable to fetch gold rate"
         })   
     
+    market_open = is_market_open()
+    status_label = "<span style='color: green; font-weight: bold;'>Market Open</span>" if market_open else "<span style='color: red; font-weight: bold;'>Market Closed</span>"
+    date_time_str = timezone.localtime(timezone.now()).strftime("%d %b %Y • %I:%M:%S %p")
+    
     return JsonResponse({
         "current_gold_rate": current_gold_rate,
         "current_silver_rate": current_silver_rate,
         "currency_icon": currency_icon,
-        "date_time": timezone.localtime(timezone.now()).strftime("%d %b %Y • %I:%M:%S %p"),
+        "date_time": f"{date_time_str} • {status_label}",
     })
 
 # rates = getMetalRate()
@@ -809,15 +829,29 @@ def getMetalData(request):
 # print(sell_rate)
 
 def calculate_order(gm, membership, metal_type):
-    # order_amt = Decimal(gm) * Decimal(membership.service_fee)
-    order_amt = Decimal(gm) * 50 if metal_type=='GOLD' else Decimal(gm)
-    # order_amt = Decimal(gm) * 50
-    service_fee = (order_amt * (membership.service_fee_percent/100)).quantize(Decimal("0"),rounding=ROUND_HALF_UP)
-    gst = (service_fee * Decimal("0.18")).quantize(Decimal("0.0"),rounding=ROUND_HALF_UP)
-    # reward = int(gm) / 2
-    reward = int(order_amt) * 0.01
-    actual_service_fee = (service_fee - (Decimal(gst) + Decimal(reward))).quantize(Decimal("0.0"),rounding=ROUND_HALF_UP)
-    market_amount = (order_amt - service_fee).quantize(Decimal("0"),rounding=ROUND_HALF_UP)
+    order_amt = Decimal(gm) * 50 if metal_type == 'GOLD' else Decimal(gm)
+    
+    # Base fee is 10% of order amount
+    base_fee = (order_amt * Decimal('0.10')).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
+    
+    # Discount based on membership level (membership.service_fee per 10gm)
+    discount = Decimal('50') - Decimal(membership.service_fee)
+    service_fee = base_fee - discount
+    
+    # Rewards calculation
+    if membership.level == 'Normal':
+        reward = (service_fee * Decimal('0.10')).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
+    else:
+        reward = (order_amt * Decimal('0.01')).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
+        
+    # GST calculation (18% on service fee)
+    gst = (service_fee * Decimal("0.18")).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
+    
+    # Actual service fee calculation
+    actual_service_fee = (service_fee - (gst + reward)).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
+    
+    # Market amount
+    market_amount = (order_amt - service_fee).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
 
     spread_val = 200
     try:
@@ -921,6 +955,10 @@ def calculate_live_pnl(order, current_metal_rate):
     # print("pnl_percent::",pnl_percent)
 
     current_value = (order.market_amount + pnl_amount).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP)
+    if current_value < Decimal("0.0"):
+        current_value = Decimal("0.0")
+        pnl_amount = -order.market_amount
+        pnl_percent = Decimal("-100.00")
 
     return {
         "current_value": current_value,

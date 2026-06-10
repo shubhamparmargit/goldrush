@@ -20,9 +20,9 @@ def process_auto_sell_for_orders(is_demo, current_rates):
 
     for order in live_orders:
         if order.order_type == "BOOKING":
-            current_rate = current_rates["buy_gold_rate"] if order.metal_type == 'GOLD' else current_rates["buy_silver_rate"]
-        else:
             current_rate = current_rates["sell_gold_rate"] if order.metal_type == 'GOLD' else current_rates["sell_silver_rate"]
+        else:
+            current_rate = current_rates["buy_gold_rate"] if order.metal_type == 'GOLD' else current_rates["buy_silver_rate"]
         
         # Calculate current PNL and value
         pnl = calculate_live_pnl(order, current_rate)

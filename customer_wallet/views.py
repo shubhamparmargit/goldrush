@@ -26,7 +26,7 @@ def is_withdrawal_window_open():
 
     holiday = BankHoliday.objects.filter(date=now.date(), is_active=True).first()
     if holiday:
-        return False, f"Withdrawals are not available today due to bank holiday: {holiday.description}"
+        return False, "Withdrawals are unavailable today due to a Bank Holiday."
 
     return True, None
 from django.utils import timezone
