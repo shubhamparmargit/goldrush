@@ -196,6 +196,7 @@
     -webkit-backdrop-filter: blur(4px);
     border: 1.5px solid rgba(255, 220, 60, 0.6);
     text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
 .ingot-gold .metal-rate {
@@ -210,4 +211,56 @@
     border-color: rgba(160, 160, 185, 0.75);
     color: #1c1c2e;
     animation: rate-pulse-silver 1.8s ease-out infinite;
+}
+
+/* ⚡ Horizontal Row Layout for Ingot Dashboard */
+.ingot-toggle .ingot-inner {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+}
+
+.ingot-toggle .ingot-text {
+    margin: 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ingot-toggle .metal-rate {
+    margin-top: 0;
+    font-size: 18px; /* Bigger rate font */
+    padding: 8px 18px;
+    border-radius: 12px; /* Premium boxed look */
+}
+
+/* ⚡ Fluctuation Styles (Green for UP, Red for DOWN) */
+.metal-rate.rate-up {
+    color: #155724 !important;
+    background: rgba(212, 239, 223, 0.95) !important;
+    border-color: #28a745 !important;
+    animation: rate-pulse-green 1.8s ease-out infinite !important;
+    text-shadow: none !important;
+}
+
+.metal-rate.rate-down {
+    color: #721c24 !important;
+    background: rgba(248, 215, 218, 0.95) !important;
+    border-color: #dc3545 !important;
+    animation: rate-pulse-red 1.8s ease-out infinite !important;
+    text-shadow: none !important;
+}
+
+@keyframes rate-pulse-green {
+    0%   { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.8), 0 2px 8px rgba(0,0,0,0.15); }
+    60%  { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+@keyframes rate-pulse-red {
+    0%   { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.8), 0 2px 8px rgba(0,0,0,0.15); }
+    60%  { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }

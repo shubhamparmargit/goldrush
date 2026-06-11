@@ -335,9 +335,9 @@ class TransactionBuySell:
             # 🔥 Live rate
             metal = getMetalRate()
             if buy_txn.order_type == "BOOKING":
-                current_metal_rate = metal["buy_gold_rate"] if metal_type == 'GOLD' else metal["buy_silver_rate"]
-            else:
                 current_metal_rate = metal["sell_gold_rate"] if metal_type == 'GOLD' else metal["sell_silver_rate"]
+            else:
+                current_metal_rate = metal["buy_gold_rate"] if metal_type == 'GOLD' else metal["buy_silver_rate"]
             # print('current_metal_rate :: ',current_metal_rate)
             # current_metal_rate = Decimal(158.04)
 
@@ -541,9 +541,9 @@ class OrderList:
         try:
             metal = getMetalRate()
             if order.order_type == "BOOKING":
-                current_metal_rate = metal["buy_gold_rate"] if order.metal_type == 'GOLD' else metal["buy_silver_rate"]
-            else:
                 current_metal_rate = metal["sell_gold_rate"] if order.metal_type == 'GOLD' else metal["sell_silver_rate"]
+            else:
+                current_metal_rate = metal["buy_gold_rate"] if order.metal_type == 'GOLD' else metal["buy_silver_rate"]
             currency_icon = metal["currency_icon"]
         except Exception:
             return JsonResponse({

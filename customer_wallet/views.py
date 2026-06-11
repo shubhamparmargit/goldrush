@@ -222,17 +222,21 @@ class WalletOperations:
                 "message": "Minimum recharge ₹1"
             })
 
+        # 💡 Membership is determined by TOTAL wallet balance (existing + new amount)
+        current_wallet = CustomerWallet.objects.filter(customer=customer).first()
+        current_balance = current_wallet.balance if current_wallet else 0
+        projected_balance = int(current_balance) + amount
+
         membership = (
             MembershipMaster.objects
-            .filter(min_amount__lte=amount)
+            .filter(min_amount__lte=projected_balance)
             .order_by("-min_amount")
             .first()
         )
 
-        # 👉 If no membership (small recharge), keep previous
+        # 👉 If no membership (very small recharge, below all tiers), keep previous
         if not membership and first_recharge_done:
-            wallet = CustomerWallet.objects.filter(customer=customer).first()
-            membership = wallet.current_membership if wallet else None
+            membership = current_wallet.current_membership if current_wallet else None
 
         # 🔐 Everything inside atomic
         try:
@@ -375,15 +379,20 @@ class WalletOperations:
                     customer=customer
                 )
 
-                # wallet.balance = wallet.balance + Decimal(order.amount)
                 wallet.balance += Decimal(order.amount)
 
-                new_membership = order.membership
+                # 💡 Membership upgrade based on TOTAL wallet balance (cumulative)
+                new_membership = (
+                    MembershipMaster.objects
+                    .filter(min_amount__lte=wallet.balance)
+                    .order_by("-min_amount")
+                    .first()
+                )
 
-                if wallet.current_membership is None:
-                    wallet.current_membership = new_membership
-                else:
-                    if new_membership.min_amount > wallet.current_membership.min_amount:
+                if new_membership:
+                    if wallet.current_membership is None:
+                        wallet.current_membership = new_membership
+                    elif new_membership.min_amount > wallet.current_membership.min_amount:
                         wallet.current_membership = new_membership
 
                 wallet.save()
@@ -594,15 +603,19 @@ class WalletOperations:
             if not first_recharge_done and amount < 5000:
                 return JsonResponse({'status': False, 'message': 'First recharge minimum ₹5000 required'})
 
+            # 💡 Membership determined by TOTAL balance (existing wallet + new amount)
+            existing_wallet = CustomerWallet.objects.filter(customer=customer).first()
+            existing_balance = existing_wallet.balance if existing_wallet else 0
+            projected_balance = int(existing_balance) + amount
+
             membership = (
                 MembershipMaster.objects
-                .filter(min_amount__lte=amount)
+                .filter(min_amount__lte=projected_balance)
                 .order_by('-min_amount')
                 .first()
             )
             if not membership and first_recharge_done:
-                wallet = CustomerWallet.objects.filter(customer=customer).first()
-                membership = wallet.current_membership if wallet else None
+                membership = existing_wallet.current_membership if existing_wallet else None
 
             # save screenshot
             file_obj = request.FILES['screenshot']
@@ -684,6 +697,54 @@ class WithdrawalOperations:
                 "status": False,
                 "message": "Invalid customer"
             })
+
+        # ⏳ 24-HOUR WITHDRAWAL LOCK AFTER RECHARGE CHECK
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        latest_online = WalletRechargeHistory.objects.filter(
+            customer=customer,
+            status='Success'
+        ).order_by('-created_at').first()
+
+        latest_manual = ManualRechargeRequest.objects.filter(
+            customer=customer,
+            status='APPROVED'
+        ).order_by('-action_date').first()
+
+        latest_credit = WalletManualCredit.objects.filter(
+            customer=customer
+        ).order_by('-credited_on').first()
+
+        latest_recharge_time = None
+
+        if latest_online:
+            latest_recharge_time = latest_online.created_at
+
+        if latest_manual and latest_manual.action_date:
+            if not latest_recharge_time or latest_manual.action_date > latest_recharge_time:
+                latest_recharge_time = latest_manual.action_date
+
+        if latest_credit:
+            if not latest_recharge_time or latest_credit.credited_on > latest_recharge_time:
+                latest_recharge_time = latest_credit.credited_on
+
+        if latest_recharge_time:
+            time_difference = timezone.now() - latest_recharge_time
+            if time_difference < timedelta(hours=24):
+                remaining_time = timedelta(hours=24) - time_difference
+                remaining_hours = int(remaining_time.total_seconds() // 3600)
+                remaining_minutes = int((remaining_time.total_seconds() % 3600) // 60)
+                
+                if remaining_hours > 0:
+                    msg = f"You can withdraw only after 24 hours of your last recharge. Please try again after {remaining_hours} hour(s) and {remaining_minutes} minute(s)."
+                else:
+                    msg = f"You can withdraw only after 24 hours of your last recharge. Please try again after {remaining_minutes} minute(s)."
+                
+                return JsonResponse({
+                    'status': False,
+                    'message': msg
+                })
 
         try:
             allowed, reason = is_withdrawal_window_open()
@@ -934,12 +995,18 @@ class ManualRechargePortal:
                     wallet = CustomerWallet.objects.select_for_update().get(customer=obj.customer)
                     wallet.balance += obj.amount
 
-                    # 🔁 Auto-upgrade membership based on recharged amount
-                    if obj.membership:
+                    # 💡 Auto-upgrade membership based on TOTAL wallet balance (cumulative)
+                    new_membership = (
+                        MembershipMaster.objects
+                        .filter(min_amount__lte=wallet.balance)
+                        .order_by('-min_amount')
+                        .first()
+                    )
+                    if new_membership:
                         if wallet.current_membership is None:
-                            wallet.current_membership = obj.membership
-                        elif obj.membership.min_amount > wallet.current_membership.min_amount:
-                            wallet.current_membership = obj.membership
+                            wallet.current_membership = new_membership
+                        elif new_membership.min_amount > wallet.current_membership.min_amount:
+                            wallet.current_membership = new_membership
 
                     wallet.save(update_fields=['balance', 'current_membership'])
 
@@ -1135,18 +1202,17 @@ class AddWalletBalance:
                     return JsonResponse({'success': '0', 'message': 'Enter a valid amount'})
                 if not remark:
                     return JsonResponse({'success': '0', 'message': 'Remark is required'})
-
                 customer = Customer.objects.get(unique_id=unique_id, access='Granted')
 
                 with transaction.atomic():
-                    wallet = CustomerWallet.objects.select_for_update().get(customer=customer)
+                    wallet, _ = CustomerWallet.objects.select_for_update().get_or_create(customer=customer)
                     balance_before = wallet.balance
                     wallet.balance += amount
 
-                    # 🔁 Auto-assign membership based on credited amount
+                    # 💡 Auto-assign membership based on TOTAL wallet balance (cumulative)
                     new_membership = (
                         MembershipMaster.objects
-                        .filter(min_amount__lte=amount)
+                        .filter(min_amount__lte=wallet.balance)
                         .order_by('-min_amount')
                         .first()
                     )
@@ -1207,7 +1273,7 @@ class AddWalletBalance:
                 customer = Customer.objects.get(unique_id=unique_id, access='Granted')
 
                 with transaction.atomic():
-                    wallet = CustomerWallet.objects.select_for_update().get(customer=customer)
+                    wallet, _ = CustomerWallet.objects.select_for_update().get_or_create(customer=customer)
                     if wallet.balance < amount:
                         return JsonResponse({'success': '0', 'message': f'Insufficient wallet balance. Current: ₹{wallet.balance}'})
 
