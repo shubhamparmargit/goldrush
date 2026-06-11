@@ -146,7 +146,7 @@ class TransactionBuySell:
     @require_trading_pin
     def buy_metal(self, request):
         if not is_market_open():
-            return JsonResponse({"status": False, "message": "Market is closed. Trading is allowed from Monday to Friday, 09:00 AM to 11:59 PM."})
+            return JsonResponse({"status": False, "message": "Market is closed. Digital Investment is allowed from Monday to Friday, 09:00 AM to 11:59 PM."})
         try:
             data = json.loads(request.body)
             gm = int(data.get("gm", 0))

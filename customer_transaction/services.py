@@ -44,6 +44,8 @@ def process_auto_sell_for_orders(is_demo, current_rates):
         # 1. Check stop loss (close position if loss meets or exceeds stop_loss_percentage)
         # Note: stop_loss_percentage = 0 means disabled
         if stop_loss_percentage > 0:
+            # Stop loss based on market_amount (order_amount minus service fee)
+            # e.g. market_amount = ₹450, stop_loss = 80% → trigger when loss ≥ ₹360 → current_value ≤ ₹90
             limit_value = Decimal(order.market_amount) * (Decimal("1") - (Decimal(str(stop_loss_percentage)) / Decimal("100")))
             if current_value <= limit_value:
                 execute_sell(
