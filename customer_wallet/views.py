@@ -933,8 +933,14 @@ class ManualRechargePortal:
                 with transaction.atomic():
                     wallet = CustomerWallet.objects.select_for_update().get(customer=obj.customer)
                     wallet.balance += obj.amount
+
+                    # 🔁 Auto-upgrade membership based on recharged amount
                     if obj.membership:
-                        wallet.current_membership = obj.membership
+                        if wallet.current_membership is None:
+                            wallet.current_membership = obj.membership
+                        elif obj.membership.min_amount > wallet.current_membership.min_amount:
+                            wallet.current_membership = obj.membership
+
                     wallet.save(update_fields=['balance', 'current_membership'])
 
                     obj.status      = 'APPROVED'
@@ -1136,7 +1142,21 @@ class AddWalletBalance:
                     wallet = CustomerWallet.objects.select_for_update().get(customer=customer)
                     balance_before = wallet.balance
                     wallet.balance += amount
-                    wallet.save(update_fields=['balance'])
+
+                    # 🔁 Auto-assign membership based on credited amount
+                    new_membership = (
+                        MembershipMaster.objects
+                        .filter(min_amount__lte=amount)
+                        .order_by('-min_amount')
+                        .first()
+                    )
+                    if new_membership:
+                        if wallet.current_membership is None:
+                            wallet.current_membership = new_membership
+                        elif new_membership.min_amount > wallet.current_membership.min_amount:
+                            wallet.current_membership = new_membership
+
+                    wallet.save(update_fields=['balance', 'current_membership'])
 
                     WalletManualCredit.objects.create(
                         unique_id      = random_obj.generateUID(),

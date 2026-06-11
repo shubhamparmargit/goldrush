@@ -169,10 +169,45 @@
     height: 100px;
 }
 
+/* ⚡ Live Rate Badge — eye-catching like Market Open */
+@keyframes rate-pulse-gold {
+    0%   { box-shadow: 0 0 0 0 rgba(255, 200, 30, 0.85), 0 2px 8px rgba(0,0,0,0.18); }
+    60%  { box-shadow: 0 0 0 7px rgba(255, 200, 30, 0), 0 2px 8px rgba(0,0,0,0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 200, 30, 0), 0 2px 8px rgba(0,0,0,0.18); }
+}
+
+@keyframes rate-pulse-silver {
+    0%   { box-shadow: 0 0 0 0 rgba(180, 180, 200, 0.85), 0 2px 8px rgba(0,0,0,0.15); }
+    60%  { box-shadow: 0 0 0 7px rgba(180, 180, 200, 0), 0 2px 8px rgba(0,0,0,0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(180, 180, 200, 0), 0 2px 8px rgba(0,0,0,0.15); }
+}
+
 .metal-rate {
-    margin-top: 6px;
+    margin-top: 8px;
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 50px;
     font-size: 15px;
-    font-weight: 700;
-    color: rgba(0,0,0,0.7);
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    color: #1a1200;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1.5px solid rgba(255, 220, 60, 0.6);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.ingot-gold .metal-rate {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 210, 40, 0.75);
+    color: #3d2700;
+    animation: rate-pulse-gold 1.8s ease-out infinite;
+}
+
+.ingot-silver .metal-rate {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(160, 160, 185, 0.75);
+    color: #1c1c2e;
+    animation: rate-pulse-silver 1.8s ease-out infinite;
 }
