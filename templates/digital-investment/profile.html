@@ -39,10 +39,7 @@ Profile
                             <p>{{ customer.mobile }}</p>
                         </div>
 
-                        <div>
-                            <label>Email</label>
-                            <p>{{ customer.email }}</p>
-                        </div>
+
 
                         <!-- <div>
                             <label>PAN</label>
@@ -57,37 +54,7 @@ Profile
                     </div>
                 </div>
 
-                <!-- ADDRESS -->
-                <div class="profile-card">
-                    <h3>Addresses</h3>
 
-                    {% for addr in addresses %}
-
-                    <div class="address-box">
-
-                        <p class="addr-name">{{ addr.name }}</p>
-
-                        <p>
-                            {{ addr.address_line_1 }},
-                            {{ addr.address_line_2 }}
-                        </p>
-
-                        <p>
-                            {{ addr.city }},
-                            {{ addr.district }},
-                            {{ addr.state }}
-                            - {{ addr.pincode }}
-                        </p>
-
-                    </div>
-
-                    {% empty %}
-
-                    <p>No address available</p>
-
-                    {% endfor %}
-
-                </div>
 
                 <!-- TRADING ACCOUNT -->
                 <div class="profile-card">
@@ -114,53 +81,7 @@ Profile
 
                 </div>
 
-                <!-- BANK DETAILS -->
-                <div class="profile-card">
-                    <h3>Bank Details</h3>
 
-                    {% if bank %}
-
-                    <div class="profile-grid">
-
-                        <div>
-                            <label>Bank</label>
-                            <p>{{ bank.bank_name }}</p>
-                        </div>
-
-                        <div>
-                            <label>Account Holder</label>
-                            <p>{{ bank.account_holder_name }}</p>
-                        </div>
-
-                        <div>
-                            <label>Account Number</label>
-                            <p>{{ account_masked }}</p>
-                        </div>
-
-                        <div>
-                            <label>IFSC</label>
-                            <p>{{ bank.ifsc_code }}</p>
-                        </div>
-
-                        <div>
-                            <label>Branch</label>
-                            <p>{{ bank.branch_name }}</p>
-                        </div>
-
-                        <!-- <div>
-                            <label>Verified</label>
-                            <p>{{ bank.verified }}</p>
-                        </div> -->
-
-                    </div>
-
-                    {% else %}
-
-                    <p>No bank details available</p>
-
-                    {% endif %}
-
-                </div>
 
                 <!-- DOCUMENTS
                 <div class="profile-card">
