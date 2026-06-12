@@ -256,7 +256,7 @@ RAZORPAY_KEY_SECRET = "Y7WzMRFYpD60MKccks82q7Tx"
 METAL_API_KEY = "2Ehlo6aoBuvDpF07LHgs00UMHz3jyq8NP4Yryuk0QD9IxVpzsOy1tDj2EtYZ"
 
 # Market spread applied on top of live buy rate when customer places an order
-ORDER_SPREAD_POINTS = 200
+ORDER_SPREAD_POINTS = 0
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
