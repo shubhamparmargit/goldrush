@@ -24,6 +24,8 @@ class CompanyBankDetails(models.Model):
     qr_code_image  = models.CharField(max_length=300, blank=True)
     dollar_rate    = models.DecimalField(max_digits=10, decimal_places=2, default=83.00)
     spread         = models.IntegerField(default=200, help_text="Order spread points applied on gold/silver buy rates")
+    rate_refresh_interval = models.IntegerField(default=10, help_text="Live rate refresh interval in seconds")
+    pnl_refresh_interval  = models.IntegerField(default=5, help_text="Live PNL refresh interval in seconds")
     is_active      = models.BooleanField(default=True)
     updated_on     = models.DateTimeField(auto_now=True)
 

@@ -102,6 +102,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # Start custom template
                 'utility.context_processors.sidebar_context',
+                'utility.context_processors.settings_context',
                 # End custom template
             ],
         },

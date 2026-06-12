@@ -136,7 +136,7 @@ MENU_CONFIG = [
                 "icon": "icon-Commit"
             },
             {
-                "label": "Spread Settings",
+                "label": "System Settings",
                 "url": "spread-settings",
                 "view": "spread_settings_page",
                 "icon": "icon-Commit"

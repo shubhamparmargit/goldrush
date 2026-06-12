@@ -217,7 +217,7 @@ Wallet History
         }
     });
 
-    setInterval(loadLivePNL, 5000);
+    setInterval(loadLivePNL, {{ pnl_refresh_interval|default:'5' }} * 1000);
 </script>
 <script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=4.0"></script>
 <script>

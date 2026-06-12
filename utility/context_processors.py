@@ -1,5 +1,6 @@
 from utility.menu_config import MENU_CONFIG
 from utility.middleware.check_access_middleware import PAGE_ACCESS
+from portal_misc.models import CompanyBankDetails
 
 def sidebar_context(request):
     role = request.session.get('role')
@@ -26,3 +27,16 @@ def sidebar_context(request):
 
     # print("sidebar", sidebar)
     return {"SIDEBAR": sidebar}
+
+def settings_context(request):
+    try:
+        bank = CompanyBankDetails.objects.first()
+        rate_refresh = bank.rate_refresh_interval if bank and bank.rate_refresh_interval else 10
+        pnl_refresh = bank.pnl_refresh_interval if bank and bank.pnl_refresh_interval else 5
+    except Exception:
+        rate_refresh = 10
+        pnl_refresh = 5
+    return {
+        "rate_refresh_interval": rate_refresh,
+        "pnl_refresh_interval": pnl_refresh
+    }
