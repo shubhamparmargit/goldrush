@@ -1131,8 +1131,16 @@ class CompanyBankPortal:
                 return JsonResponse({'success': '0', 'message': 'Invalid request'})
             try:
                 spread_val = request.POST.get('spread', '').strip()
+                rate_interval_val = request.POST.get('rate_refresh_interval', '').strip()
+                pnl_interval_val = request.POST.get('pnl_refresh_interval', '').strip()
+
                 if not spread_val:
                     return JsonResponse({'success': '0', 'message': 'Spread value is required'})
+                if not rate_interval_val:
+                    return JsonResponse({'success': '0', 'message': 'Rate refresh interval is required'})
+                if not pnl_interval_val:
+                    return JsonResponse({'success': '0', 'message': 'PNL refresh interval is required'})
+
                 try:
                     spread_int = int(spread_val)
                     if spread_int < 0:
@@ -1140,15 +1148,31 @@ class CompanyBankPortal:
                 except ValueError:
                     return JsonResponse({'success': '0', 'message': 'Spread value must be an integer'})
 
+                try:
+                    rate_interval_int = int(rate_interval_val)
+                    if rate_interval_int < 1:
+                        return JsonResponse({'success': '0', 'message': 'Rate refresh interval must be at least 1 second'})
+                except ValueError:
+                    return JsonResponse({'success': '0', 'message': 'Rate refresh interval must be an integer'})
+
+                try:
+                    pnl_interval_int = int(pnl_interval_val)
+                    if pnl_interval_int < 1:
+                        return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be at least 1 second'})
+                except ValueError:
+                    return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be an integer'})
+
                 bank, created = CompanyBankDetails.objects.get_or_create(id=1)
                 bank.spread = spread_int
+                bank.rate_refresh_interval = rate_interval_int
+                bank.pnl_refresh_interval = pnl_interval_int
                 bank.save()
 
                 username = request.session.get('logged', 'admin')
                 login_id = request.session.get('login_id')
-                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated to {spread_int}")
+                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated. Spread: {spread_int}, Rate Interval: {rate_interval_int}s, PNL Interval: {pnl_interval_int}s")
 
-                return JsonResponse({'success': '1', 'message': 'Spread settings saved successfully'})
+                return JsonResponse({'success': '1', 'message': 'Settings saved successfully'})
 
             except Exception as e:
                 return JsonResponse({'success': '0', 'message': 'Something went wrong', 'error': str(e)})

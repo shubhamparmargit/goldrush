@@ -63,6 +63,6 @@ Digital Investment
     });
 
     fetchLiveRate();
-    setInterval(fetchLiveRate, 10000);
+    setInterval(fetchLiveRate, {{ rate_refresh_interval|default:'10' }} * 1000);
 </script>
 {% endblock %}
