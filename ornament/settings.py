@@ -128,8 +128,14 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
         'PORT': os.getenv('DB_PORT', '3306'),
+        'TEST': {
+            'CHARSET': 'latin1',
+            'COLLATION': 'latin1_swedish_ci',
+        }
     }
 }
+
+
 
 
 
@@ -266,3 +272,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+import sys
+if 'test' in sys.argv:
+    class DisableMigrations(object):
+        def __contains__(self, item):
+            return True
+        def __getitem__(self, item):
+            return None
+    MIGRATION_MODULES = DisableMigrations()

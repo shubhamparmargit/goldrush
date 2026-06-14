@@ -955,7 +955,7 @@ class DataList:
                         elif table_name=="wallet_recharge_report" or table_name=="first_recharge_report":
                             query=query.filter(Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(razorpay_payment_id__icontains=search_tearm) | Q(order__razorpay_order_id__icontains=search_tearm))
                         elif table_name=="transaction_report":
-                            query=query.filter(Q(transaction_id__icontains=search_tearm) | Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(metal_type__icontains=search_tearm) | Q(transaction_type__icontains=search_tearm) | Q(order_type__icontains=search_tearm) | Q(sell_transactions__profit_loss__icontains=search_tearm))
+                            query=query.filter(Q(transaction_id__icontains=search_tearm) | Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(metal_type__icontains=search_tearm) | Q(transaction_type__icontains=search_tearm) | Q(order_type__icontains=search_tearm) | Q(sell_transactions__profit_loss__icontains=search_tearm) | Q(sell_transactions__sold_via__icontains=search_tearm))
                         elif table_name=="customer_report":
                             query=query.filter(
                                 Q(name__icontains=search_tearm) |

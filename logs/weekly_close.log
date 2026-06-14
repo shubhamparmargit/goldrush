@@ -1,0 +1,18 @@
+2026-06-14 19:03:36,883 [INFO] Weekly auto-close runner triggered at 2026-06-14 13:33:36.883522+00:00
+2026-06-14 19:03:36,884 [INFO] Fetched live rates - Gold Buy: 6000.0, Silver Buy: 75.0
+2026-06-14 19:03:36,886 [INFO] Processing weekly auto-close for 1 open live orders.
+2026-06-14 19:03:36,890 [INFO] Closing order TXN_LIVE_BUY_1 (Customer ID: 1) at rate 5900.0.
+2026-06-14 19:03:36,903 [INFO] Successfully settled order TXN_LIVE_BUY_1. PnL: -450.00 (-100.00%). Wallet credited with settlement amount: 0.0. New wallet balance: 9500.00.
+2026-06-14 19:03:36,904 [INFO] Processing weekly auto-close for 1 open demo orders.
+2026-06-14 19:03:36,909 [INFO] Closing order TXN_DEMO_BUY_1 (Customer ID: 1) at rate 5900.0.
+2026-06-14 19:03:36,923 [INFO] Successfully settled order TXN_DEMO_BUY_1. PnL: -450.00 (-100.00%). Wallet credited with settlement amount: 0.0. New wallet balance: 9500.00.
+2026-06-14 19:03:36,923 [INFO] Weekly auto-close runner finished.
+2026-06-14 19:05:47,030 [INFO] Weekly auto-close runner triggered at 2026-06-14 13:35:47.030809+00:00
+2026-06-14 19:05:56,380 [INFO] Fetched live rates - Gold Buy: 12937.5, Silver Buy: 209.0
+2026-06-14 19:05:56,383 [INFO] Processing weekly auto-close for 0 open live orders.
+2026-06-14 19:05:56,389 [INFO] Processing weekly auto-close for 2 open demo orders.
+2026-06-14 19:05:56,508 [INFO] Closing order 18093351962281864438 (Customer ID: 5) at rate 12937.5.
+2026-06-14 19:05:56,552 [INFO] Successfully settled order 18093351962281864438. PnL: 16601.4 (3689.20%). Wallet credited with settlement amount: 17051.4. New wallet balance: 17988.40.
+2026-06-14 19:05:56,556 [INFO] Closing order 12911600598487013999 (Customer ID: 5) at rate 12937.5.
+2026-06-14 19:05:56,574 [INFO] Successfully settled order 12911600598487013999. PnL: 16439.0 (3653.11%). Wallet credited with settlement amount: 16889.0. New wallet balance: 34877.40.
+2026-06-14 19:05:56,574 [INFO] Weekly auto-close runner finished.
