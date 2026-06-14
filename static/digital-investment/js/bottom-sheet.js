@@ -136,21 +136,8 @@ function openGoldSheet(gm, metal_type) {
                     <span>${walletBalanceText}</span>
                 </div>
                 <div class="sheet-row">
-                    <span>Investment Duration</span>
-                    <span style="color: #1e3a8a;">Weekly (Auto-closes Saturdays 00:00)</span>
-                </div>
-                <div class="sheet-row">
                     <span>Market Status</span>
                     <span class="status-pill ${marketStatus === 'Open' ? 'status-success' : 'status-danger'}">${marketStatus}</span>
-                </div>
-
-                <!-- EXPECTED PROFIT INFO -->
-                <div class="sheet-divider">Expected Profit Information</div>
-                <div class="info-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 12px;">
-                    Profits/Losses are calculated based on live rate fluctuations. 
-                    <b>Booking</b> orders profit when the rate goes UP. 
-                    <b>Buyback</b> orders profit when the rate goes DOWN. 
-                    Positions are auto-closed and settled at Saturday 00:00 server time.
                 </div>
 
                 <!-- SERVICE FEE BREAKUP -->
@@ -204,10 +191,10 @@ function openGoldSheet(gm, metal_type) {
 
                 <!-- BUTTONS -->
                 <div class="sheet-row" style="gap: 12px; margin-top: 10px; border-bottom: none;">
-                    <button class="action-btn primary-btn w-100" id="confirmMetalBuy" ${isInsufficient ? 'disabled style="opacity: 0.55; cursor: not-allowed;"' : ''}>
+                    <button class="action-btn primary-btn w-100" id="confirmMetalBuy">
                         Buy
                     </button>
-                    <button class="action-btn buyback-btn w-100" id="confirmMetalBuyBack" ${isInsufficient ? 'disabled style="opacity: 0.55; cursor: not-allowed;"' : ''}>
+                    <button class="action-btn buyback-btn w-100" id="confirmMetalBuyBack">
                         Sell
                     </button>
                 </div>
