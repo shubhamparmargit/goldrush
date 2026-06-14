@@ -146,7 +146,10 @@ class TransactionBuySell:
         
         membership = cust_util_obj.get_current_membership(customer, request)
         if not membership:
-            return JsonResponse({"status": False,"message": "Membership not found"})
+            from customer_wallet.models import MembershipMaster
+            membership = MembershipMaster.objects.filter(level="Normal").first()
+            if not membership:
+                return JsonResponse({"status": False,"message": "Membership not found"})
         
         # try:
         calculated_data = calculate_order(gm, membership, metal_type)
