@@ -62,6 +62,18 @@ class Pages:
             weights = silver_weights_gm
             title = "Select Silver Quantity"
 
+        # Build weight items with booking amount
+        weight_items = []
+        for gm in weights:
+            if metal_type == "gold":
+                booking_amt = gm * 50
+            else:
+                booking_amt = gm
+            weight_items.append({
+                "gm": gm,
+                "booking_amount": f"{booking_amt:,}"
+            })
+
         try:
             metal = getMetalRate()
             current_metal_rate = metal["buy_gold_rate"] if metal_type == 'gold' else metal["buy_silver_rate"]
@@ -72,7 +84,7 @@ class Pages:
                 "message": "Unable to fetch gold rate"
             })
 
-        return render(request,'digital-investment/weights.html',{'wallet_balance':wallet_balance, 'weights': weights, 'metal_type': metal_type, 'title': title, 'current_metal_rate': current_metal_rate, 'currency_icon': metal["currency_icon"]})
+        return render(request,'digital-investment/weights.html',{'wallet_balance':wallet_balance, 'weight_items': weight_items, 'metal_type': metal_type, 'title': title, 'current_metal_rate': current_metal_rate, 'currency_icon': metal["currency_icon"]})
     
     def live_orders(self,request):
         if request.trading_error:
