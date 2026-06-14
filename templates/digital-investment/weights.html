@@ -29,12 +29,14 @@ Digital Investment
                 <p id="dateTime" style="font-size: 12px; text-align: center; margin-bottom: 24px;"></p>
                 
                 <div class="weight-grid">
-                    {% for gm in weights %}
-                    <div class="ingot ingot-{{metal_type}} weight-bar" data-metal="{{metal_type}}" data-gm="{{gm}}">
+                    {% for item in weight_items %}
+                    <div class="ingot ingot-{{metal_type}} weight-bar" data-metal="{{metal_type}}" data-gm="{{item.gm}}">
                         <div class="ingot-inner">
                             <div class="ingot-text">
-                                <div class="metal-name">{{gm}}</div>
-                                <div class="metal-purity">GM</div>
+                                <div class="metal-name" style="font-size: 18px; font-weight: 800;">{{item.gm}} GM</div>
+                                <div class="booking-amount-label" style="font-size: 11px; margin-top: 4px; font-weight: 600; color: rgba(0, 0, 0, 0.6); text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);">
+                                    Booking ₹{{ item.booking_amount }}
+                                </div>
                             </div>
                         </div>
                     </div>

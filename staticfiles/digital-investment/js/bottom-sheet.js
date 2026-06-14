@@ -82,85 +82,132 @@ function openGoldSheet(gm, metal_type) {
 
             AUTO_SELL_BASE_AMOUNT = Number(data.market_amount);
 
-            const title = metal_type === 'gold' ? "Gold Purchase" : "Silver Purchase";
+            // Get rate and status from DOM
+            const rateEl = document.querySelector(`.${metal_type}-rate`);
+            const curEl = document.querySelector('.currency-icon');
+            const currentRate = (curEl ? curEl.innerText : '₹') + (rateEl ? rateEl.innerText : '0.0');
 
+            const dateTimeEl = document.getElementById("dateTime");
+            let marketStatus = "Closed";
+            if (dateTimeEl && dateTimeEl.innerText.includes("Market Open")) {
+                marketStatus = "Open";
+            }
+
+            const walletBalanceEl = document.getElementById("walletBalance");
+            const walletBalanceText = walletBalanceEl ? walletBalanceEl.innerText.trim() : "₹0.00/-";
+
+            // Validation
+            const balanceClean = walletBalanceText.replace(/[^\d.]/g, '');
+            const balanceVal = parseFloat(balanceClean) || 0.0;
+            const orderAmt = parseFloat(data.order_amt) || 0.0;
+            const isInsufficient = balanceVal < orderAmt;
+
+            const title = metal_type === 'gold' ? "Gold Investment Details" : "Silver Investment Details";
             document.getElementById("sheetTitle").innerText = title;
 
+            let warningHtml = "";
+            if (isInsufficient) {
+                warningHtml = `
+                    <div class="alert alert-danger" style="color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: 600; text-align: center; font-size: 13px; width: 100%;">
+                        Insufficient wallet balance. Please add funds to continue.
+                    </div>
+                `;
+            }
+
             document.getElementById("sheetContent").innerHTML = `
-                <!-- ORDER DETAILS -->
+                ${warningHtml}
+
+                <!-- SUMMARY CARD -->
+                <div class="sheet-divider">Investment Summary</div>
                 <div class="sheet-row">
-                    <span>Quantity</span>
-                    <span>${gm} gm</span>
+                    <span>Selected Quantity</span>
+                    <span>${gm} ${metal_type.toUpperCase()}</span>
+                </div>
+                <div class="sheet-row">
+                    <span>Current Rate</span>
+                    <span>${currentRate} / gm</span>
+                </div>
+                <div class="sheet-row" style="background: #fffbeb; border-radius: 8px; padding: 10px 8px;">
+                    <span style="color: #b45309; font-weight: 600;">Booking Amount Required</span>
+                    <span style="color: #b45309; font-weight: 700;">₹${Number(data.order_amt).toLocaleString("en-IN")}</span>
+                </div>
+                <div class="sheet-row">
+                    <span>Wallet Balance</span>
+                    <span>${walletBalanceText}</span>
+                </div>
+                <div class="sheet-row">
+                    <span>Investment Duration</span>
+                    <span style="color: #1e3a8a;">Weekly (Auto-closes Saturdays 00:00)</span>
+                </div>
+                <div class="sheet-row">
+                    <span>Market Status</span>
+                    <span class="status-pill ${marketStatus === 'Open' ? 'status-success' : 'status-danger'}">${marketStatus}</span>
                 </div>
 
-                <div class="sheet-row">
-                    <span>Order Amount</span>
-                    <span>₹${data.order_amt}</span>
+                <!-- EXPECTED PROFIT INFO -->
+                <div class="sheet-divider">Expected Profit Information</div>
+                <div class="info-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 12px;">
+                    Profits/Losses are calculated based on live rate fluctuations. 
+                    <b>Booking</b> orders profit when the rate goes UP. 
+                    <b>Buyback</b> orders profit when the rate goes DOWN. 
+                    Positions are auto-closed and settled at Saturday 00:00 server time.
                 </div>
 
                 <!-- SERVICE FEE BREAKUP -->
                 <div class="sheet-divider">Service Fee Breakup</div>
-
-                <div class="sheet-row">
+                <div class="sheet-row sub">
                     <span>Service Fee</span>
                     <span>₹${data.service_fee}</span>
                 </div>
-
                 <div class="sheet-row sub">
                     <span>GST (18%)</span>
                     <span>₹${data.gst}</span>
                 </div>
-
                 <div class="sheet-row sub">
                     <span>Reward</span>
                     <span>₹${data.reward}</span>
                 </div>
-
                 <div class="sheet-row">
                     <span>Actual Service Fee</span>
                     <span>₹${data.actual_service_fee}</span>
                 </div>
-
-                <!-- FINAL -->
                 <div class="sheet-row total">
-                    <span>Market Amount</span>
+                    <span>Market Invested Amount</span>
                     <span>₹${data.market_amount}</span>
                 </div>
 
-                <div class="auto-sell-box">
+                <!-- AUTO SELL -->
+                <div class="auto-sell-box" style="margin-top: 15px;">
                     <div class="auto-sell-header">
-                        <span>Auto Sell<small>(optional)</small></span>
-
+                        <span>Auto Sell <small>(optional)</small></span>
                         <span id="autoSellPercentBadge" class="auto-sell-percent neutral">0%</span>
-                        
-                        <!-- ✅ ADD ONLY -->
                         <label class="auto-sell-toggle">
                             <input type="checkbox" id="autoSellToggle">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-
                     <div class="auto-sell-input-wrap">
                         <button type="button" class="auto-btn" id="autoSellMinus">−</button>
-
-                        <input type="number"
-                            id="autoSellAmount"
-                            class="auto-sell-input"
-                            step="1" value="${data.market_amount}">
-
+                        <input type="number" id="autoSellAmount" class="auto-sell-input" step="1" value="${data.market_amount}">
                         <button type="button" class="auto-btn" id="autoSellPlus">+</button>
                     </div>
-
                     <div class="auto-sell-hint">
                         Order will auto close at this total value (profit or loss)
                     </div>
                 </div>
 
-                <div class="sheet-row">
-                    <button class="action-btn primary-btn w-100" id="confirmMetalBuy">
+                <!-- TERMS -->
+                <div class="sheet-divider">Order Terms & Conditions</div>
+                <div class="terms-text" style="font-size: 11px; color: #64748b; line-height: 1.4; margin-bottom: 18px; padding: 4px 0;">
+                    By confirming this order, you agree that transactions carry market risks and open positions will be closed automatically weekly.
+                </div>
+
+                <!-- BUTTONS -->
+                <div class="sheet-row" style="gap: 12px; margin-top: 10px; border-bottom: none;">
+                    <button class="action-btn primary-btn w-100" id="confirmMetalBuy" ${isInsufficient ? 'disabled style="opacity: 0.55; cursor: not-allowed;"' : ''}>
                         Buy
                     </button>
-                    <button class="action-btn buyback-btn w-100" id="confirmMetalBuyBack">
+                    <button class="action-btn buyback-btn w-100" id="confirmMetalBuyBack" ${isInsufficient ? 'disabled style="opacity: 0.55; cursor: not-allowed;"' : ''}>
                         Sell
                     </button>
                 </div>
@@ -168,6 +215,49 @@ function openGoldSheet(gm, metal_type) {
             `;
 
             openSheet();
+
+            // Setup listeners inside the then-block to eliminate race conditions
+            const buyBtn = document.getElementById("confirmMetalBuy");
+            const buybackBtn = document.getElementById("confirmMetalBuyBack");
+            const toggle = document.getElementById("autoSellToggle");
+            const autoSellAmount = document.getElementById("autoSellAmount");
+            initAutoSellUI("autoSellToggle", "autoSellAmount", "autoSellPlus", "autoSellMinus", ".auto-sell-input-wrap", AUTO_SELL_BASE_AMOUNT);
+
+            updateAutoSellPercentDisplay("autoSellAmount", AUTO_SELL_BASE_AMOUNT);
+
+            if (buyBtn) {
+                buyBtn.onclick = () => {
+                    if (isInsufficient) {
+                        $.toast({
+                            heading: "Error",
+                            text: "Insufficient wallet balance. Please add funds to continue.",
+                            position: "top-right",
+                            icon: "error"
+                        });
+                        return;
+                    }
+                    const enabled = toggle && toggle.checked;
+                    const amount = enabled ? autoSellAmount.value : null;
+                    placeOrder("BOOKING", buyBtn, gm, metal_type, amount, enabled);
+                };
+            }
+
+            if (buybackBtn) {
+                buybackBtn.onclick = () => {
+                    if (isInsufficient) {
+                        $.toast({
+                            heading: "Error",
+                            text: "Insufficient wallet balance. Please add funds to continue.",
+                            position: "top-right",
+                            icon: "error"
+                        });
+                        return;
+                    }
+                    const enabled = toggle && toggle.checked;
+                    const amount = enabled ? autoSellAmount.value : null;
+                    placeOrder("BUYBACK", buybackBtn, gm, metal_type, amount, enabled);
+                };
+            }
         })
         .catch(err => {
             // console.error("ERROR:", err);
@@ -179,33 +269,6 @@ function openGoldSheet(gm, metal_type) {
                 icon: "error"
             });
         });
-
-    setTimeout(() => {
-        const buyBtn = document.getElementById("confirmMetalBuy");
-        const buybackBtn = document.getElementById("confirmMetalBuyBack");
-        const toggle = document.getElementById("autoSellToggle");
-        const autoSellAmount = document.getElementById("autoSellAmount");
-        initAutoSellUI("autoSellToggle", "autoSellAmount", "autoSellPlus", "autoSellMinus", ".auto-sell-input-wrap", AUTO_SELL_BASE_AMOUNT)
-
-        updateAutoSellPercentDisplay("autoSellAmount", AUTO_SELL_BASE_AMOUNT);
-
-        if (buyBtn) {
-            buyBtn.onclick = () => {
-                const enabled = toggle && toggle.checked;
-                const amount = enabled ? autoSellAmount.value : null;
-                placeOrder("BOOKING", buyBtn, gm, metal_type, amount, enabled);
-            };
-        }
-
-        if (buybackBtn) {
-            buybackBtn.onclick = () => {
-                const enabled = toggle && toggle.checked;
-                const amount = enabled ? autoSellAmount.value : null;
-                placeOrder("BUYBACK", buybackBtn, gm, metal_type, amount, enabled);
-            };
-        }
-
-    }, 100);
 }
 
 function placeOrder(type, btn, gm, metal_type, autoSellAmount, autoSellEnabled) {
