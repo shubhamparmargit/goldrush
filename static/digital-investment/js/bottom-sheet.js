@@ -115,56 +115,18 @@ function openGoldSheet(gm, metal_type) {
             }
 
             document.getElementById("sheetContent").innerHTML = `
-                ${warningHtml}
-
-                <!-- SUMMARY CARD -->
-                <div class="sheet-divider">Investment Summary</div>
-                <div class="sheet-row">
+                <!-- ORDER SUMMARY -->
+                <div class="sheet-row" style="margin-top: 10px;">
                     <span>Selected Quantity</span>
-                    <span>${gm} ${metal_type.toUpperCase()}</span>
+                    <span style="font-weight: 700; color: #0b0f2f;">${gm} ${metal_type.toUpperCase()}</span>
                 </div>
-                <div class="sheet-row">
-                    <span>Current Rate</span>
-                    <span>${currentRate} / gm</span>
-                </div>
-                <div class="sheet-row" style="background: #fffbeb; border-radius: 8px; padding: 10px 8px;">
+                <div class="sheet-row" style="background: #fffbeb; border-radius: 8px; padding: 10px 8px; margin-top: 10px;">
                     <span style="color: #b45309; font-weight: 600;">Booking Amount Required</span>
                     <span style="color: #b45309; font-weight: 700;">₹${Number(data.order_amt).toLocaleString("en-IN")}</span>
                 </div>
-                <div class="sheet-row">
-                    <span>Wallet Balance</span>
-                    <span>${walletBalanceText}</span>
-                </div>
-                <div class="sheet-row">
-                    <span>Market Status</span>
-                    <span class="status-pill ${marketStatus === 'Open' ? 'status-success' : 'status-danger'}">${marketStatus}</span>
-                </div>
-
-                <!-- SERVICE FEE BREAKUP -->
-                <div class="sheet-divider">Service Fee Breakup</div>
-                <div class="sheet-row sub">
-                    <span>Service Fee</span>
-                    <span>₹${data.service_fee}</span>
-                </div>
-                <div class="sheet-row sub">
-                    <span>GST (18%)</span>
-                    <span>₹${data.gst}</span>
-                </div>
-                <div class="sheet-row sub">
-                    <span>Reward</span>
-                    <span>₹${data.reward}</span>
-                </div>
-                <div class="sheet-row">
-                    <span>Actual Service Fee</span>
-                    <span>₹${data.actual_service_fee}</span>
-                </div>
-                <div class="sheet-row total">
-                    <span>Market Invested Amount</span>
-                    <span>₹${data.market_amount}</span>
-                </div>
 
                 <!-- AUTO SELL -->
-                <div class="auto-sell-box" style="margin-top: 15px;">
+                <div class="auto-sell-box" style="margin-top: 20px;">
                     <div class="auto-sell-header">
                         <span>Auto Sell <small>(optional)</small></span>
                         <span id="autoSellPercentBadge" class="auto-sell-percent neutral">0%</span>
@@ -183,14 +145,8 @@ function openGoldSheet(gm, metal_type) {
                     </div>
                 </div>
 
-                <!-- TERMS -->
-                <div class="sheet-divider">Order Terms & Conditions</div>
-                <div class="terms-text" style="font-size: 11px; color: #64748b; line-height: 1.4; margin-bottom: 18px; padding: 4px 0;">
-                    By confirming this order, you agree that transactions carry market risks and open positions will be closed automatically weekly.
-                </div>
-
                 <!-- BUTTONS -->
-                <div class="sheet-row" style="gap: 12px; margin-top: 10px; border-bottom: none;">
+                <div class="sheet-row" style="gap: 12px; margin-top: 25px; border-bottom: none;">
                     <button class="action-btn primary-btn w-100" id="confirmMetalBuy">
                         Buy
                     </button>
@@ -198,7 +154,6 @@ function openGoldSheet(gm, metal_type) {
                         Sell
                     </button>
                 </div>
-
             `;
 
             openSheet();
