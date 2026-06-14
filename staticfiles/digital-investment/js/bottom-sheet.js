@@ -118,10 +118,10 @@ function openGoldSheet(gm, metal_type) {
                 <!-- ORDER SUMMARY -->
                 <div class="sheet-row" style="margin-top: 10px;">
                     <span>Selected Quantity</span>
-                    <span style="font-weight: 700; color: #0b0f2f;">${gm} ${metal_type.toUpperCase()}</span>
+                    <span style="font-weight: 700; color: #0b0f2f;">${gm} GM</span>
                 </div>
                 <div class="sheet-row" style="background: #fffbeb; border-radius: 8px; padding: 10px 8px; margin-top: 10px;">
-                    <span style="color: #b45309; font-weight: 600;">Booking Amount Required</span>
+                    <span style="color: #b45309; font-weight: 600;">Booking Amount</span>
                     <span style="color: #b45309; font-weight: 700;">₹${Number(data.order_amt).toLocaleString("en-IN")}</span>
                 </div>
 
