@@ -25,6 +25,7 @@ ORDER_TYPE = (
 SOLD_VIA_CHOICES = (
     ("MANUAL", "Manual"),
     ("AUTO", "Auto Sell"),
+    ("WEEKLY_AUTO_CLOSE", "Weekly Auto Close"),
 )
 
 class CustomerTransaction(models.Model):
@@ -67,7 +68,8 @@ class CustomerTransaction(models.Model):
 
     auto_sell_enabled = models.BooleanField(default=False)
     auto_sell_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Auto sell trigger value set by user")
-    sold_via = models.CharField(max_length=10, choices=SOLD_VIA_CHOICES, default="MANUAL")
+    sold_via = models.CharField(max_length=20, choices=SOLD_VIA_CHOICES, default="MANUAL")
+    auto_closed_weekly = models.BooleanField(default=False)
 
 class TransactionAutoSellHistory(models.Model):
     class Meta:
@@ -120,7 +122,8 @@ class CustomerDemoTransaction(models.Model):
 
     auto_sell_enabled = models.BooleanField(default=False)
     auto_sell_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Auto sell trigger value set by user")
-    sold_via = models.CharField(max_length=10, choices=SOLD_VIA_CHOICES, default="MANUAL")
+    sold_via = models.CharField(max_length=20, choices=SOLD_VIA_CHOICES, default="MANUAL")
+    auto_closed_weekly = models.BooleanField(default=False)
 
 class DemoTransactionAutoSellHistory(models.Model):
     class Meta:

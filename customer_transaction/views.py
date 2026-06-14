@@ -598,6 +598,7 @@ class OrderList:
             )
             # .filter(sell_relation__isnull=False)
             .filter(**{f"{sell_relation}__isnull": False})
+            .exclude(auto_closed_weekly=True)
             .prefetch_related(sell_relation)
             .order_by("-created_at")
         )
@@ -657,7 +658,7 @@ class OrderList:
 
         # 🔍 Fetch order (ONLY live BUY order)
         try:
-            buy = trans_model.objects.get(customer=customer,transaction_id=transaction_id,transaction_type="BUY")
+            buy = trans_model.objects.get(customer=customer,transaction_id=transaction_id,transaction_type="BUY", auto_closed_weekly=False)
         except trans_model.DoesNotExist:
             return JsonResponse({
                 "status": False,
@@ -912,6 +913,7 @@ def get_active_live_orders(request, customer, metal_type="GOLD"):
         )
         # .exclude(sell_transactions__isnull=False)
         .exclude(**{f"{sell_relation}__isnull": False})
+        .exclude(auto_closed_weekly=True)
         .order_by("-created_at")
     )
 
@@ -1042,12 +1044,17 @@ def execute_sell(request,buy_txn,current_metal_rate,sold_via="MANUAL"):
 
             sold_via=sold_via,
             created_at=current_date,
+            auto_closed_weekly=(sold_via == "WEEKLY_AUTO_CLOSE"),
         )
 
         # 🔥 auto sell ke case me disable
         if sold_via == "AUTO":
             buy_txn.auto_sell_enabled = False
             buy_txn.save(update_fields=["auto_sell_enabled"])
+        elif sold_via == "WEEKLY_AUTO_CLOSE":
+            buy_txn.auto_sell_enabled = False
+            buy_txn.auto_closed_weekly = True
+            buy_txn.save(update_fields=["auto_sell_enabled", "auto_closed_weekly"])
 
         return {
             "sell_txn": sell_txn,
