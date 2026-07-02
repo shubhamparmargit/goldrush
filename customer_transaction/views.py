@@ -751,7 +751,7 @@ def getMetalRate():
 
         gold_output = gold_data.get("result", {}).get("output", [])
         if not gold_output:
-            raise ValueError("Tradefeeds: gold output missing")
+            raise ValueError(f"Tradefeeds: gold output missing. API Response: {gold_data}")
         gold_price_usd = Decimal(str(gold_output[0]["price"]))
 
         # --- Fetch Silver ---
@@ -765,7 +765,7 @@ def getMetalRate():
 
         silver_output = silver_data.get("result", {}).get("output", [])
         if not silver_output:
-            raise ValueError("Tradefeeds: silver output missing")
+            raise ValueError(f"Tradefeeds: silver output missing. API Response: {silver_data}")
         silver_price_usd = Decimal(str(silver_output[0]["price"]))
 
         # --- Currency conversion ---
