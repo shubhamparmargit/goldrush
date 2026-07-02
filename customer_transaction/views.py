@@ -252,8 +252,9 @@ class TransactionBuySell:
             reward = calculated_data['reward']
             actual_service_fee = calculated_data['actual_service_fee']
             market_amount = calculated_data['market_amount']
-        except Exception:
-            return JsonResponse({"status": False,"message": "Gold rate calculation failed"})
+        except Exception as e:
+            logger.exception("Gold rate calculation failed:")
+            return JsonResponse({"status": False,"message": "Gold rate calculation failed: " + str(e)})
 
         # 🔐 ATOMIC TRANSACTION
         try:
@@ -365,7 +366,8 @@ class TransactionBuySell:
             return JsonResponse({"status": False, "message": "Order not found"})
 
         except Exception as e:
-            return JsonResponse({"status": False, "message": "Sell failed, try again"})
+            logger.exception("Sell failed exception:")
+            return JsonResponse({"status": False, "message": "Sell failed: " + str(e)})
 
         return JsonResponse({
             "status": True,
