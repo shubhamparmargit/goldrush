@@ -3,6 +3,8 @@ from customer_wallet.models import CustomerWallet, CustomerDemoWallet
 from customer_transaction.models import CustomerTransaction, TransactionAutoSellHistory, CustomerDemoTransaction, DemoTransactionAutoSellHistory
 from utility.views import RandomIdGenerate, current_date, Utility, CustomerUtil
 import json, requests, sys
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from django.http.response import JsonResponse
 from rest_framework import status
 from django.db import transaction
@@ -730,7 +732,7 @@ def getMetalRate():
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, timeout=10, verify=False)
         response.raise_for_status()
         data = response.json()
 
