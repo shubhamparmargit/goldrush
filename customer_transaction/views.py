@@ -3,8 +3,6 @@ from customer_wallet.models import CustomerWallet, CustomerDemoWallet
 from customer_transaction.models import CustomerTransaction, TransactionAutoSellHistory, CustomerDemoTransaction, DemoTransactionAutoSellHistory
 from utility.views import RandomIdGenerate, current_date, Utility, CustomerUtil
 import json, requests, sys
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from django.http.response import JsonResponse
 from rest_framework import status
 from django.db import transaction
@@ -469,7 +467,7 @@ class OrderList:
             buy_rate = o.metal_rate_per_gm
             if getattr(o, 'currency', 'INR') == 'USD':
                 usd_to_inr = get_dollar_rate()
-                buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
+                buy_rate = (buy_rate / Decimal("31.1034768")) * usd_to_inr
             buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
             data.append({
@@ -628,13 +626,13 @@ class OrderList:
             buy_rate = buy.metal_rate_per_gm
             if getattr(buy, 'currency', 'INR') == 'USD':
                 usd_to_inr = get_dollar_rate()
-                buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
+                buy_rate = (buy_rate / Decimal("31.1034768")) * usd_to_inr
             buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
             sell_rate = sell.metal_rate_per_gm
             if getattr(sell, 'currency', 'INR') == 'USD':
                 usd_to_inr = get_dollar_rate()
-                sell_rate = (sell_rate / Decimal("31.1035")) * usd_to_inr
+                sell_rate = (sell_rate / Decimal("31.1034768")) * usd_to_inr
             sell_metal_value = (sell_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
             data.append({
@@ -725,48 +723,67 @@ class OrderList:
 logger = logging.getLogger(__name__)
 
 def getMetalRate():
-    url = "https://freegoldprice.org/api/v2"
-    params = {
-        "key": settings.METAL_API_KEY,
-        "action": "GSJ"   # Gold & Silver JSON, prices per troy ounce (V2 API)
-    }
+    """
+    Fetches live gold and silver mid-prices from the Tradefeeds API.
+    Endpoint: GET https://data.tradefeeds.com/api/v1/commodity_prices
+    Params:   key=<METAL_API_KEY>, name=gold|silver
+    Response: result.output[0].price  (USD per troy ounce, mid-price)
+
+    Since Tradefeeds returns a single mid-price (no ask/bid), the spread
+    is applied symmetrically:
+        buy_rate  = mid_price - spread
+        sell_rate = mid_price + spread
+    """
+    BASE_URL = "https://data.tradefeeds.com/api/v1/commodity_prices"
+    api_key = settings.METAL_API_KEY
 
     try:
-        response = requests.get(url, params=params, timeout=10, verify=False)
-        response.raise_for_status()
-        data = response.json()
+        # --- Fetch Gold ---
+        gold_resp = requests.get(
+            BASE_URL,
+            params={"key": api_key, "name": "gold"},
+            timeout=10
+        )
+        gold_resp.raise_for_status()
+        gold_data = gold_resp.json()
 
-        gsj = data.get("GSJ")
-        if not gsj:
-            raise ValueError("GSJ missing")
+        gold_output = gold_data.get("result", {}).get("output", [])
+        if not gold_output:
+            raise ValueError("Tradefeeds: gold output missing")
+        gold_price_usd = Decimal(str(gold_output[0]["price"]))
 
-        gold = gsj.get("Gold", {}).get("USD")
-        silver = gsj.get("Silver", {}).get("USD")
+        # --- Fetch Silver ---
+        silver_resp = requests.get(
+            BASE_URL,
+            params={"key": api_key, "name": "silver"},
+            timeout=10
+        )
+        silver_resp.raise_for_status()
+        silver_data = silver_resp.json()
 
-        if not gold or not silver:
-            raise ValueError("Metal data missing")
+        silver_output = silver_data.get("result", {}).get("output", [])
+        if not silver_output:
+            raise ValueError("Tradefeeds: silver output missing")
+        silver_price_usd = Decimal(str(silver_output[0]["price"]))
 
+        # --- Currency conversion ---
         usd_to_inr = get_dollar_rate()
 
-        # API (GSJ action) returns prices in USD per TROY OUNCE (unit = "ounce")
-        # Convert: USD/troy_oz ÷ 31.1035 g/troy_oz = USD/gram
+        # Tradefeeds returns USD per troy ounce (same unit as freegoldprice.org)
+        # Convert: USD/troy_oz ÷ 31.1034768 g/troy_oz = USD/gram
         # Then:    USD/gram × INR/USD = INR/gram
-        ounce_weight = Decimal("31.1035")
+        ounce_weight = Decimal("31.1034768")
 
-        gold_ask_per_oz = Decimal(gold["ask"])
-        gold_bid_per_oz = Decimal(gold["bid"])
-        silver_ask_per_oz = Decimal(silver["ask"])
-        silver_bid_per_oz = Decimal(silver["bid"])
+        gold_mid_per_gm   = gold_price_usd / ounce_weight
+        silver_mid_per_gm = silver_price_usd / ounce_weight
 
-        # USD per gram
-        gold_ask_per_gm = gold_ask_per_oz / ounce_weight
-        gold_bid_per_gm = gold_bid_per_oz / ounce_weight
-        silver_ask_per_gm = silver_ask_per_oz / ounce_weight
-        silver_bid_per_gm = silver_bid_per_oz / ounce_weight
+        gold_mid_inr   = gold_mid_per_gm * usd_to_inr
+        silver_mid_inr = silver_mid_per_gm * usd_to_inr
 
         currency = 'INR'
         currency_icon = '₹'
 
+        # --- Spread (from DB, default 200 USD/oz) ---
         spread_points = Decimal("200")
         try:
             from portal_misc.models import CompanyBankDetails
@@ -776,52 +793,44 @@ def getMetalRate():
         except Exception:
             pass
 
-        # Spread in INR per gram = (spread_points USD/oz) / 31.1035 * usd_to_inr
+        # Spread in INR per gram = (spread_points USD/oz) / 31.1034768 * usd_to_inr
         spread_in_inr_gold = (spread_points / ounce_weight) * usd_to_inr
 
-        # Scale spread for Silver proportionally
-        ratio = gold_ask_per_gm / silver_ask_per_gm if silver_ask_per_gm > 0 else Decimal("65")
+        # Scale silver spread proportionally to gold/silver price ratio
+        ratio = gold_mid_per_gm / silver_mid_per_gm if silver_mid_per_gm > 0 else Decimal("65")
         spread_in_inr_silver = spread_in_inr_gold / ratio
 
-        # Base INR rates per gram
-        base_gold_ask_inr = gold_ask_per_gm * usd_to_inr
-        base_gold_bid_inr = gold_bid_per_gm * usd_to_inr
-        base_silver_ask_inr = silver_ask_per_gm * usd_to_inr
-        base_silver_bid_inr = silver_bid_per_gm * usd_to_inr
+        # --- Final buy/sell rates (spread applied symmetrically around mid-price) ---
+        buy_gold_rate    = gold_mid_inr - spread_in_inr_gold
+        sell_gold_rate   = gold_mid_inr + spread_in_inr_gold
+        buy_silver_rate  = silver_mid_inr - spread_in_inr_silver
+        sell_silver_rate = silver_mid_inr + spread_in_inr_silver
 
-        # Final rates after spread
-        buy_gold_rate = base_gold_ask_inr - spread_in_inr_gold
-        sell_gold_rate = base_gold_bid_inr + spread_in_inr_gold
-        buy_silver_rate = base_silver_ask_inr - spread_in_inr_silver
-        sell_silver_rate = base_silver_bid_inr + spread_in_inr_silver
-
-        # Logs and console prints
+        # --- Logging ---
         log_msg = (
             f"\n========================================\n"
-            f"METAL RATE API CONVERSION LOGS (GSJ - troy ounce):\n"
-            f"Raw API Gold Ask: {gold['ask']} USD/troy oz, Bid: {gold['bid']} USD/troy oz\n"
-            f"Raw API Silver Ask: {silver['ask']} USD/troy oz, Bid: {silver['bid']} USD/troy oz\n"
+            f"METAL RATE API CONVERSION LOGS (Tradefeeds - troy ounce):\n"
+            f"Raw API Gold Mid:   {gold_price_usd} USD/troy oz\n"
+            f"Raw API Silver Mid: {silver_price_usd} USD/troy oz\n"
             f"Exchange Rate (usd_to_inr): {usd_to_inr}\n"
-            f"Spread Points (from DB): {spread_points}\n"
+            f"Spread Points (from DB): {spread_points} USD/oz\n"
             f"----------------------------------------\n"
             f"Conversion to USD/gm (÷ {ounce_weight} g/troy oz):\n"
-            f"Gold Ask: {gold_ask_per_gm} USD/gm\n"
-            f"Gold Bid: {gold_bid_per_gm} USD/gm\n"
-            f"Silver Ask: {silver_ask_per_gm} USD/gm\n"
-            f"Silver Bid: {silver_bid_per_gm} USD/gm\n"
+            f"Gold Mid:   {gold_mid_per_gm} USD/gm\n"
+            f"Silver Mid: {silver_mid_per_gm} USD/gm\n"
             f"----------------------------------------\n"
             f"Conversion to INR/gm (* {usd_to_inr}):\n"
-            f"Base Gold Ask INR: {base_gold_ask_inr} INR/gm\n"
-            f"Base Gold Bid INR: {base_gold_bid_inr} INR/gm\n"
+            f"Gold Mid INR:   {gold_mid_inr} INR/gm\n"
+            f"Silver Mid INR: {silver_mid_inr} INR/gm\n"
             f"----------------------------------------\n"
-            f"Spread in INR per gram:\n"
-            f"Gold Spread: {spread_in_inr_gold} INR/gm\n"
+            f"Spread in INR per gram (symmetric):\n"
+            f"Gold Spread:   {spread_in_inr_gold} INR/gm\n"
             f"Silver Spread: {spread_in_inr_silver} INR/gm\n"
             f"----------------------------------------\n"
             f"Final Rates after Spread:\n"
-            f"Buy Gold Rate: {buy_gold_rate} INR/gm\n"
-            f"Sell Gold Rate: {sell_gold_rate} INR/gm\n"
-            f"Buy Silver Rate: {buy_silver_rate} INR/gm\n"
+            f"Buy Gold Rate:    {buy_gold_rate} INR/gm\n"
+            f"Sell Gold Rate:   {sell_gold_rate} INR/gm\n"
+            f"Buy Silver Rate:  {buy_silver_rate} INR/gm\n"
             f"Sell Silver Rate: {sell_silver_rate} INR/gm\n"
             f"========================================\n"
         )
@@ -830,10 +839,10 @@ def getMetalRate():
         sys.stdout.flush()
 
         return {
-            "buy_gold_rate":    (buy_gold_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "sell_gold_rate":   (sell_gold_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "buy_silver_rate":  (buy_silver_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
-            "sell_silver_rate": (sell_silver_rate).quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "buy_gold_rate":    buy_gold_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "sell_gold_rate":   sell_gold_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "buy_silver_rate":  buy_silver_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
+            "sell_silver_rate": sell_silver_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
             "spread": spread_points,
             "currency": currency,
             "currency_icon": currency_icon
@@ -967,7 +976,7 @@ def calculate_live_pnl(order, current_metal_rate):
     buy_rate = order.metal_rate_per_gm
     if getattr(order, 'currency', 'INR') == 'USD':
         usd_to_inr = get_dollar_rate()
-        buy_rate = (buy_rate / Decimal("31.1035")) * usd_to_inr
+        buy_rate = (buy_rate / Decimal("31.1034768")) * usd_to_inr
 
     buy_metal_value = (buy_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
     sell_metal_value = (current_metal_rate).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)

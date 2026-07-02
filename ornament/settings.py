@@ -260,7 +260,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 RAZORPAY_KEY_ID = "rzp_live_SWYkvLQAZBvUO0"
 RAZORPAY_KEY_SECRET = "Y7WzMRFYpD60MKccks82q7Tx"
 
-METAL_API_KEY = "2Ehlo6aoBuvDpF07LHgs00UMHz3jyq8NP4Yryuk0QD9IxVpzsOy1tDj2EtYZ"
+METAL_API_KEY = "1f31019f5ca7737bad3e1fc82934881cc5a8ead2"  # Tradefeeds API key (Starter plan, expires 2026-08-08)
+
 
 # Market spread applied on top of live buy rate when customer places an order
 ORDER_SPREAD_POINTS = 0
