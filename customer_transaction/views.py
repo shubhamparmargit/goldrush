@@ -748,8 +748,19 @@ def getMetalRate():
     if not is_market_open():
         cached_rates = cache.get(METAL_RATE_CACHE_KEY)
         if cached_rates:
-            logger.info("Market closed — returning cached metal rates (frozen at last market close).")
-            return cached_rates
+            try:
+                logger.info("Market closed — returning cached metal rates (frozen at last market close).")
+                return {
+                    "buy_gold_rate":    Decimal(str(cached_rates["buy_gold_rate"])),
+                    "sell_gold_rate":   Decimal(str(cached_rates["sell_gold_rate"])),
+                    "buy_silver_rate":  Decimal(str(cached_rates["buy_silver_rate"])),
+                    "sell_silver_rate": Decimal(str(cached_rates["sell_silver_rate"])),
+                    "spread":           Decimal(str(cached_rates["spread"])),
+                    "currency":         cached_rates["currency"],
+                    "currency_icon":    cached_rates["currency_icon"]
+                }
+            except Exception as e:
+                logger.error(f"Error parsing cached rates: {e}")
         # No cache yet (e.g. first server start after a weekend) — fall through to fetch once
         logger.warning("Market closed but no cached rates found — fetching once to populate cache.")
 
@@ -800,26 +811,34 @@ def getMetalRate():
         gold_raw_inr   = gold_mid_per_gm * usd_to_inr
         silver_raw_inr = silver_mid_per_gm * usd_to_inr
 
-        # --- Fetch all config from DB in one call ---
+        # --- Fetch all config from DB with fallback for missing migrations ---
         from portal_misc.models import CompanyBankDetails
-        bank = CompanyBankDetails.objects.first()
-        if not bank:
-            raise Exception("CompanyBankDetails record not found. Please configure it in admin.")
-
-        spread_points = Decimal(str(bank.spread)) if bank.spread is not None else Decimal("200")
+        bank = None
+        spread_points = Decimal("200")
+        try:
+            bank = CompanyBankDetails.objects.first()
+            if bank and bank.spread is not None:
+                spread_points = Decimal(str(bank.spread))
+        except Exception as e:
+            logger.warning(f"Database error reading CompanyBankDetails (migration may be pending): {e}")
 
         # BASE_GOLD_PRICE: anchor INR/gm around which scaling is applied.
-        # Auto-calibrated from live price on first call — no manual admin input needed.
-        if bank.base_gold_price is None:
-            bank.base_gold_price = gold_raw_inr.quantize(Decimal("0.00"))
-            bank.save(update_fields=["base_gold_price"])
-        BASE_GOLD_PRICE = Decimal(str(bank.base_gold_price))
+        # Auto-calibrated from live price on first call — falls back to 12784.87 if db column doesn't exist yet.
+        BASE_GOLD_PRICE = Decimal("12784.87")
+        if bank:
+            try:
+                if hasattr(bank, "base_gold_price") and bank.base_gold_price is not None:
+                    BASE_GOLD_PRICE = Decimal(str(bank.base_gold_price))
+                elif hasattr(bank, "base_gold_price"):
+                    bank.base_gold_price = gold_raw_inr.quantize(Decimal("0.00"))
+                    bank.save(update_fields=["base_gold_price"])
+                    BASE_GOLD_PRICE = Decimal(str(bank.base_gold_price))
+            except Exception as e:
+                logger.error(f"Error accessing base_gold_price in DB: {e}")
 
         # SCALE = ounce_weight / usd_to_inr
         # Ensures exactly 1 INR/gm change per $1/oz move in gold price,
         # regardless of the current USD/INR exchange rate.
-        # Proof: raw change = $1/31.1g × usd_to_inr ≈ 3.06 INR/gm
-        #        × SCALE (31.1/usd_to_inr) → = 1 INR/gm ✓
         SCALE = ounce_weight / usd_to_inr
 
         # Scale gold around anchor: only the DEVIATION from anchor is compressed
@@ -837,6 +856,7 @@ def getMetalRate():
         # Scale silver spread proportionally to gold/silver price ratio
         ratio = gold_mid_per_gm / silver_mid_per_gm if silver_mid_per_gm > 0 else Decimal("65")
         spread_in_inr_silver = spread_in_inr_gold / ratio
+
 
 
         # --- Final buy/sell rates (spread applied symmetrically around mid-price) ---
@@ -887,21 +907,45 @@ def getMetalRate():
             "currency_icon": currency_icon
         }
 
-        # Save to cache (no expiry) so market-closed requests return frozen rates
+        # Save to cache as strings (ensures JSON/Redis/Memcached serializability)
         from django.core.cache import cache
-        cache.set(METAL_RATE_CACHE_KEY, rates, timeout=None)
+        try:
+            cache_rates = {
+                "buy_gold_rate":    str(rates["buy_gold_rate"]),
+                "sell_gold_rate":   str(rates["sell_gold_rate"]),
+                "buy_silver_rate":  str(rates["buy_silver_rate"]),
+                "sell_silver_rate": str(rates["sell_silver_rate"]),
+                "spread":           str(rates["spread"]),
+                "currency":         rates["currency"],
+                "currency_icon":    rates["currency_icon"]
+            }
+            cache.set(METAL_RATE_CACHE_KEY, cache_rates, timeout=None)
+        except Exception as e:
+            logger.error(f"Error caching metal rates: {e}")
 
         return rates
 
-    except (requests.RequestException, ValueError, KeyError, InvalidOperation) as e:
-        logger.error(f"Metal rate fetch failed: {e}")
+    except Exception as e:
+        logger.error(f"Metal rate fetch/calculation failed: {e}")
         # Try returning last cached rates as fallback (better than crashing)
         from django.core.cache import cache
-        cached_rates = cache.get(METAL_RATE_CACHE_KEY)
-        if cached_rates:
-            logger.warning("API failed — returning last cached metal rates as fallback.")
-            return cached_rates
-        raise Exception("Unable to fetch metal rates")
+        try:
+            cached_rates = cache.get(METAL_RATE_CACHE_KEY)
+            if cached_rates:
+                logger.warning("API failed — returning last cached metal rates as fallback.")
+                return {
+                    "buy_gold_rate":    Decimal(str(cached_rates["buy_gold_rate"])),
+                    "sell_gold_rate":   Decimal(str(cached_rates["sell_gold_rate"])),
+                    "buy_silver_rate":  Decimal(str(cached_rates["buy_silver_rate"])),
+                    "sell_silver_rate": Decimal(str(cached_rates["sell_silver_rate"])),
+                    "spread":           Decimal(str(cached_rates["spread"])),
+                    "currency":         cached_rates["currency"],
+                    "currency_icon":    cached_rates["currency_icon"]
+                }
+        except Exception as cache_err:
+            logger.error(f"Error retrieving cached rates in fallback: {cache_err}")
+        raise Exception(f"Unable to fetch metal rates: {e}")
+
 
     
 def getMetalData(request):
