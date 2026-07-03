@@ -724,7 +724,7 @@ class OrderList:
 
 logger = logging.getLogger(__name__)
 
-METAL_RATE_CACHE_KEY = "last_metal_rates"
+METAL_RATE_CACHE_KEY = "last_metal_rates_v2"
 
 def getMetalRate():
     """
@@ -748,8 +748,19 @@ def getMetalRate():
     if not is_market_open():
         cached_rates = cache.get(METAL_RATE_CACHE_KEY)
         if cached_rates:
-            logger.info("Market closed — returning cached metal rates (frozen at last market close).")
-            return cached_rates
+            try:
+                logger.info("Market closed — returning cached metal rates (frozen at last market close).")
+                return {
+                    "buy_gold_rate":    Decimal(str(cached_rates["buy_gold_rate"])),
+                    "sell_gold_rate":   Decimal(str(cached_rates["sell_gold_rate"])),
+                    "buy_silver_rate":  Decimal(str(cached_rates["buy_silver_rate"])),
+                    "sell_silver_rate": Decimal(str(cached_rates["sell_silver_rate"])),
+                    "spread":           Decimal(str(cached_rates["spread"])),
+                    "currency":         cached_rates["currency"],
+                    "currency_icon":    cached_rates["currency_icon"]
+                }
+            except Exception as e:
+                logger.error(f"Error parsing cached rates: {e}")
         # No cache yet (e.g. first server start after a weekend) — fall through to fetch once
         logger.warning("Market closed but no cached rates found — fetching once to populate cache.")
 
@@ -825,8 +836,8 @@ def getMetalRate():
         # Scale gold around anchor: only the DEVIATION from anchor is compressed
         gold_mid_inr   = BASE_GOLD_PRICE + ((gold_raw_inr - BASE_GOLD_PRICE) * SCALE)
 
-        # Scale silver by same factor
-        silver_mid_inr = silver_raw_inr * SCALE
+        # Scale silver: keeps the raw INR/gm rate (no gold compression scale)
+        silver_mid_inr = silver_raw_inr
 
         currency = 'INR'
         currency_icon = '₹'
@@ -887,21 +898,45 @@ def getMetalRate():
             "currency_icon": currency_icon
         }
 
-        # Save to cache (no expiry) so market-closed requests return frozen rates
+        # Save to cache as strings (ensures JSON/Redis/Memcached serializability)
         from django.core.cache import cache
-        cache.set(METAL_RATE_CACHE_KEY, rates, timeout=None)
+        try:
+            cache_rates = {
+                "buy_gold_rate":    str(rates["buy_gold_rate"]),
+                "sell_gold_rate":   str(rates["sell_gold_rate"]),
+                "buy_silver_rate":  str(rates["buy_silver_rate"]),
+                "sell_silver_rate": str(rates["sell_silver_rate"]),
+                "spread":           str(rates["spread"]),
+                "currency":         rates["currency"],
+                "currency_icon":    rates["currency_icon"]
+            }
+            cache.set(METAL_RATE_CACHE_KEY, cache_rates, timeout=None)
+        except Exception as e:
+            logger.error(f"Error caching metal rates: {e}")
 
         return rates
 
-    except (requests.RequestException, ValueError, KeyError, InvalidOperation) as e:
+    except Exception as e:
         logger.error(f"Metal rate fetch failed: {e}")
         # Try returning last cached rates as fallback (better than crashing)
         from django.core.cache import cache
-        cached_rates = cache.get(METAL_RATE_CACHE_KEY)
-        if cached_rates:
-            logger.warning("API failed — returning last cached metal rates as fallback.")
-            return cached_rates
-        raise Exception("Unable to fetch metal rates")
+        try:
+            cached_rates = cache.get(METAL_RATE_CACHE_KEY)
+            if cached_rates:
+                logger.warning("API failed — returning last cached metal rates as fallback.")
+                return {
+                    "buy_gold_rate":    Decimal(str(cached_rates["buy_gold_rate"])),
+                    "sell_gold_rate":   Decimal(str(cached_rates["sell_gold_rate"])),
+                    "buy_silver_rate":  Decimal(str(cached_rates["buy_silver_rate"])),
+                    "sell_silver_rate": Decimal(str(cached_rates["sell_silver_rate"])),
+                    "spread":           Decimal(str(cached_rates["spread"])),
+                    "currency":         cached_rates["currency"],
+                    "currency_icon":    cached_rates["currency_icon"]
+                }
+        except Exception as cache_err:
+            logger.error(f"Error retrieving cached rates in fallback: {cache_err}")
+        raise Exception(f"Unable to fetch metal rates: {e}")
+
 
     
 def getMetalData(request):
