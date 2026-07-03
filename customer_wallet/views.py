@@ -1150,15 +1150,15 @@ class CompanyBankPortal:
 
                 try:
                     rate_interval_int = int(rate_interval_val)
-                    if rate_interval_int < 1:
-                        return JsonResponse({'success': '0', 'message': 'Rate refresh interval must be at least 1 second'})
+                    if rate_interval_int < 0:
+                        return JsonResponse({'success': '0', 'message': 'Rate refresh interval must be non-negative'})
                 except ValueError:
                     return JsonResponse({'success': '0', 'message': 'Rate refresh interval must be an integer'})
 
                 try:
                     pnl_interval_int = int(pnl_interval_val)
-                    if pnl_interval_int < 1:
-                        return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be at least 1 second'})
+                    if pnl_interval_int < 0:
+                        return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be non-negative'})
                 except ValueError:
                     return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be an integer'})
 

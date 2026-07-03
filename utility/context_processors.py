@@ -31,8 +31,8 @@ def sidebar_context(request):
 def settings_context(request):
     try:
         bank = CompanyBankDetails.objects.first()
-        rate_refresh = bank.rate_refresh_interval if bank and bank.rate_refresh_interval else 10
-        pnl_refresh = bank.pnl_refresh_interval if bank and bank.pnl_refresh_interval else 5
+        rate_refresh = bank.rate_refresh_interval if bank and bank.rate_refresh_interval is not None else 10
+        pnl_refresh = bank.pnl_refresh_interval if bank and bank.pnl_refresh_interval is not None else 5
     except Exception:
         rate_refresh = 10
         pnl_refresh = 5
