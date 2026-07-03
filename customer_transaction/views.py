@@ -779,28 +779,48 @@ def getMetalRate():
         gold_mid_per_gm   = gold_price_usd / ounce_weight
         silver_mid_per_gm = silver_price_usd / ounce_weight
 
-        gold_mid_inr   = gold_mid_per_gm * usd_to_inr
-        silver_mid_inr = silver_mid_per_gm * usd_to_inr
+        # Raw INR price per gram (unscaled)
+        gold_raw_inr   = gold_mid_per_gm * usd_to_inr
+        silver_raw_inr = silver_mid_per_gm * usd_to_inr
+
+        # --- Fetch all config from DB in one call ---
+        from portal_misc.models import CompanyBankDetails
+        bank = CompanyBankDetails.objects.first()
+        if not bank:
+            raise Exception("CompanyBankDetails record not found. Please configure it in admin.")
+
+        spread_points = Decimal(str(bank.spread)) if bank.spread is not None else Decimal("200")
+
+        # BASE_GOLD_PRICE: anchor INR/gm around which scaling is applied.
+        # Auto-calibrated from live price on first call — no manual admin input needed.
+        if bank.base_gold_price is None:
+            bank.base_gold_price = gold_raw_inr.quantize(Decimal("0.00"))
+            bank.save(update_fields=["base_gold_price"])
+        BASE_GOLD_PRICE = Decimal(str(bank.base_gold_price))
+
+        # SCALE = ounce_weight / usd_to_inr
+        # Ensures exactly 1 INR/gm change per $1/oz move in gold price,
+        # regardless of the current USD/INR exchange rate.
+        # Proof: raw change = $1/31.1g × usd_to_inr ≈ 3.06 INR/gm
+        #        × SCALE (31.1/usd_to_inr) → = 1 INR/gm ✓
+        SCALE = ounce_weight / usd_to_inr
+
+        # Scale gold around anchor: only the DEVIATION from anchor is compressed
+        gold_mid_inr   = BASE_GOLD_PRICE + ((gold_raw_inr - BASE_GOLD_PRICE) * SCALE)
+
+        # Scale silver by same factor
+        silver_mid_inr = silver_raw_inr * SCALE
 
         currency = 'INR'
         currency_icon = '₹'
 
-        # --- Spread (from DB, default 200 USD/oz) ---
-        spread_points = Decimal("200")
-        try:
-            from portal_misc.models import CompanyBankDetails
-            bank = CompanyBankDetails.objects.first()
-            if bank and bank.spread is not None:
-                spread_points = Decimal(str(bank.spread))
-        except Exception:
-            pass
-
-        # Spread in INR per gram = (spread_points USD/oz) / 31.1034768 * usd_to_inr
-        spread_in_inr_gold = (spread_points / ounce_weight) * usd_to_inr
+        # Spread: also scaled so 1 USD/oz spread ≈ 1 INR/gm impact (not 3 INR/gm)
+        spread_in_inr_gold = ((spread_points / ounce_weight) * usd_to_inr) * SCALE
 
         # Scale silver spread proportionally to gold/silver price ratio
         ratio = gold_mid_per_gm / silver_mid_per_gm if silver_mid_per_gm > 0 else Decimal("65")
         spread_in_inr_silver = spread_in_inr_gold / ratio
+
 
         # --- Final buy/sell rates (spread applied symmetrically around mid-price) ---
         buy_gold_rate    = gold_mid_inr - spread_in_inr_gold
