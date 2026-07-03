@@ -724,6 +724,8 @@ class OrderList:
 
 logger = logging.getLogger(__name__)
 
+METAL_RATE_CACHE_KEY = "last_metal_rates"
+
 def getMetalRate():
     """
     Fetches live gold and silver mid-prices from the Tradefeeds API.
@@ -731,17 +733,25 @@ def getMetalRate():
     Params:   key=<METAL_API_KEY>, name=gold|silver
     Response: result.output[0].price  (USD per troy ounce, mid-price)
 
-    Since Tradefeeds returns a single mid-price (no ask/bid), the spread
-    is applied symmetrically:
+    Market-closed behavior:
+    - When market is closed, returns the last cached rates (frozen at market close).
+    - When market is open, fetches fresh rates and updates the cache.
+    - This prevents artificial PnL fluctuations after trading hours.
+
+    Spread is applied symmetrically around mid-price:
         buy_rate  = mid_price - spread
         sell_rate = mid_price + spread
     """
     from django.core.cache import cache
 
-    # 1. Try to read from short-lived cache (30 seconds)
-    cached_rates = cache.get("live_metal_rates")
-    if cached_rates:
-        return cached_rates
+    # --- Market closed: return frozen rates from cache ---
+    if not is_market_open():
+        cached_rates = cache.get(METAL_RATE_CACHE_KEY)
+        if cached_rates:
+            logger.info("Market closed — returning cached metal rates (frozen at last market close).")
+            return cached_rates
+        # No cache yet (e.g. first server start after a weekend) — fall through to fetch once
+        logger.warning("Market closed but no cached rates found — fetching once to populate cache.")
 
     BASE_URL = "https://data.tradefeeds.com/api/v1/commodity_prices"
     api_key = settings.METAL_API_KEY
@@ -867,7 +877,7 @@ def getMetalRate():
         print(log_msg)
         sys.stdout.flush()
 
-        res = {
+        rates = {
             "buy_gold_rate":    buy_gold_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
             "sell_gold_rate":   sell_gold_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
             "buy_silver_rate":  buy_silver_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
@@ -877,20 +887,22 @@ def getMetalRate():
             "currency_icon": currency_icon
         }
 
-        # Cache live rates for 30 seconds
-        cache.set("live_metal_rates", res, timeout=30)
-        # Store a fallback cache key for 1 day
-        cache.set("fallback_metal_rates", res, timeout=86400)
+        # Save to cache (no expiry) so market-closed requests return frozen rates
+        from django.core.cache import cache
+        cache.set(METAL_RATE_CACHE_KEY, rates, timeout=None)
 
-        return res
+        return rates
 
     except (requests.RequestException, ValueError, KeyError, InvalidOperation) as e:
         logger.error(f"Metal rate fetch failed: {e}")
-        fallback_rates = cache.get("fallback_metal_rates")
-        if fallback_rates:
-            logger.info("Using cached fallback metal rates due to API fetch failure.")
-            return fallback_rates
+        # Try returning last cached rates as fallback (better than crashing)
+        from django.core.cache import cache
+        cached_rates = cache.get(METAL_RATE_CACHE_KEY)
+        if cached_rates:
+            logger.warning("API failed — returning last cached metal rates as fallback.")
+            return cached_rates
         raise Exception("Unable to fetch metal rates")
+
     
 def getMetalData(request):
     try:
