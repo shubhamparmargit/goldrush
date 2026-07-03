@@ -251,7 +251,7 @@ function placeOrder(type, btn, gm, metal_type, autoSellAmount, autoSellEnabled) 
 
             $.toast({
                 heading: "Success",
-                text: type === "BOOKING" ? "Booking placed" : "Buyback placed",
+                text: type === "BOOKING" ? "Buy order placed" : "Sell order placed",
                 icon: "success",
                 position: "top-right"
             });
@@ -308,8 +308,8 @@ function openTransactionSheet(item) {
 
             const orderTypeText =
                 data.order_type === "BOOKING"
-                    ? "Booking Order – Profit when market goes UP"
-                    : "Buyback Order – Profit when market goes DOWN";
+                    ? "Buy Order – Profit when market goes UP"
+                    : "Sell Order – Profit when market goes DOWN";
 
             const orderTypeClass =
                 data.order_type === "BOOKING" ? "booking" : "buyback";
@@ -758,7 +758,7 @@ function openPastOrderSheet(item) {
                 <div class="sheet-row">
                     <span>Order Type</span>
                     <span class="order-type ${data.order_type === "BOOKING" ? "booking" : "buyback"}">
-                        ${data.order_type}
+                        ${data.order_type === "BOOKING" ? "BUY" : "SELL"}
                     </span>
                 </div>
 

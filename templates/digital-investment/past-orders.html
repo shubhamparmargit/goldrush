@@ -40,7 +40,7 @@ Wallet History
                             <!-- ORDER TYPE LABEL -->
                             <span class="order-type 
                                 {% if o.order_type == 'BOOKING' %}booking{% else %}buyback{% endif %}">
-                                {{ o.order_type }}
+                                {% if o.order_type == 'BOOKING' %}BUY{% else %}SELL{% endif %}
                             </span>
                         </div>
 
