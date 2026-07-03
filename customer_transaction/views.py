@@ -743,6 +743,24 @@ def getMetalRate():
         sell_rate = mid_price + spread
     """
     from django.core.cache import cache
+    # --- Cooldown check: if rates were fetched less than 1 second ago, return cache ---
+    # This protects the Tradefeeds API from rate-limiting when clients poll at 0-1 seconds.
+    cooldown = cache.get("live_metal_rates_cooldown")
+    if cooldown:
+        cached_rates = cache.get(METAL_RATE_CACHE_KEY)
+        if cached_rates:
+            try:
+                return {
+                    "buy_gold_rate":    Decimal(str(cached_rates["buy_gold_rate"])),
+                    "sell_gold_rate":   Decimal(str(cached_rates["sell_gold_rate"])),
+                    "buy_silver_rate":  Decimal(str(cached_rates["buy_silver_rate"])),
+                    "sell_silver_rate": Decimal(str(cached_rates["sell_silver_rate"])),
+                    "spread":           Decimal(str(cached_rates["spread"])),
+                    "currency":         cached_rates["currency"],
+                    "currency_icon":    cached_rates["currency_icon"]
+                }
+            except Exception as e:
+                logger.error(f"Error parsing cooldown cached rates: {e}")
 
     # --- Market closed: return frozen rates from cache ---
     if not is_market_open():
@@ -911,6 +929,7 @@ def getMetalRate():
                 "currency_icon":    rates["currency_icon"]
             }
             cache.set(METAL_RATE_CACHE_KEY, cache_rates, timeout=None)
+            cache.set("live_metal_rates_cooldown", True, timeout=1)
         except Exception as e:
             logger.error(f"Error caching metal rates: {e}")
 
