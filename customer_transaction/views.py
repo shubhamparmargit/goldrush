@@ -736,6 +736,13 @@ def getMetalRate():
         buy_rate  = mid_price - spread
         sell_rate = mid_price + spread
     """
+    from django.core.cache import cache
+
+    # 1. Try to read from short-lived cache (30 seconds)
+    cached_rates = cache.get("live_metal_rates")
+    if cached_rates:
+        return cached_rates
+
     BASE_URL = "https://data.tradefeeds.com/api/v1/commodity_prices"
     api_key = settings.METAL_API_KEY
 
@@ -840,7 +847,7 @@ def getMetalRate():
         print(log_msg)
         sys.stdout.flush()
 
-        return {
+        res = {
             "buy_gold_rate":    buy_gold_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
             "sell_gold_rate":   sell_gold_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
             "buy_silver_rate":  buy_silver_rate.quantize(Decimal("0.0"), rounding=ROUND_HALF_UP),
@@ -850,8 +857,19 @@ def getMetalRate():
             "currency_icon": currency_icon
         }
 
+        # Cache live rates for 30 seconds
+        cache.set("live_metal_rates", res, timeout=30)
+        # Store a fallback cache key for 1 day
+        cache.set("fallback_metal_rates", res, timeout=86400)
+
+        return res
+
     except (requests.RequestException, ValueError, KeyError, InvalidOperation) as e:
         logger.error(f"Metal rate fetch failed: {e}")
+        fallback_rates = cache.get("fallback_metal_rates")
+        if fallback_rates:
+            logger.info("Using cached fallback metal rates due to API fetch failure.")
+            return fallback_rates
         raise Exception("Unable to fetch metal rates")
     
 def getMetalData(request):

@@ -174,3 +174,123 @@ class WeeklyAutoCloseTestCase(TestCase):
         past_demo = order_list.get_past_orders(MockRequestDemo(), self.customer)
         self.assertEqual(len(past_live), 0)
         self.assertEqual(len(past_demo), 0)
+
+class AutoSellTestCase(TestCase):
+    def setUp(self):
+        # Create customer, membership level, wallets, mock rates
+        self.customer = Customer.objects.create(
+            unique_id="12345678_auto",
+            name="Auto Sell Customer",
+            mobile="9876543211",
+            email="autosell@example.com",
+            access="Granted",
+            trading="ON",
+            date=timezone.now()
+        )
+        self.membership = MembershipMaster.objects.create(
+            level="Normal",
+            min_amount=Decimal("0"),
+            service_fee=Decimal("50"),
+            service_fee_percent=Decimal("0.10"),
+            daily_slot=100
+        )
+        self.wallet_live = CustomerWallet.objects.create(
+            customer=self.customer,
+            balance=Decimal("10000.00"),
+            current_membership=self.membership,
+            stop_loss_percentage=80  # 80% stop loss
+        )
+
+    @patch("customer_transaction.services.getMetalRate")
+    def test_auto_sell_profit_target_triggered(self, mock_get_metal_rate):
+        # Initial rates at 6000.0, but we will mock it to 6010.0 to trigger profit target
+        mock_get_metal_rate.return_value = {
+            "buy_gold_rate": Decimal("6010.0"),
+            "sell_gold_rate": Decimal("6010.0"),
+            "buy_silver_rate": Decimal("75.0"),
+            "sell_silver_rate": Decimal("75.0"),
+            "spread": Decimal("0"),
+            "currency": "INR",
+            "currency_icon": "₹"
+        }
+
+        # Create active BUY order with profit target auto_sell_amount = 500 INR
+        # order_amount = 500, service_fee = 50, market_amount = 450
+        # If rate goes up to 6010, current_value = 450 + 10*(6010-6000) = 550, which >= 500
+        order = CustomerTransaction.objects.create(
+            transaction_id="TXN_AUTO_SELL_PROFIT",
+            customer=self.customer,
+            wallet=self.wallet_live,
+            membership=self.membership,
+            transaction_type="BUY",
+            metal_type="GOLD",
+            order_type="BOOKING",
+            quantity_gm=10,
+            metal_rate_per_gm=Decimal("6000.0"),
+            metal_value=Decimal("6000.0"),
+            order_amount=Decimal("500.0"),
+            service_fee=Decimal("50.0"),
+            gst=Decimal("9.0"),
+            reward=Decimal("5.0"),
+            actual_service_fee=Decimal("36.0"),
+            market_amount=Decimal("450.0"),
+            auto_sell_enabled=True,
+            auto_sell_amount=Decimal("500.0"),
+            created_at=timezone.now()
+        )
+
+        from customer_transaction.services import auto_sell_runner
+        auto_sell_runner()
+
+        # Check if the order was auto sold
+        order.refresh_from_db()
+        sell_txns = CustomerTransaction.objects.filter(parent_buy=order)
+        self.assertEqual(sell_txns.count(), 1)
+        sell_txn = sell_txns.first()
+        self.assertEqual(sell_txn.transaction_type, "SELL")
+        self.assertEqual(sell_txn.sold_via, "AUTO")
+
+    @patch("customer_transaction.services.getMetalRate")
+    def test_auto_sell_stop_loss_triggered(self, mock_get_metal_rate):
+        # Mock rate is 5960.0 to trigger stop loss (current_value = 450 - 400 = 50 <= limit_value of 90)
+        mock_get_metal_rate.return_value = {
+            "buy_gold_rate": Decimal("5960.0"),
+            "sell_gold_rate": Decimal("5960.0"),
+            "buy_silver_rate": Decimal("75.0"),
+            "sell_silver_rate": Decimal("75.0"),
+            "spread": Decimal("0"),
+            "currency": "INR",
+            "currency_icon": "₹"
+        }
+
+        order = CustomerTransaction.objects.create(
+            transaction_id="TXN_AUTO_SELL_SL",
+            customer=self.customer,
+            wallet=self.wallet_live,
+            membership=self.membership,
+            transaction_type="BUY",
+            metal_type="GOLD",
+            order_type="BOOKING",
+            quantity_gm=10,
+            metal_rate_per_gm=Decimal("6000.0"),
+            metal_value=Decimal("6000.0"),
+            order_amount=Decimal("500.0"),
+            service_fee=Decimal("50.0"),
+            gst=Decimal("9.0"),
+            reward=Decimal("5.0"),
+            actual_service_fee=Decimal("36.0"),
+            market_amount=Decimal("450.0"),
+            auto_sell_enabled=True,
+            created_at=timezone.now()
+        )
+
+        from customer_transaction.services import auto_sell_runner
+        auto_sell_runner()
+
+        # Check if the order was auto sold due to stop loss
+        order.refresh_from_db()
+        sell_txns = CustomerTransaction.objects.filter(parent_buy=order)
+        self.assertEqual(sell_txns.count(), 1)
+        sell_txn = sell_txns.first()
+        self.assertEqual(sell_txn.transaction_type, "SELL")
+        self.assertEqual(sell_txn.sold_via, "AUTO")
