@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from utility.views import Utility, RandomIdGenerate, Validation, current_date, urlPrefix, domainURL, domainURLPortal, InvoiceUtil
+from utility.views import Utility, RandomIdGenerate, Validation, urlPrefix, domainURL, domainURLPortal, InvoiceUtil
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.conf import settings
@@ -279,7 +279,7 @@ def cartInsert(request):
                                     res = 1
                             else:
                                 insertCartItemData = CartItems.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     cart = Cart.objects.get(cart_id = cart_id),
                                     category = Category.objects.get(unique_id=category_id),
                                     product = Product.objects.get(unique_id=product_id),
@@ -313,7 +313,7 @@ def cartInsert(request):
                             cart_id = 'cart_'+str(random_obj.generateUID())
 
                             insertCartData = Cart.objects.create(
-                                date = current_date,
+                                date = timezone.now(),
                                 cart_id = cart_id,
                                 mobile = mobile,
                                 customer = Customer.objects.get(unique_id=user_unique_id),
@@ -321,7 +321,7 @@ def cartInsert(request):
                             )
                             if insertCartData:
                                 insertCartItemData = CartItems.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     cart = Cart.objects.get(cart_id = cart_id),
                                     category = Category.objects.get(unique_id=category_id),
                                     product = Product.objects.get(unique_id=product_id),
@@ -451,7 +451,7 @@ def placeOrder(request):
                         orderStatus_arr = []
 
                         insertData = Order.objects.create(
-                            date = current_date,
+                            date = timezone.now(),
                             order_id = order_id,
                             order_number = order_number,
                             cart = Cart.objects.get(cart_id = cart_id),
@@ -483,9 +483,9 @@ def placeOrder(request):
                                     sub_total = sub_total + row.total
                                     total_quantity = total_quantity + row.quantity
 
-                                    data_arr.append(OrderDetails(date = current_date, order = Order.objects.get(order_id = order_id), prd_detail_id = prd_detail_id, category = Category.objects.get(unique_id=row.category.unique_id), product = Product.objects.get(unique_id=row.product.unique_id), size = row.size, description = row.description, category_description = row.category_description, metal = row.metal, metal_type = row.metal_type, purity = row.purity, price_per_10_gm = row.price_per_10_gm, weight_in_gm = row.weight_in_gm, gst_in_percent = row.gst_in_percent, making_fixed = row.making_fixed, making_charge = row.making_charge, delivery_charge = row.delivery_charge, discount_in_percent = row.discount_in_percent, quantity = row.quantity, price = row.price, total = row.total, category_name = row.category_name,product_name = row.product_name))
+                                    data_arr.append(OrderDetails(date = timezone.now(), order = Order.objects.get(order_id = order_id), prd_detail_id = prd_detail_id, category = Category.objects.get(unique_id=row.category.unique_id), product = Product.objects.get(unique_id=row.product.unique_id), size = row.size, description = row.description, category_description = row.category_description, metal = row.metal, metal_type = row.metal_type, purity = row.purity, price_per_10_gm = row.price_per_10_gm, weight_in_gm = row.weight_in_gm, gst_in_percent = row.gst_in_percent, making_fixed = row.making_fixed, making_charge = row.making_charge, delivery_charge = row.delivery_charge, discount_in_percent = row.discount_in_percent, quantity = row.quantity, price = row.price, total = row.total, category_name = row.category_name,product_name = row.product_name))
 
-                                    orderStatus_arr.append(OrderStatus(date = current_date, order = Order.objects.get(order_id = order_id), prd_detail_id = prd_detail_id, order_status = 'Placed'))
+                                    orderStatus_arr.append(OrderStatus(date = timezone.now(), order = Order.objects.get(order_id = order_id), prd_detail_id = prd_detail_id, order_status = 'Placed'))
                             else:
                                 return Response({'success':'0','message':'No data found for given details'}, status=status.HTTP_200_OK)
                             

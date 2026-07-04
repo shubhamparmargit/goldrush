@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from customer.models import Customer, CustomerAddress
 from customer_trading.models import CustomerTradingAccount, CustomerTradingBankDetails, CustomerTradingTerms, CustomerTradingDocuments, CustomerTradingLogin, CustomerTradingLoginReport
-from utility.views import RandomIdGenerate, current_date, Utility, Validation, urlPrefix, Encryption, CustomerUtil, ProfileUtil, PinResetKeys
+from utility.views import RandomIdGenerate, Utility, Validation, urlPrefix, Encryption, CustomerUtil, ProfileUtil, PinResetKeys
 import re, os, secrets, jwt, datetime, time, random
 from django.http.response import JsonResponse
 from rest_framework import status
@@ -337,7 +337,7 @@ class TradingOnboard:
                 # allowed_ext = (".pdf", ".doc", ".docx", ".ppt", ".pptx")
                 # required_files = ["cancelled_cheque", "passbook", "bank_statement"]
                 allowed_ext = (".jpg", ".jpeg", ".png", ".pdf")
-                max_file_size = 5 * 1024 * 1024  # 5MB
+                max_file_size = 10 * 1024 * 1024  # 10MB
                 allowed_mime = ["image/jpeg","image/png","application/pdf"]
                 
                 # required_files = ["cancelled_cheque", "passbook"]
@@ -408,7 +408,7 @@ class TradingOnboard:
                         continue
 
                     if f.size > max_file_size:
-                        errors[field_name] = "File size should not exceed 5MB"
+                        errors[field_name] = "File size should not exceed 10MB"
                         continue
 
                 # ================= FINAL RESPONSE =================
@@ -436,7 +436,7 @@ class TradingOnboard:
                     CustomerTradingBankDetails.objects.create(
                         customer=customer,
                         unique_id=bank_unique_id,
-                        date=current_date,
+                        date=timezone.now(),
                         bank_name=bank_name,
                         account_holder_name=account_holder_name,
                         account_number=account_number,
@@ -467,7 +467,7 @@ class TradingOnboard:
                         CustomerTradingDocuments.objects.create(
                             customer=customer,
                             unique_id=random_obj.generateUID(),
-                            date=current_date,
+                            date=timezone.now(),
                             doc_type=doc_type,
                             file_path=f"customer-documents/{customer.unique_id}/{file_name}"
                         )
@@ -526,7 +526,7 @@ class TradingOnboard:
                     CustomerTradingTerms.objects.create(
                         customer=customer,
                         accepted='Yes',
-                        accepted_date=current_date,
+                        accepted_date=timezone.now(),
                         accepted_ip=ip,
                         version='1'
                     )
@@ -590,7 +590,7 @@ class TradingOnboard:
 
                 # 🔄 UPDATE STATUS
                 trading_account.status = status_value
-                trading_account.approved_date = current_date
+                trading_account.approved_date = timezone.now()
                 trading_account.approved_by = request.session.get('login_id')
                 trading_account.save(update_fields=[
                     'status', 'approved_date', 'approved_by'

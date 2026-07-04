@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from utility.views import Utility, RandomIdGenerate, Validation, Encryption, current_date, imageType_lst, urlPrefix, domainURL
+from utility.views import Utility, RandomIdGenerate, Validation, Encryption, imageType_lst, urlPrefix, domainURL
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 import os, random
@@ -209,7 +209,7 @@ def customerRegistarion(request):
         with transaction.atomic():
 
             customer = Customer.objects.create(
-                date=current_date,
+                date=timezone.now(),
                 unique_id=unique_id,
                 name=name,
                 aadhaar_number=aadhaar_number,
@@ -232,7 +232,7 @@ def customerRegistarion(request):
             # Create address only if at least pincode or address_line is provided
             if pincode or postoffice or state or city or address_line_1:
                 CustomerAddress.objects.create(
-                    date=current_date,
+                    date=timezone.now(),
                     unique_id=address_unique_id,
                     name=name,
                     mobile=mobile,
@@ -312,7 +312,7 @@ def customerLogin(request):
                             with transaction.atomic():
                                 if login_success[0].unique_application_id == '':
                                     affected_rows = login_success.update(
-                                    app_id_date = current_date,
+                                    app_id_date = timezone.now(),
                                     unique_application_id = unique_application_id,
                                     device_details = bytes(device_details,'utf-8'))
 
@@ -329,7 +329,7 @@ def customerLogin(request):
                                 if flag == 1:
                                     insertData = CustomerLoginReport.objects.create(
                                         username = mobile,
-                                        login_date_time = current_date,
+                                        login_date_time = timezone.now(),
                                         latitude = latitude,
                                         longitude = longitude,
                                         location = bytes(location,'utf-8'),
@@ -440,7 +440,7 @@ def storeFCMId(request):
                 login_success = Customer.objects.filter(mobile = mobile)
                 if login_success:
                     affected_rows = login_success.update(
-                    fcm_date = current_date,
+                    fcm_date = timezone.now(),
                     fcm_registered_id = fcm_registered_id)
 
                     if affected_rows>0:
@@ -474,7 +474,7 @@ def storeUniqueAppId(request):
                 login_success = Customer.objects.filter(mobile = mobile, unique_id = user_unique_id)
                 if login_success:
                     affected_rows = login_success.update(
-                    app_id_date = current_date,
+                    app_id_date = timezone.now(),
                     unique_application_id = unique_application_id,)
 
                     if affected_rows>0:
@@ -548,7 +548,7 @@ def forgotPassword(request):
                     with transaction.atomic():
                         insertData = PasswordResetRequest.objects.create(
                             email = email,
-                            request_date_time = current_date,
+                            request_date_time = timezone.now(),
                             valid_till = valid_till,
                             unique_id = unique_id,
                             customer = login_success,
@@ -602,7 +602,7 @@ def addCustomerAddress(request):
 
                 with transaction.atomic():
                     insertAddressData = CustomerAddress.objects.create(
-                        date = current_date,
+                        date = timezone.now(),
                         unique_id = unique_id,
                         name = name,
                         mobile = add_mobile,

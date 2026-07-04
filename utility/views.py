@@ -20,7 +20,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from num2words import num2words
 from users.models import Franchise
-from customer_wallet.models import MembershipMaster, CustomerWallet, CustomerDemoWallet, WalletRechargeHistory, WithdrawalRequest
+from customer_wallet.models import MembershipMaster, CustomerWallet, CustomerDemoWallet, WalletRechargeHistory, WithdrawalRequest, ManualRechargeRequest, WalletManualCredit
 from customer_transaction.models import CustomerTransaction, CustomerDemoTransaction
 from decimal import Decimal, ROUND_HALF_UP
 from django.utils import timezone
@@ -29,7 +29,7 @@ from django.db.models import OuterRef, Subquery, Exists
 from openpyxl import Workbook
 from django.http import HttpResponse
 
-current_date = datetime.now()
+
 imageType_lst = ['.jpg','.jpeg','.png']
 urlPrefix = settings.DOMAIN_NAME+'media/'
 domainURL = settings.DOMAIN_NAME
@@ -100,6 +100,7 @@ EXPORT_COLUMNS = {
         ("Metal", "metal_type"),
         ("Quantity", "quantity"),
         ("Invested Amount", "invested_amount"),
+        ("Service Fee", "service_fee"),
         ("Buy Rate", "buy_price"),
         ("Buy Date", "buy_date"),
         ("Sell Rate", "sell_price"),
@@ -216,6 +217,8 @@ EXPORT_COLUMNS = {
         ("Sr. No.", "sr_no"),
         ("Full Name", "customer_name"),
         ("Mobile Number", "mobile_number"),
+        ("Email", "email"),
+        ("State", "state"),
         ("Registered On", "date"),
         ("Referral Code", "referral_code"),
         ("Referral Holder Name", "referral_holder_name"),
@@ -291,7 +294,7 @@ class Utility:
     def activity_log(self,login_id,login_name,page_name,message):
         try:
             insertData = User_Activity_Log.objects.create(
-                date = current_date,
+                date = timezone.now(),
                 username = login_name,
                 page_name = page_name,
                 message = bytes(message,'utf-8'),
@@ -790,7 +793,179 @@ class DataList:
                     if request.POST.get('page') is not None and int(request.POST.get('page')) > 1:
                         page = int(request.POST['page'])
                         start= ((page - 1) * limit)
-                    
+
+                    if table_name in ["wallet_recharge_report", "first_recharge_report"]:
+                        from datetime import datetime, time
+                        import math
+
+                        # 1. Determine allowed franchise referral codes if franchise user
+                        allowed_referral_codes = None
+                        if role == 4:
+                            login = Login.objects.get(id=login_id)
+                            parent_franchise = Franchise.objects.get(unique_id=login.table_id)
+                            allowed_referral_codes = [parent_franchise.referral_id]
+
+                        # Load active franchises for referral holder mapping
+                        franchise_map = {f.referral_id: f.holder_name for f in Franchise.objects.all()}
+
+                        # Get search term
+                        search_term = request.POST.get('query', '').strip()
+
+                        # Get date range
+                        from_date = request.POST.get('from_date', '').strip()
+                        to_date = request.POST.get('to_date', '').strip()
+                        start_dt = None
+                        end_dt = None
+                        if from_date:
+                            start_dt = timezone.make_aware(datetime.strptime(from_date, "%Y-%m-%d"))
+                        if to_date:
+                            parsed_end = datetime.strptime(to_date, "%Y-%m-%d")
+                            end_dt = timezone.make_aware(datetime.combine(parsed_end.date(), time.max))
+
+                        # Build queries
+                        online_qs = WalletRechargeHistory.objects.select_related("customer", "membership_allocated", "order").all()
+                        manual_qs = ManualRechargeRequest.objects.select_related("customer", "membership").filter(status="APPROVED")
+                        credit_qs = WalletManualCredit.objects.select_related("customer").all()
+
+                        if allowed_referral_codes is not None:
+                            online_qs = online_qs.filter(customer__referral_code__in=allowed_referral_codes)
+                            manual_qs = manual_qs.filter(customer__referral_code__in=allowed_referral_codes)
+                            credit_qs = credit_qs.filter(customer__referral_code__in=allowed_referral_codes)
+
+                        # Filter by search_term
+                        if search_term:
+                            online_qs = online_qs.filter(Q(customer__name__icontains=search_term) | Q(customer__mobile__icontains=search_term) | Q(razorpay_payment_id__icontains=search_term) | Q(order__razorpay_order_id__icontains=search_term))
+                            manual_qs = manual_qs.filter(Q(customer__name__icontains=search_term) | Q(customer__mobile__icontains=search_term) | Q(utr_number__icontains=search_term))
+                            credit_qs = credit_qs.filter(Q(customer__name__icontains=search_term) | Q(customer__mobile__icontains=search_term) | Q(utr_number__icontains=search_term) | Q(remark__icontains=search_term))
+
+                        # Fetch and format all
+                        all_recharges = []
+
+                        # Load all memberships for manual credit membership lookup
+                        memberships = list(MembershipMaster.objects.all().order_by('-min_amount'))
+                        def get_membership_for_balance(balance):
+                            for m in memberships:
+                                if balance >= m.min_amount:
+                                    return m.level
+                            return 'N/A'
+
+                        for r in online_qs:
+                            all_recharges.append({
+                                'sr_no': 0,
+                                'date': timezone.localtime(r.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'customer_name': r.customer.name,
+                                'mobile_number': r.customer.mobile,
+                                'email': r.customer.email or 'N/A',
+                                'amount': float(r.amount),
+                                'membership': r.membership_allocated.level if r.membership_allocated else 'N/A',
+                                'razorpay_order_id': r.order.razorpay_order_id if r.order else 'N/A',
+                                'razorpay_payment_id': r.razorpay_payment_id or 'N/A',
+                                'transaction_date': r.created_at,
+                                'transaction_date_str': timezone.localtime(r.created_at).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'status': r.status,
+                                'referral_code': r.customer.referral_code,
+                                'referral_holder_name': franchise_map.get(r.customer.referral_code, 'N/A')
+                            })
+
+                        for r in manual_qs:
+                            txn_date = r.action_date if r.action_date else r.request_date
+                            all_recharges.append({
+                                'sr_no': 0,
+                                'date': timezone.localtime(r.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'customer_name': r.customer.name,
+                                'mobile_number': r.customer.mobile,
+                                'email': r.customer.email or 'N/A',
+                                'amount': float(r.amount),
+                                'membership': r.membership.level if r.membership else 'N/A',
+                                'razorpay_order_id': 'Manual Recharge Request',
+                                'razorpay_payment_id': r.utr_number,
+                                'transaction_date': txn_date,
+                                'transaction_date_str': timezone.localtime(txn_date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'status': r.status,
+                                'referral_code': r.customer.referral_code,
+                                'referral_holder_name': franchise_map.get(r.customer.referral_code, 'N/A')
+                            })
+
+                        for r in credit_qs:
+                            all_recharges.append({
+                                'sr_no': 0,
+                                'date': timezone.localtime(r.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'customer_name': r.customer.name,
+                                'mobile_number': r.customer.mobile,
+                                'email': r.customer.email or 'N/A',
+                                'amount': float(r.amount),
+                                'membership': get_membership_for_balance(r.balance_after),
+                                'razorpay_order_id': 'manually added by admin',
+                                'razorpay_payment_id': f"{r.utr_number} (manually added by admin)" if r.utr_number else "manually added by admin",
+                                'transaction_date': r.credited_on,
+                                'transaction_date_str': timezone.localtime(r.credited_on).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'status': 'APPROVED',
+                                'referral_code': r.customer.referral_code,
+                                'referral_holder_name': franchise_map.get(r.customer.referral_code, 'N/A')
+                            })
+
+                        # If first_recharge_report, filter down to the oldest/first transaction date per customer (mobile)
+                        if table_name == "first_recharge_report":
+                            all_recharges.sort(key=lambda x: x['transaction_date'])
+                            by_customer = {}
+                            for r in all_recharges:
+                                mob = r['mobile_number']
+                                if mob not in by_customer:
+                                    by_customer[mob] = r
+                            filtered_recharges = list(by_customer.values())
+                        else:
+                            filtered_recharges = all_recharges
+
+                        # Apply date range filtering on the computed (or full) recharge list
+                        if start_dt or end_dt:
+                            date_filtered = []
+                            for r in filtered_recharges:
+                                t_date = r['transaction_date']
+                                if not timezone.is_aware(t_date):
+                                    t_date = timezone.make_aware(t_date)
+                                if start_dt and t_date < start_dt:
+                                    continue
+                                if end_dt and t_date > end_dt:
+                                    continue
+                                date_filtered.append(r)
+                            filtered_recharges = date_filtered
+
+                        # Sort descending by transaction_date
+                        filtered_recharges.sort(key=lambda x: x['transaction_date'], reverse=True)
+
+                        # Paginate
+                        total_data = len(filtered_recharges)
+                        export = request.POST.get("export")
+                        if export == "excel":
+                            sliced_recharges = filtered_recharges
+                        else:
+                            sliced_recharges = filtered_recharges[start: start + limit]
+
+                        # Map transaction_date to transaction_date_str and set final sr_no
+                        table_data = []
+                        curr_sr = start + 1
+                        for r in sliced_recharges:
+                            r['sr_no'] = curr_sr
+                            curr_sr += 1
+                            r_copy = r.copy()
+                            if 'transaction_date' in r_copy:
+                                del r_copy['transaction_date']
+                            r_copy['transaction_date'] = r_copy['transaction_date_str']
+                            table_data.append(r_copy)
+
+                        total_filter_data = len(table_data)
+                        total_links = math.ceil(total_data / limit)
+                        paginate = self.pagination(total_links, page)
+                        
+                        arr = {
+                            'table_data': table_data,
+                            'page_array': paginate,
+                            'total_links': total_links,
+                            'total_data': total_data,
+                            'total_filter_data': total_filter_data
+                        }
+                        return JsonResponse(arr, status=status.HTTP_200_OK, safe=False)
+
                     if table_name == "metal_purity_price":
                         query = MetalPurityPrice.objects.select_related("metal","purity").all()
                     elif table_name == "unit":
@@ -1241,12 +1416,18 @@ class DataList:
                                 sell_price = 0
                                 sell_date = ""
                                 pnl = ""
-                                pnl_amount = 0
+                                pnl_amount = "0"
 
                                 if sell:
-                                    sell_price = float(sell.market_amount)
+                                    sell_price = float(sell.metal_rate_per_gm)
                                     pnl = sell.profit_loss
-                                    pnl_amount = float(sell.profit_loss_amount)
+                                    raw_pnl_amt = float(sell.profit_loss_amount)
+                                    if pnl == "PROFIT":
+                                        pnl_amount = f"+{raw_pnl_amt}"
+                                    elif pnl == "LOSS":
+                                        pnl_amount = f"-{raw_pnl_amt}"
+                                    else:
+                                        pnl_amount = str(raw_pnl_amt)
                                     sell_date = timezone.localtime(sell.created_at).strftime('%d-%m-%Y @ %I:%M %p')
 
                                 buy_date = timezone.localtime(row.created_at).strftime('%d-%m-%Y @ %I:%M %p')
@@ -1264,10 +1445,11 @@ class DataList:
 
                                     "quantity": row.quantity_gm,
 
-                                    "buy_price": float(row.market_amount),
+                                    "buy_price": float(row.metal_rate_per_gm),
                                     "sell_price": sell_price,
 
                                     "invested_amount": float(row.order_amount),
+                                    "service_fee": float(row.service_fee),
 
                                     "profit_loss": pnl,
                                     "pnl_amount": pnl_amount,
@@ -1492,6 +1674,10 @@ class DataList:
                                 remark = row.remark if row.remark else 'N/A'
                                 transaction_number = row.transaction_number if row.transaction_number else 'N/A'
 
+                                first_address = row.customer.customeraddress_set.first()
+                                state = first_address.state if first_address else 'N/A'
+                                email = row.email if row.email else (row.customer.email if row.customer.email else 'N/A')
+
                                 status_cls = None
                                 btn = None
                                 if(row.status=="APPROVED"):
@@ -1502,7 +1688,7 @@ class DataList:
                                 elif(row.status=="REJECTED"):
                                     status_cls='danger'
 
-                                table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': row.customer.mobile,'email': row.customer.email,'unique_id': row.unique_id,'request_amount': float(row.request_amount),'service_charge': float(row.service_charge),'gst_amount': float(row.gst_amount),'total_deduction': float(row.total_deduction),'final_amount': float(row.final_amount),'status': row.status, 'status_cls': status_cls, 'btn': btn, 'transaction_number':transaction_number, 'remark':remark,'action_date':action_date,'request_date': request_date,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder, 'bank_name': row.customer.customertradingbankdetails.bank_name, 'account_holder_name': row.customer.customertradingbankdetails.account_holder_name, 'account_number': row.customer.customertradingbankdetails.account_number, 'ifsc_code': row.customer.customertradingbankdetails.ifsc_code})
+                                table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': row.customer.mobile,'email': email,'state': state,'unique_id': row.unique_id,'request_amount': float(row.request_amount),'service_charge': float(row.service_charge),'gst_amount': float(row.gst_amount),'total_deduction': float(row.total_deduction),'final_amount': float(row.final_amount),'status': row.status, 'status_cls': status_cls, 'btn': btn, 'transaction_number':transaction_number, 'remark':remark,'action_date':action_date,'request_date': request_date,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder, 'bank_name': row.customer.customertradingbankdetails.bank_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_holder_name': row.customer.customertradingbankdetails.account_holder_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_number': row.customer.customertradingbankdetails.account_number if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'ifsc_code': row.customer.customertradingbankdetails.ifsc_code if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A'})
 
                             sr_no=sr_no+1
 

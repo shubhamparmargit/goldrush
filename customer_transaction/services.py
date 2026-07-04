@@ -2,11 +2,7 @@ from customer_transaction.models import CustomerTransaction, CustomerDemoTransac
 from customer_wallet.models import CustomerWallet, CustomerDemoWallet
 from customer_transaction.views import getMetalRate, calculate_live_pnl, execute_sell
 from django.db import transaction
-from utility.views import RandomIdGenerate, current_date
-from decimal import Decimal, ROUND_HALF_UP
-import logging
-import os
-from django.conf import settings
+from utility.views import RandomIdGenerate, from decimal import Decimal, ROUND_HALF_UP import logging import os from django.conf import settings
 from django.utils import timezone
 
 # Setup logger for weekly auto-close

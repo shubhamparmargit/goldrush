@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from customer_wallet.models import CustomerWallet, CustomerDemoWallet
 from customer_transaction.models import CustomerTransaction, TransactionAutoSellHistory, CustomerDemoTransaction, DemoTransactionAutoSellHistory
-from utility.views import RandomIdGenerate, current_date, Utility, CustomerUtil
+from utility.views import RandomIdGenerate, Utility, CustomerUtil
 import json, requests, sys
 from django.http.response import JsonResponse
 from rest_framework import status
@@ -285,7 +285,7 @@ class TransactionBuySell:
                     reward=reward,
                     actual_service_fee=actual_service_fee,
                     market_amount=market_amount,
-                    created_at=current_date,
+                    created_at=timezone.now(),
                     auto_sell_enabled=auto_sell_enabled,
                     auto_sell_amount=auto_sell_amount,
                 )
@@ -296,7 +296,7 @@ class TransactionBuySell:
                         old_auto_sell_amount=None,
                         new_auto_sell_amount=auto_sell_amount,
                         changed_by="CUSTOMER",
-                        created_at=current_date,
+                        created_at=timezone.now(),
                     )
 
         except Exception as e:
@@ -449,7 +449,7 @@ class TransactionBuySell:
                         old_auto_sell_amount=old_value,
                         new_auto_sell_amount=auto_sell_amount,
                         changed_by="CUSTOMER",
-                        created_at=current_date
+                        created_at=timezone.now()
                     )
 
         except trans_model.DoesNotExist:
@@ -1169,7 +1169,7 @@ def execute_sell(request,buy_txn,current_metal_rate,sold_via="MANUAL"):
             profit_loss_percent=pnl["pnl_percent"],
 
             sold_via=sold_via,
-            created_at=current_date,
+            created_at=timezone.now(),
             auto_closed_weekly=(sold_via == "WEEKLY_AUTO_CLOSE"),
         )
 

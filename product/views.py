@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from product.models import Metal, MetalPurity, MetalPurityPrice, MetalType, Unit, GenderCategories, Category, Product, Product_Images, Product_Videos, Stock, StockMovement
-from utility.views import Utility, Validation, RandomIdGenerate, current_date, imageType_lst, urlPrefix, InvoiceUtil
+from utility.views import Utility, Validation, RandomIdGenerate, imageType_lst, urlPrefix, InvoiceUtil
 from django.http.response import JsonResponse
 from rest_framework import status
 from django.db import transaction
@@ -211,7 +211,7 @@ class PurityPrice:
                                 username = request.session['logged']
 
                                 insertData = MetalPurityPrice.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     unique_id = unique_id,
                                     price_per_10_gm = price,
                                     access = access,
@@ -384,7 +384,7 @@ class UnitData:
                                 username = request.session['logged']
 
                                 insertData = Unit.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     unique_id = unique_id,
                                     unit_name = unit_name,
                                     access = access,
@@ -547,7 +547,7 @@ class CategoryData:
                                 username = request.session['logged']
 
                                 insertData = Category.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     unique_id = unique_id,
                                     name = name,
                                     image = image_url,
@@ -793,7 +793,7 @@ class ProductData:
                                 total_price = calculatedPrice[2]
 
                                 insertData = Product.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     unique_id = unique_id,
                                     name = name,
                                     category = Category.objects.get(unique_id=category),
@@ -818,7 +818,7 @@ class ProductData:
                                     Stock.objects.create(
                                         product = Product.objects.get(unique_id = unique_id), 
                                         quantity = 0,
-                                        last_updated = current_date,
+                                        last_updated = timezone.now(),
                                         added_by = username
                                     )
 
@@ -1154,7 +1154,7 @@ class ProductData:
                                                 unique_id = img_unique_id,
                                                 image_url = file_url,
                                                 product = Product.objects.get(unique_id=unique_id),
-                                                date = current_date,
+                                                date = timezone.now(),
                                                 added_by = username,
                                                 image_type = image_type
                                             )
@@ -1218,7 +1218,7 @@ class ProductData:
                                                 unique_id = vid_unique_id,
                                                 video_url = file_url,
                                                 product = Product.objects.get(unique_id=unique_id),
-                                                date = current_date,
+                                                date = timezone.now(),
                                                 added_by = username
                                             )
                                             if insertData:
@@ -1342,13 +1342,13 @@ class StockOperation:
                                         movement_type = "IN", 
                                         quantity = quantity, 
                                         reference = reference,
-                                        movement_date = current_date,
+                                        movement_date = timezone.now(),
                                         added_by = username
                                     )
 
                                     affected_rows = stock.update(
                                         quantity = int(quantity) + qny,
-                                        last_updated = current_date
+                                        last_updated = timezone.now()
                                     )
 
                                     if affected_rows>0:

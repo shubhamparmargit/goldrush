@@ -24,6 +24,7 @@ urlpatterns = [
    re_path(r'^withdrawal-report$', page_obj.withdrawal_report, name='withdrawal_report'),
    re_path(r'^ledger-report$', page_obj.ledger_report, name='ledger_report'),
    re_path(r'^get-customer-ledger$', page_obj.get_customer_ledger, name='get_customer_ledger'),
+   re_path(r'^export-bulk-ledger$', page_obj.export_bulk_ledger, name='export_bulk_ledger'),
    
    re_path(r'^mac-reset$', cust_obj.macReset, name='macReset'),
    re_path(r'^getCustomer$', cust_obj.getCustomer, name='getCustomer'),

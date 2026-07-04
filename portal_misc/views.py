@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from utility.views import Utility, Validation, RandomIdGenerate, imageType_lst, current_date
+from utility.views import Utility, Validation, RandomIdGenerate, imageType_lst
 import os, random, datetime
 from django.conf import settings
 from django.db import transaction
@@ -80,7 +80,7 @@ class ImageData:
                                 username = request.session['logged']
 
                                 insertData = ImageSlider.objects.create(
-                                    date = current_date,
+                                    date = timezone.now(),
                                     unique_id = unique_id,
                                     image_type = image_type,
                                     sequence = sequence,

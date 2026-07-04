@@ -1,6 +1,3 @@
-from utility.views import current_date
-from time import strftime
-
 class FCMTemplates:
     def welcome_message(self, name, email, mobile_number, password):
         msg = '''

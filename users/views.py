@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from utility.views import Utility, RandomIdGenerate, Encryption, Validation, current_date, ROLE_FRANCHISE_MAP, urlPrefix
+from utility.views import Utility, RandomIdGenerate, Encryption, Validation, ROLE_FRANCHISE_MAP, urlPrefix
 from django.http.response import JsonResponse
 from rest_framework import status
 import re, os, random
@@ -84,7 +84,7 @@ class TradingUser:
                     # ================= FILE VALIDATION =================
                     # allowed_ext = (".pdf", ".doc", ".docx", ".ppt", ".pptx")
                     allowed_ext = (".jpg", ".jpeg", ".png", ".pdf")
-                    max_file_size = 5 * 1024 * 1024  # 5MB
+                    max_file_size = 10 * 1024 * 1024  # 10MB
                     allowed_mime = ["image/jpeg","image/png","application/pdf"]
                     required_files = ["aadhaar_doc", "pan_doc", "agreement_doc"]
                     # optional_files = ["cancelled_cheque", "passbook", "bank_statement"]
@@ -99,7 +99,7 @@ class TradingUser:
                         elif f.content_type not in allowed_mime:
                             errors[field_name] = "Invalid file type"
                         elif f.size > max_file_size:
-                            errors[field_name] = "File size should not exceed 5MB"
+                            errors[field_name] = "File size should not exceed 10MB"
 
                     # 🟡 OPTIONAL FILES CHECK (only if uploaded)
                     for file_field in optional_files:
@@ -110,7 +110,7 @@ class TradingUser:
                             elif f.content_type not in allowed_mime:
                                 errors[field_name] = "Invalid file type"
                             elif f.size > max_file_size:
-                                errors[field_name] = "File size should not exceed 5MB"
+                                errors[field_name] = "File size should not exceed 10MB"
 
                     # ================= FINAL RESPONSE =================
                     if errors:
@@ -204,7 +204,7 @@ class TradingUser:
                     with transaction.atomic():
                         # ================= CREATE FRANCHISE =================
                         franchise = Franchise.objects.create(
-                            date=current_date,
+                            date=timezone.now(),
                             unique_id=unique_id,
                             parent_id=parent_id,
                             franchise_model=franchise_model,
@@ -230,7 +230,7 @@ class TradingUser:
 
                         # ================= CREATE LOGIN =================
                         login = Login.objects.create(
-                            date=current_date,
+                            date=timezone.now(),
                             name=holder_name,
                             mobile_number=mobile,
                             email=email,
@@ -248,7 +248,7 @@ class TradingUser:
                         FranchiseBankDetails.objects.create(
                             franchise=franchise,
                             unique_id=bank_unique_id,
-                            date=current_date,
+                            date=timezone.now(),
                             bank_name=bank_name,
                             account_holder_name=account_holder_name,
                             account_number=account_number,
@@ -280,7 +280,7 @@ class TradingUser:
                             FranchiseDocuments.objects.create(
                                 franchise=franchise,
                                 unique_id=random_obj.generateUID(),
-                                date=current_date,
+                                date=timezone.now(),
                                 doc_type=doc_type,
                                 file_path=f"franchise-documents/{unique_id}/{file_name}"
                             )
@@ -516,7 +516,7 @@ class TradingUser:
 
             # 🔄 UPDATE
             franchise.status = franchise_status
-            franchise.status_date = current_date
+            franchise.status_date = timezone.now()
             franchise.save(update_fields=['status', 'status_date'])
 
             # 🔔 OPTIONAL: EXTRA ACTION ON ACCEPT
@@ -604,7 +604,7 @@ class TradingUser:
                     old_referral_code=old_referral_code,
                     new_referral_code=referral_agent,
                     transfer_by=transfer_by,
-                    transfer_date = current_date,
+                    transfer_date = timezone.now(),
                     reason_for_transfer=reason_for_transfer
                 )
 

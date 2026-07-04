@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
-from customer.models import Customer
+from customer.models import Customer, CustomerAddress
 from customer_wallet.models import MembershipMaster, CustomerWallet, WalletRechargeHistory, WalletRechargeOrder, WithdrawalRequest, ManualRechargeRequest, WalletManualCredit, WalletManualDebit
-from utility.views import RandomIdGenerate, current_date, Utility, CustomerUtil
+from utility.views import RandomIdGenerate, Utility, CustomerUtil
 import re, os, json
 from django.http.response import JsonResponse
 from rest_framework import status
@@ -792,6 +792,42 @@ class WithdrawalOperations:
                 total_deduction = service_charge + gst
                 final_amount = amount - total_deduction
 
+                # Update customer email if provided
+                if email:
+                    customer.email = email
+                    customer.save(update_fields=['email'])
+
+                # Update/Create CustomerAddress if address details provided
+                state = data.get('state', '').strip()
+                city = data.get('city', '').strip()
+                pincode = data.get('pincode', '').strip()
+                address_line_1 = data.get('address_line_1', '').strip()
+                address_line_2 = data.get('address_line_2', '').strip()
+
+                if any([state, city, pincode, address_line_1]):
+                    address = CustomerAddress.objects.filter(customer=customer).first()
+                    if address:
+                        if state: address.state = state
+                        if city: address.city = city
+                        if pincode: address.pincode = pincode
+                        if address_line_1: address.address_line_1 = address_line_1
+                        if address_line_2: address.address_line_2 = address_line_2
+                        address.save()
+                    else:
+                        CustomerAddress.objects.create(
+                            date=timezone.now(),
+                            unique_id=random_obj.generateUID(),
+                            customer=customer,
+                            name=customer.name,
+                            mobile=customer.mobile,
+                            pincode=pincode,
+                            state=state,
+                            city=city,
+                            address_line_1=address_line_1,
+                            address_line_2=address_line_2,
+                            access='Granted'
+                        )
+
                 # ✅ CREATE REQUEST
                 WithdrawalRequest.objects.create(
                     unique_id=random_obj.generateUID(),
@@ -803,7 +839,7 @@ class WithdrawalOperations:
                     total_deduction=total_deduction,
                     final_amount=final_amount,
                     status='PENDING',
-                    request_date=current_date
+                    request_date=timezone.now()
                 )
 
                 # 🔥 DEDUCT BALANCE

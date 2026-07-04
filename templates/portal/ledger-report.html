@@ -62,10 +62,13 @@
                                     </div>
                                 </div>
 
-                                <!-- Action Button -->
-                                <div class="col-md-2" style="margin-top: 25px;">
-                                    <button class="btn btn-primary btn-block" id="searchBtn">
+                                <!-- Action Buttons -->
+                                <div class="col-md-4" style="margin-top: 25px;">
+                                    <button class="btn btn-primary mr-10" id="searchBtn" type="button">
                                         <i class="fa fa-search"></i> Search Ledger
+                                    </button>
+                                    <button class="btn btn-success" id="exportBulkBtn" type="button">
+                                        <i class="fa fa-download"></i> Export Bulk Ledger
                                     </button>
                                 </div>
                             </div>
@@ -288,6 +291,37 @@
         if (e.key === 'Enter') {
             document.getElementById('searchBtn').click();
         }
+    });
+
+    document.getElementById('exportBulkBtn').addEventListener('click', function() {
+        const filterType = document.getElementById('filter_type').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{% url 'export_bulk_ledger' %}";
+
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        
+        const inputs = {
+            'csrfmiddlewaretoken': csrfToken,
+            'filter_type': filterType,
+            'start_date': startDate,
+            'end_date': endDate
+        };
+
+        for (const [key, val] of Object.entries(inputs)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = val;
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     });
 </script>
 {% endblock %}

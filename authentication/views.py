@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from utility.views import Utility, Validation, Encryption, RandomIdGenerate, PasswordUtility, current_date, urlPrefix, domainURLPortal
+from utility.views import Utility, Validation, Encryption, RandomIdGenerate, PasswordUtility, urlPrefix, domainURLPortal
 from authentication.models import Login, LoginReport, PasswordResetRequest
 from users.models import Franchise
 from users.views import TradingUser
@@ -49,7 +49,7 @@ class Authentication:
             login_details = LoginReport.objects.filter(session_id=session_id, username=username)
             if login_details:
                 login_details.update(
-                    logout_date_time = current_date,
+                    logout_date_time = timezone.now(),
                 )
         request.session.clear()
         return render(request,'portal/login.html')
@@ -98,7 +98,7 @@ class Authentication:
                                     with transaction.atomic():
                                         insertData = LoginReport.objects.create(
                                             username = mob,
-                                            login_date_time = current_date,
+                                            login_date_time = timezone.now(),
                                             ip_address = ip,
                                             login_type = login_type,
                                             session_id = session_id,

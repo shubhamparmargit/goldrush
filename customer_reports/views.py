@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from utility.views import Utility, Validation, RandomIdGenerate, current_date, InvoiceUtil, urlPrefix
+from utility.views import Utility, Validation, RandomIdGenerate, InvoiceUtil, urlPrefix
 from django.conf import settings
 from django.db import transaction
 from django.http.response import JsonResponse
@@ -346,6 +346,215 @@ class Pages:
                 return JsonResponse({'success': '0', 'message': 'Something went wrong', 'error': str(e)})
         return util_obj.goToLogin(request)
 
+    def export_bulk_ledger(self, request):
+        if util_obj.checkSession(request) == False:
+            from decimal import Decimal
+            from django.utils import timezone
+            from datetime import datetime, time, timedelta
+            from openpyxl import Workbook
+            from django.http import HttpResponse
+
+            # Parse date filters
+            filter_type = request.POST.get('filter_type', 'all').strip()
+            start_date_str = request.POST.get('start_date', '').strip()
+            end_date_str = request.POST.get('end_date', '').strip()
+
+            now = timezone.now()
+            start_datetime = None
+            end_datetime = None
+
+            if filter_type == 'today':
+                start_datetime = timezone.make_aware(datetime.combine(now.date(), time.min))
+                end_datetime = timezone.make_aware(datetime.combine(now.date(), time.max))
+            elif filter_type == 'week':
+                start_datetime = now - timedelta(days=7)
+            elif filter_type == '30days':
+                start_datetime = now - timedelta(days=30)
+            elif filter_type == 'custom':
+                if start_date_str:
+                    start_datetime = timezone.make_aware(datetime.strptime(start_date_str, '%Y-%m-%d'))
+                if end_date_str:
+                    parsed_end = datetime.strptime(end_date_str, '%Y-%m-%d')
+                    end_datetime = timezone.make_aware(datetime.combine(parsed_end.date(), time.max))
+
+            # Query all records
+            from customer_wallet.models import WalletRechargeHistory, ManualRechargeRequest, WalletManualCredit, WalletManualDebit, WithdrawalRequest
+            from customer_transaction.models import CustomerTransaction, CustomerDemoTransaction
+
+            online_list = WalletRechargeHistory.objects.select_related("customer", "order").all()
+            manual_list = ManualRechargeRequest.objects.select_related("customer").all()
+            credit_list = WalletManualCredit.objects.select_related("customer").all()
+            debit_list = WalletManualDebit.objects.select_related("customer").all()
+            withdraw_list = WithdrawalRequest.objects.select_related("customer").all()
+            txns_live = CustomerTransaction.objects.select_related("customer", "metal_type").all()
+            txns_demo = CustomerDemoTransaction.objects.select_related("customer", "metal_type").all()
+
+            by_customer = {}
+
+            def add_entry(cust, entry):
+                cid = cust.id
+                if cid not in by_customer:
+                    by_customer[cid] = {
+                        'customer': cust,
+                        'entries': []
+                    }
+                by_customer[cid]['entries'].append(entry)
+
+            for item in online_list:
+                status_str = 'Success' if item.status == 'Success' else 'Failed'
+                add_entry(item.customer, {
+                    'date': item.created_at,
+                    'txn_id': f"ONL_{item.order.razorpay_order_id}" if item.order else f"ONL_{item.id}",
+                    'type': 'Online Recharge',
+                    'direction': 'Credit',
+                    'amount': item.amount,
+                    'status': status_str,
+                    'details': f"Gateway: Razorpay | ID: {item.id}",
+                    'is_successful': status_str == 'Success'
+                })
+
+            for item in manual_list:
+                status_str = 'Pending' if item.status == 'PENDING' else ('Success' if item.status == 'APPROVED' else 'Failed')
+                add_entry(item.customer, {
+                    'date': item.request_date,
+                    'txn_id': f"MAN_{item.unique_id}",
+                    'type': 'Manual Recharge',
+                    'direction': 'Credit',
+                    'amount': item.amount,
+                    'status': status_str,
+                    'details': f"UTR: {item.utr_number} | Remark: {item.remark or ''}",
+                    'is_successful': status_str == 'Success'
+                })
+
+            for item in credit_list:
+                add_entry(item.customer, {
+                    'date': item.credited_on,
+                    'txn_id': f"CR_{item.unique_id}",
+                    'type': 'Admin Credit',
+                    'direction': 'Credit',
+                    'amount': item.amount,
+                    'status': 'Success',
+                    'details': f"Remark: {item.remark or ''}",
+                    'is_successful': True
+                })
+
+            for item in debit_list:
+                add_entry(item.customer, {
+                    'date': item.debited_on,
+                    'txn_id': f"DR_{item.unique_id}",
+                    'type': 'Admin Debit',
+                    'direction': 'Debit',
+                    'amount': item.amount,
+                    'status': 'Success',
+                    'details': f"Remark: {item.remark or ''}",
+                    'is_successful': True
+                })
+
+            for item in withdraw_list:
+                status_str = 'Pending' if item.status == 'PENDING' else ('Success' if item.status == 'APPROVED' else 'Failed')
+                add_entry(item.customer, {
+                    'date': item.request_date,
+                    'txn_id': f"WDR_{item.unique_id}",
+                    'type': 'Withdrawal Request',
+                    'direction': 'Debit',
+                    'amount': item.request_amount,
+                    'status': status_str,
+                    'details': f"Remark: {item.remark or ''}",
+                    'is_successful': status_str == 'Success'
+                })
+
+            for item in txns_live:
+                direction = 'Debit' if item.transaction_type == 'BUY' else 'Credit'
+                txn_type_str = f"Buy {item.metal_type.title()} (Live)" if item.transaction_type == 'BUY' else f"Sell {item.metal_type.title()} (Live)"
+                details_str = f"{item.quantity_gm} gm @ ₹{item.metal_rate_per_gm}/gm"
+                if item.transaction_type == 'SELL' and item.profit_loss_amount:
+                    details_str += f" | {item.profit_loss}: ₹{item.profit_loss_amount}"
+                add_entry(item.customer, {
+                    'date': item.created_at,
+                    'txn_id': item.transaction_id,
+                    'type': txn_type_str,
+                    'direction': direction,
+                    'amount': item.order_amount,
+                    'status': 'Success',
+                    'details': details_str,
+                    'is_successful': True
+                })
+
+            for item in txns_demo:
+                direction = 'Debit' if item.transaction_type == 'BUY' else 'Credit'
+                txn_type_str = f"Buy {item.metal_type.title()} (Demo)" if item.transaction_type == 'BUY' else f"Sell {item.metal_type.title()} (Demo)"
+                details_str = f"{item.quantity_gm} gm @ ₹{item.metal_rate_per_gm}/gm"
+                if item.transaction_type == 'SELL' and item.profit_loss_amount:
+                    details_str += f" | {item.profit_loss}: ₹{item.profit_loss_amount}"
+                add_entry(item.customer, {
+                    'date': item.created_at,
+                    'txn_id': item.transaction_id,
+                    'type': txn_type_str,
+                    'direction': direction,
+                    'amount': item.order_amount,
+                    'status': 'Success',
+                    'details': details_str,
+                    'is_successful': True
+                })
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Bulk Ledger"
+
+            # Headers
+            headers = [
+                "Customer Name", "Mobile Number", "Referral Code", 
+                "Date", "Txn ID", "Type", "Direction", "Amount", "Status", "Details", "Running Balance"
+            ]
+            ws.append(headers)
+
+            for cid, data in by_customer.items():
+                cust = data['customer']
+                entries = data['entries']
+                
+                # Sort chronologically to calculate running balance
+                entries.sort(key=lambda x: x['date'])
+                
+                running_balance = Decimal("0.0")
+                
+                for entry in entries:
+                    if entry['is_successful']:
+                        if entry['direction'] == 'Credit':
+                            running_balance += Decimal(str(entry['amount']))
+                        else:
+                            running_balance -= Decimal(str(entry['amount']))
+                    
+                    # Check date filter
+                    if start_datetime and entry['date'] < start_datetime:
+                        continue
+                    if end_datetime and entry['date'] > end_datetime:
+                        continue
+
+                    local_dt = timezone.localtime(entry['date'])
+                    date_str = local_dt.strftime('%d-%m-%Y %I:%M %p')
+
+                    ws.append([
+                        cust.name,
+                        cust.mobile,
+                        cust.referral_code,
+                        date_str,
+                        entry['txn_id'],
+                        entry['type'],
+                        entry['direction'],
+                        float(entry['amount']),
+                        entry['status'],
+                        entry['details'],
+                        float(running_balance)
+                    ])
+
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename=Bulk_Customer_Ledger.xlsx'
+            wb.save(response)
+            return response
+        return util_obj.goToLogin(request)
+
 class CustomerOperation:
     def macReset(self,request):
         if util_obj.checkSession(request) == False:
@@ -368,7 +577,7 @@ class CustomerOperation:
                                     mac_reset_count = custObj[0].mac_reset_count + 1
                                     with transaction.atomic():
                                         insertData = MacResetDetails.objects.create(
-                                            date = current_date,
+                                            date = timezone.now(),
                                             unique_id = u_id,
                                             old_unique_application_id = custObj[0].unique_application_id,
                                             old_app_id_date = custObj[0].app_id_date,

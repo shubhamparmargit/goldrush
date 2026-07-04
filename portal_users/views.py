@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from utility.views import Utility, RandomIdGenerate, Encryption, Validation, current_date, ROLE_FRANCHISE_MAP, urlPrefix
+from utility.views import Utility, RandomIdGenerate, Encryption, Validation, ROLE_FRANCHISE_MAP, urlPrefix
 from django.http.response import JsonResponse
 from rest_framework import status
 import os
@@ -56,7 +56,7 @@ class PortalUser:
                     with transaction.atomic():
                         # ================= CREATE LOGIN =================
                         login = Login.objects.create(
-                            date=current_date,
+                            date=timezone.now(),
                             name=name,
                             mobile_number=mobile,
                             email=email,

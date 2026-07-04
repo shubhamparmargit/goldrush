@@ -1357,6 +1357,7 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].metal_type+'</td>\
                                 <td>'+data.table_data[i].quantity+'</td>\
                                 <td>'+data.table_data[i].invested_amount+'</td>\
+                                <td>'+data.table_data[i].service_fee+'</td>\
                                 <td>'+data.table_data[i].buy_price+'</td>\
                                 <td>'+data.table_data[i].buy_date+'</td>\
                                 <td>'+data.table_data[i].sell_price+'</td>\
@@ -1517,6 +1518,8 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].sr_no+'</td>\
                                 <td>'+data.table_data[i].customer_name+'</td>\
                                 <td>'+data.table_data[i].mobile_number+'</td>\
+                                <td>'+data.table_data[i].email+'</td>\
+                                <td>'+data.table_data[i].state+'</td>\
                                 <td>'+data.table_data[i].date+'</td>\
                                 <td>'+data.table_data[i].referral_code+'</td>\
                                 <td>'+data.table_data[i].referral_holder_name+'</td>\

@@ -5,8 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.core.cache import cache
 from website.models import ContactMessage
-from utility.views import current_date, Utility
-
+from utility.views import Utility
 NAME_REGEX = r"^[A-Za-z\s]{2,50}$"
 PHONE_REGEX = r"^[0-9]{10}$"
 EMAIL_REGEX = r"^[^@]+@[^@]+\.[^@]+$"
@@ -120,12 +119,12 @@ class Enquiry:
         phone = html.escape(phone)
         message = html.escape(message)
 
-        # print(current_date)
+        # print(timezone.now())
 
         with transaction.atomic():
 
             ContactMessage.objects.create(
-                date=current_date,
+                date=timezone.now(),
                 name=name,
                 email=email,
                 phone=phone,
