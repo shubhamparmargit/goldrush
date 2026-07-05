@@ -10,24 +10,24 @@ Digital Investment
 <link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
 <link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
 <style>
-    .chart-btn {
-        padding: 6px 12px;
+    .tv-btn {
+        background: transparent;
+        border: none;
+        color: #868996;
+        padding: 6px 10px;
         font-size: 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        background: rgba(255, 255, 255, 0.05);
-        color: #fff;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        border-radius: 4px;
+        transition: all 0.2s ease;
     }
-    .chart-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
+    .tv-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #d1d4dc;
     }
-    .chart-btn.active {
-        background: #f1b80c !important;
-        color: #000 !important;
-        border-color: #f1b80c !important;
-        font-weight: 700;
+    .tv-btn.active {
+        background: #2a2e39 !important;
+        color: #ffffff !important;
     }
 </style>
 {% endblock %}
@@ -51,21 +51,40 @@ Digital Investment
                 </div>
                 <p id="dateTime" style="font-size: 12px; text-align: center; margin-bottom: 15px;"></p>
 
-                <!-- Interactive Chart Card -->
-                <div class="profile-card" style="margin-bottom: 24px; padding: 16px; border-radius: 16px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
-                        <div style="display: flex; gap: 6px;" class="chart-intervals">
-                            <button class="chart-btn active" data-interval="1">1m</button>
-                            <button class="chart-btn" data-interval="5">5m</button>
-                            <button class="chart-btn" data-interval="15">15m</button>
-                            <button class="chart-btn" data-interval="60">1h</button>
+                <!-- TradingView-like Chart Card -->
+                <div class="tradingview-card" style="margin-bottom: 24px; border-radius: 12px; background: #131722; border: 1px solid #2a2e39; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;">
+                    
+                    <!-- TradingView Toolbar -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: #1c2030; border-bottom: 1px solid #2a2e39; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="color: #d1d4dc; font-weight: 700; font-size: 13px; letter-spacing: 0.5px;">{{ metal_type|upper }}/INR</span>
+                            <div style="width: 1px; height: 16px; background: #2a2e39;"></div>
+                            <div style="display: flex; gap: 4px;" class="chart-intervals">
+                                <button class="tv-btn active" data-interval="1">1m</button>
+                                <button class="tv-btn" data-interval="5">5m</button>
+                                <button class="tv-btn" data-interval="15">15m</button>
+                                <button class="tv-btn" data-interval="60">1h</button>
+                            </div>
                         </div>
-                        <div style="display: flex; gap: 6px;" class="chart-types">
-                            <button class="chart-btn active" data-type="candlestick">Candle</button>
-                            <button class="chart-btn" data-type="area">Line</button>
+                        <div style="display: flex; gap: 4px;" class="chart-types">
+                            <button class="tv-btn active" data-type="candlestick">Candles</button>
+                            <button class="tv-btn" data-type="area">Line</button>
                         </div>
                     </div>
-                    <div id="metalChart" style="min-height: 280px; width: 100%;"></div>
+
+                    <!-- TradingView OHLC Legend -->
+                    <div class="tv-legend" style="padding: 10px 16px 4px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #868996; font-weight: 500;">
+                        <span>{{ metal_type|upper }} <span style="color: #2962ff;">1D</span></span>
+                        <span id="tv-ohlc-values" style="display: flex; gap: 10px; color: #d1d4dc;">
+                            <span>O <span class="ohlc-val" style="color: #26a69a;">-</span></span>
+                            <span>H <span class="ohlc-val" style="color: #26a69a;">-</span></span>
+                            <span>L <span class="ohlc-val" style="color: #26a69a;">-</span></span>
+                            <span>C <span class="ohlc-val" style="color: #26a69a;">-</span></span>
+                            <span class="ohlc-change" style="color: #26a69a;">-</span>
+                        </span>
+                    </div>
+
+                    <div id="metalChart" style="min-height: 280px; width: 100%; padding: 0 8px 8px 8px;"></div>
                 </div>
                 
                 <div class="weight-grid">
@@ -105,6 +124,25 @@ Digital Investment
     let currentInterval = "1";
     let currentChartType = "candlestick";
 
+    function updateLegendOHLC(o, h, l, c) {
+        if (o === undefined || h === undefined || l === undefined || c === undefined) return;
+        const container = document.getElementById('tv-ohlc-values');
+        if (!container) return;
+        
+        const change = c - o;
+        const changePct = o !== 0 ? (change / o) * 100 : 0;
+        const color = change >= 0 ? '#26a69a' : '#ef5350';
+        const prefix = change >= 0 ? '+' : '';
+        
+        container.innerHTML = `
+            <span>O <span class="ohlc-val" style="color: ${color}; font-weight: 600;">${o.toFixed(1)}</span></span>
+            <span>H <span class="ohlc-val" style="color: ${color}; font-weight: 600;">${h.toFixed(1)}</span></span>
+            <span>L <span class="ohlc-val" style="color: ${color}; font-weight: 600;">${l.toFixed(1)}</span></span>
+            <span>C <span class="ohlc-val" style="color: ${color}; font-weight: 600;">${c.toFixed(1)}</span></span>
+            <span class="ohlc-change" style="color: ${color}; font-weight: 700; margin-left: 4px;">${prefix}${change.toFixed(1)} (${prefix}${changePct.toFixed(2)}%)</span>
+        `;
+    }
+
     function initChart() {
         const options = {
             series: [{
@@ -117,44 +155,132 @@ Digital Investment
                 toolbar: { show: false },
                 animations: { enabled: false },
                 background: 'transparent',
-                foreColor: '#ffffff'
+                foreColor: '#868996',
+                events: {
+                    mouseMove: function(event, chartContext, config) {
+                        const dataPointIndex = config.dataPointIndex;
+                        const seriesIndex = config.seriesIndex;
+                        if (dataPointIndex !== -1 && seriesIndex !== -1 && config.w) {
+                            if (currentChartType === 'candlestick') {
+                                const o = config.w.globals.seriesCandleO[seriesIndex][dataPointIndex];
+                                const h = config.w.globals.seriesCandleH[seriesIndex][dataPointIndex];
+                                const l = config.w.globals.seriesCandleL[seriesIndex][dataPointIndex];
+                                const c = config.w.globals.seriesCandleC[seriesIndex][dataPointIndex];
+                                updateLegendOHLC(o, h, l, c);
+                            } else {
+                                const val = config.w.globals.series[seriesIndex][dataPointIndex];
+                                updateLegendOHLC(val, val, val, val);
+                            }
+                        }
+                    }
+                }
             },
             theme: {
                 mode: 'dark'
             },
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#26a69a',
+                        downward: '#ef5350'
+                    },
+                    wick: {
+                        useFillColor: true
+                    }
+                }
+            },
             grid: {
-                borderColor: 'rgba(255, 255, 255, 0.05)'
+                show: true,
+                borderColor: '#2a2e39',
+                strokeDashArray: 4,
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: true
+                    }
+                },
+                padding: {
+                    top: 10,
+                    right: 15,
+                    bottom: 0,
+                    left: 15
+                }
             },
             xaxis: {
                 type: 'datetime',
                 labels: {
                     datetimeUTC: false,
-                    style: { colors: '#ffffff' }
+                    style: { 
+                        colors: '#868996',
+                        fontSize: '11px'
+                    }
+                },
+                axisBorder: {
+                    show: true,
+                    color: '#2a2e39'
+                },
+                axisTicks: {
+                    show: true,
+                    color: '#2a2e39'
+                },
+                crosshairs: {
+                    show: true,
+                    width: 1,
+                    position: 'back',
+                    stroke: {
+                        color: '#565a66',
+                        width: 1,
+                        dashArray: 3
+                    }
                 }
             },
             yaxis: {
-                tooltip: { enabled: true },
+                opposite: true,
+                tooltip: { enabled: false },
                 labels: {
                     formatter: function(val) {
-                        return '₹' + val.toFixed(1);
+                        return val.toFixed(1);
                     },
-                    style: { colors: '#ffffff' }
+                    style: { 
+                        colors: '#868996',
+                        fontSize: '11px'
+                    }
+                },
+                axisBorder: {
+                    show: true,
+                    color: '#2a2e39'
+                },
+                crosshairs: {
+                    show: true,
+                    stroke: {
+                        color: '#565a66',
+                        width: 1,
+                        dashArray: 3
+                    }
                 }
             },
             tooltip: {
-                theme: 'dark'
+                theme: 'dark',
+                x: {
+                    show: true,
+                    format: 'dd MMM HH:mm'
+                }
             }
         };
 
         if (currentChartType === 'area') {
-            options.stroke = { curve: 'smooth', width: 2 };
+            options.stroke = { curve: 'smooth', width: 2, colors: ['#2962ff'] };
             options.fill = {
                 type: 'gradient',
                 gradient: {
                     shadeIntensity: 1,
-                    opacityFrom: 0.45,
-                    opacityTo: 0.05,
-                    stops: [0, 100]
+                    opacityFrom: 0.35,
+                    opacityTo: 0.0,
+                    stops: [0, 95]
                 }
             };
         }
@@ -186,7 +312,17 @@ Digital Investment
                             };
                         }
                     });
+                    
                     chart.updateSeries([{ data: formattedData }]);
+
+                    if (formattedData.length > 0) {
+                        const latest = formattedData[formattedData.length - 1];
+                        if (currentChartType === 'candlestick') {
+                            updateLegendOHLC(latest.y[0], latest.y[1], latest.y[2], latest.y[3]);
+                        } else {
+                            updateLegendOHLC(latest.y, latest.y, latest.y, latest.y);
+                        }
+                    }
                 }
             });
     }
