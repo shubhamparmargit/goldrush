@@ -192,7 +192,12 @@ Digital Investment
                 type: currentChartType,
                 height: 280,
                 toolbar: { show: false },
-                animations: { enabled: false },
+                animations: {
+                    enabled: false,
+                    dynamicAnimation: {
+                        enabled: false
+                    }
+                },
                 background: 'transparent',
                 foreColor: '#868996',
                 events: {
@@ -359,7 +364,69 @@ Digital Investment
                         }
                     });
                     
-                    chart.updateSeries([{ data: formattedData }]);
+                    // Calculate stable min/max for y-axis to prevent sudden jumps
+                    let prices = [];
+                    if (currentChartType === 'candlestick') {
+                        filteredData.forEach(item => {
+                            prices.push(item.open, item.high, item.low, item.close);
+                        });
+                    } else {
+                        filteredData.forEach(item => {
+                            prices.push(item.close);
+                        });
+                    }
+
+                    let minPrice = undefined;
+                    let maxPrice = undefined;
+                    if (prices.length > 0) {
+                        const minVal = Math.min(...prices);
+                        const maxVal = Math.max(...prices);
+                        const avgVal = (minVal + maxVal) / 2;
+                        const spread = maxVal - minVal;
+                        
+                        const isGold = "{{metal_type}}".toUpperCase() === "GOLD";
+                        const minSpread = isGold ? 50.0 : 2.0;
+                        
+                        if (spread < minSpread) {
+                            minPrice = avgVal - (minSpread / 2);
+                            maxPrice = avgVal + (minSpread / 2);
+                        } else {
+                            const padding = spread * 0.05;
+                            minPrice = minVal - padding;
+                            maxPrice = maxVal + padding;
+                        }
+                    }
+
+                    chart.updateOptions({
+                        series: [{ data: formattedData }],
+                        yaxis: {
+                            min: minPrice,
+                            max: maxPrice,
+                            opposite: true,
+                            tooltip: { enabled: false },
+                            labels: {
+                                formatter: function(val) {
+                                    return val.toFixed(1);
+                                },
+                                style: { 
+                                    colors: '#868996',
+                                    fontSize: '11px'
+                                }
+                            },
+                            axisBorder: {
+                                show: true,
+                                color: '#2a2e39'
+                            },
+                            crosshairs: {
+                                show: true,
+                                stroke: {
+                                    color: '#565a66',
+                                    width: 1,
+                                    dashArray: 3
+                                }
+                            }
+                        }
+                    }, false, false, false);
 
                     if (formattedData.length > 0) {
                         const latest = formattedData[formattedData.length - 1];
