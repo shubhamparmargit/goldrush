@@ -68,136 +68,138 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    payBtn.addEventListener("click", function () 
-    {
-        const amount = parseInt(amountInput.value || 0);
+    if (payBtn) {
+        payBtn.addEventListener("click", function () 
+        {
+            const amount = parseInt(amountInput.value || 0);
 
-        /* ================= VALIDATION ================= */
-        // if (amount < 5000) {
-        //     $.toast({
-        //         heading: "Error",
-        //         text: "Minimum recharge amount is ₹5,000",
-        //         position: "top-right",
-        //         icon: "error"
-        //     });
-        //     return;
-        // }
+            /* ================= VALIDATION ================= */
+            // if (amount < 5000) {
+            //     $.toast({
+            //         heading: "Error",
+            //         text: "Minimum recharge amount is ₹5,000",
+            //         position: "top-right",
+            //         icon: "error"
+            //     });
+            //     return;
+            // }
 
-        if (amount < 1) {
-            $.toast({
-                heading: "Error",
-                text: "Minimum recharge amount should not be less than 1",
-                position: "top-right",
-                icon: "error"
-            });
-            return;
-        }
-
-        payBtn.disabled = true;
-
-        /* ================= CREATE ORDER ================= */
-        const path = window.APP_URLS.create_wallet_order;
-        const success_path = window.APP_URLS.payment_success;
-        const failure_path = window.APP_URLS.payment_failed;
-
-        fetch(path, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken()
-            },
-            body: JSON.stringify({
-                amount: amount
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            if (!data.status) {
+            if (amount < 1) {
                 $.toast({
                     heading: "Error",
-                    text: data.message,
+                    text: "Minimum recharge amount should not be less than 1",
+                    position: "top-right",
+                    icon: "error"
+                });
+                return;
+            }
+
+            payBtn.disabled = true;
+
+            /* ================= CREATE ORDER ================= */
+            const path = window.APP_URLS.create_wallet_order;
+            const success_path = window.APP_URLS.payment_success;
+            const failure_path = window.APP_URLS.payment_failed;
+
+            fetch(path, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({
+                    amount: amount
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                if (!data.status) {
+                    $.toast({
+                        heading: "Error",
+                        text: data.message,
+                        position: "top-right",
+                        icon: "error"
+                    });
+                    payBtn.disabled = false;
+                    return;
+                }
+
+                const options = {
+                    key: data.key,
+                    amount: data.amount,          // paisa
+                    currency: "INR",
+                    name: "Digital Investment",
+                    description: "Wallet Recharge",
+                    order_id: data.order_id,
+                    webview_intent: true,
+                    notes: {
+                        webview_intent: "true"
+                    },
+                    prefill: data.prefill || {},
+                    method: {
+                        upi: true,
+                        card: true,
+                        netbanking: true,
+                        wallet: true
+                    },
+
+                    handler: function (response) {
+                        // ✅ PAYMENT SUCCESS → backend verification
+                        const form = document.createElement("form");
+                        form.method = "POST";
+                        form.action = success_path;
+
+                        addHidden(form, "razorpay_payment_id", response.razorpay_payment_id);
+                        addHidden(form, "razorpay_order_id", response.razorpay_order_id);
+                        addHidden(form, "razorpay_signature", response.razorpay_signature);
+                        addHidden(form, "csrfmiddlewaretoken", getCSRFToken());
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    },
+
+                    modal: {
+                        ondismiss: function () {
+                            // ❌ USER CLOSED POPUP
+                            payBtn.disabled = false;
+                            window.location.href =
+                                failure_path +
+                                "?order_id=" + data.order_id +
+                                "&reason=" + encodeURIComponent("Payment cancelled by user");
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+
+                /* ================= PAYMENT FAILED EVENT ================= */
+                rzp.on("payment.failed", function (response) {
+
+                    const reason =
+                        response.error && response.error.description
+                            ? response.error.description
+                            : "Payment failed";
+
+                    window.location.href =
+                        failure_path +
+                        "?order_id=" + data.order_id +
+                        "&reason=" + encodeURIComponent(reason);
+                });
+
+                rzp.open();
+            })
+            .catch(() => {
+                $.toast({
+                    heading: "Error",
+                    text: "Something went wrong",
                     position: "top-right",
                     icon: "error"
                 });
                 payBtn.disabled = false;
-                return;
-            }
-
-            const options = {
-                key: data.key,
-                amount: data.amount,          // paisa
-                currency: "INR",
-                name: "Digital Investment",
-                description: "Wallet Recharge",
-                order_id: data.order_id,
-                webview_intent: true,
-                notes: {
-                    webview_intent: "true"
-                },
-                prefill: data.prefill || {},
-                method: {
-                    upi: true,
-                    card: true,
-                    netbanking: true,
-                    wallet: true
-                },
-
-                handler: function (response) {
-                    // ✅ PAYMENT SUCCESS → backend verification
-                    const form = document.createElement("form");
-                    form.method = "POST";
-                    form.action = success_path;
-
-                    addHidden(form, "razorpay_payment_id", response.razorpay_payment_id);
-                    addHidden(form, "razorpay_order_id", response.razorpay_order_id);
-                    addHidden(form, "razorpay_signature", response.razorpay_signature);
-                    addHidden(form, "csrfmiddlewaretoken", getCSRFToken());
-
-                    document.body.appendChild(form);
-                    form.submit();
-                },
-
-                modal: {
-                    ondismiss: function () {
-                        // ❌ USER CLOSED POPUP
-                        payBtn.disabled = false;
-                        window.location.href =
-                            failure_path +
-                            "?order_id=" + data.order_id +
-                            "&reason=" + encodeURIComponent("Payment cancelled by user");
-                    }
-                }
-            };
-
-            const rzp = new Razorpay(options);
-
-            /* ================= PAYMENT FAILED EVENT ================= */
-            rzp.on("payment.failed", function (response) {
-
-                const reason =
-                    response.error && response.error.description
-                        ? response.error.description
-                        : "Payment failed";
-
-                window.location.href =
-                    failure_path +
-                    "?order_id=" + data.order_id +
-                    "&reason=" + encodeURIComponent(reason);
             });
-
-            rzp.open();
-        })
-        .catch(() => {
-            $.toast({
-                heading: "Error",
-                text: "Something went wrong",
-                position: "top-right",
-                icon: "error"
-            });
-            payBtn.disabled = false;
         });
-    });
+    }
     
     function addHidden(form, name, value) {
         const input = document.createElement("input");
@@ -276,12 +278,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function disablePay() {
-        payBtn.disabled = true;
-        payBtn.classList.add("disabled");
+        if (payBtn) {
+            payBtn.disabled = true;
+            payBtn.classList.add("disabled");
+        }
     }
 
     function enablePay() {
-        payBtn.disabled = false;
-        payBtn.classList.remove("disabled");
+        if (payBtn) {
+            payBtn.disabled = false;
+            payBtn.classList.remove("disabled");
+        }
     }
 });
