@@ -9,7 +9,30 @@ Digital Investment
 <link rel="stylesheet" href="{% static 'digital-investment/css/trade-buttons.css' %}">
 <link rel="stylesheet" href="{% static 'digital-investment/css/bottom-sheet.css' %}">
 <link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
-{% endblock %}{% block content %}
+<style>
+    .chart-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .chart-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    .chart-btn.active {
+        background: #f1b80c !important;
+        color: #000 !important;
+        border-color: #f1b80c !important;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="main-content">
     <div class="main-content-inner">
         <div class="main-content-wrap">
@@ -26,7 +49,24 @@ Digital Investment
                         </div>
                     </div>
                 </div>
-                <p id="dateTime" style="font-size: 12px; text-align: center; margin-bottom: 24px;"></p>
+                <p id="dateTime" style="font-size: 12px; text-align: center; margin-bottom: 15px;"></p>
+
+                <!-- Interactive Chart Card -->
+                <div class="profile-card" style="margin-bottom: 24px; padding: 16px; border-radius: 16px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; gap: 6px;" class="chart-intervals">
+                            <button class="chart-btn active" data-interval="1">1m</button>
+                            <button class="chart-btn" data-interval="5">5m</button>
+                            <button class="chart-btn" data-interval="15">15m</button>
+                            <button class="chart-btn" data-interval="60">1h</button>
+                        </div>
+                        <div style="display: flex; gap: 6px;" class="chart-types">
+                            <button class="chart-btn active" data-type="candlestick">Candle</button>
+                            <button class="chart-btn" data-type="area">Line</button>
+                        </div>
+                    </div>
+                    <div id="metalChart" style="min-height: 280px; width: 100%;"></div>
+                </div>
                 
                 <div class="weight-grid">
                     {% for item in weight_items %}
@@ -53,6 +93,7 @@ Digital Investment
 
 {% block extraJS %}
 <script src="{% static 'digital-investment/js/bottom-sheet.js' %}?v=4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     document.querySelectorAll('.weight-bar').forEach(bar => {
         bar.addEventListener('click', () => {
@@ -60,7 +101,120 @@ Digital Investment
         });
     });
 
+    let chart = null;
+    let currentInterval = "1";
+    let currentChartType = "candlestick";
+
+    function initChart() {
+        const options = {
+            series: [{
+                name: 'Rate',
+                data: []
+            }],
+            chart: {
+                type: currentChartType,
+                height: 280,
+                toolbar: { show: false },
+                animations: { enabled: false },
+                background: 'transparent',
+                foreColor: '#ffffff'
+            },
+            theme: {
+                mode: 'dark'
+            },
+            grid: {
+                borderColor: 'rgba(255, 255, 255, 0.05)'
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    datetimeUTC: false,
+                    style: { colors: '#ffffff' }
+                }
+            },
+            yaxis: {
+                tooltip: { enabled: true },
+                labels: {
+                    formatter: function(val) {
+                        return '₹' + val.toFixed(1);
+                    },
+                    style: { colors: '#ffffff' }
+                }
+            },
+            tooltip: {
+                theme: 'dark'
+            }
+        };
+
+        if (currentChartType === 'area') {
+            options.stroke = { curve: 'smooth', width: 2 };
+            options.fill = {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.45,
+                    opacityTo: 0.05,
+                    stops: [0, 100]
+                }
+            };
+        }
+
+        if (chart) {
+            chart.destroy();
+        }
+        chart = new ApexCharts(document.querySelector("#metalChart"), options);
+        chart.render();
+        loadChartData();
+    }
+
+    function loadChartData() {
+        const path = window.APP_URLS.get_chart_data + "?metal_type={{metal_type}}&interval=" + currentInterval;
+        fetch(path)
+            .then(res => res.json())
+            .then(res => {
+                if (res.status && res.data) {
+                    let formattedData = res.data.map(item => {
+                        if (currentChartType === 'candlestick') {
+                            return {
+                                x: new Date(item.time),
+                                y: [item.open, item.high, item.low, item.close]
+                            };
+                        } else {
+                            return {
+                                x: new Date(item.time),
+                                y: item.close
+                            };
+                        }
+                    });
+                    chart.updateSeries([{ data: formattedData }]);
+                }
+            });
+    }
+
+    document.querySelectorAll('.chart-intervals button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.chart-intervals button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentInterval = btn.dataset.interval;
+            loadChartData();
+        });
+    });
+
+    document.querySelectorAll('.chart-types button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.chart-types button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentChartType = btn.dataset.type;
+            initChart();
+        });
+    });
+
     fetchLiveRate();
-    setInterval(fetchLiveRate, {{ rate_refresh_interval|default:'10' }} * 1000);
+    initChart();
+
+    setInterval(() => {
+        fetchLiveRate();
+        loadChartData();
+    }, {{ rate_refresh_interval|default:'10' }} * 1000);
 </script>
 {% endblock %}

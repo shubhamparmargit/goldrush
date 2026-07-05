@@ -6,13 +6,13 @@
 		<div class="content-header">
 			<div class="d-flex align-items-center">
 				<div class="me-auto">
-					<h3 class="page-title">Franchise Module</h3>
+					<h3 class="page-title">{% if franchise %}Edit{% else %}Add{% endif %} Franchise</h3>
 					<div class="d-inline-block align-items-center">
 						<nav>
 							<ol class="breadcrumb">
 								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
 								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
-								<li class="breadcrumb-item active" aria-current="page">Franchise Module</li>
+								<li class="breadcrumb-item active" aria-current="page">{% if franchise %}Edit{% else %}Add{% endif %} Franchise</li>
 							</ol>
 						</nav>
 					</div>
@@ -39,10 +39,10 @@
 											<label class="form-label">Franchise Model<span class="error">*</span></label>
 											<select class="form-control required" data-placeholder="Select Franchise Model" id="franchise_model" name="franchise_model">
 												<option value="">Choose Model</option>
-												<option value="SMRA">SMRA</option>
-												<option value="MRA">MRA</option>
-												<option value="RA">RA</option>
-												<option value="User">User</option>
+												<option value="SMRA" {% if franchise.franchise_model == "SMRA" %}selected{% endif %}>SMRA</option>
+												<option value="MRA" {% if franchise.franchise_model == "MRA" %}selected{% endif %}>MRA</option>
+												<option value="RA" {% if franchise.franchise_model == "RA" %}selected{% endif %}>RA</option>
+												<option value="User" {% if franchise.franchise_model == "User" %}selected{% endif %}>User</option>
 											</select>
 										</div>
 									</div>
@@ -50,7 +50,7 @@
 									<div class="col-md-12" id="parent_div" style="display:none;">
 										<div class="form-group">
 											<label class="form-label">Parent Franchise<span class="error">*</span></label>
-											<select class="form-control select2" id="parent_franchise" name="parent_franchise" style="width: 100%;">
+											<select class="form-control select2" id="parent_franchise" name="parent_franchise" style="width: 100%;" data-selected-parent="{{ franchise.parent.unique_id }}">
 												<option value="">Select Parent</option>
 											</select>
 										</div>
@@ -61,22 +61,22 @@
 											<label class="form-label">Franchise Type<span class="error">*</span></label>
 											<select class="form-control required" id="franchise_type" name="franchise_type">
 												<option value="">Choose Type</option>
-												<option value="Mr">Mr</option>
-												<option value="Mrs">Mrs</option>
-												<option value="Ms">Ms</option>
+												<option value="Mr" {% if franchise.franchise_type == "Mr" %}selected{% endif %}>Mr</option>
+												<option value="Mrs" {% if franchise.franchise_type == "Mrs" %}selected{% endif %}>Mrs</option>
+												<option value="Ms" {% if franchise.franchise_type == "Ms" %}selected{% endif %}>Ms</option>
 											</select>
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Franchise Name<span class="error">*</span></label>
-											<input type="text" class="form-control required" id="franchise_name"  name="franchise_name" placeholder="Franchise Name">
+											<input type="text" class="form-control required" id="franchise_name"  name="franchise_name" placeholder="Franchise Name" value="{{ franchise.franchise_name|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Holder Name<span class="error">*</span></label>
-											<input type="text" class="form-control required" id="holder_name"  name="holder_name" placeholder="Holder Name">
+											<input type="text" class="form-control required" id="holder_name"  name="holder_name" placeholder="Holder Name" value="{{ franchise.holder_name|default:'' }}">
 										</div>
 									</div>
 								</div>
@@ -93,19 +93,19 @@
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Mobile<span class="error">*</span></label>
-											<input type="number" class="form-control required" id="mobile" name="mobile" placeholder="Mobile Number">
+											<input type="number" class="form-control required" id="mobile" name="mobile" placeholder="Mobile Number" value="{{ franchise.mobile|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Email<span class="error">*</span></label>
-											<input type="email" class="form-control required" id="email" name="email" placeholder="Email">
+											<input type="email" class="form-control required" id="email" name="email" placeholder="Email" value="{{ franchise.email|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Address</label>
-											<input type="text" class="form-control" id="address" name="address" placeholder="Address">
+											<input type="text" class="form-control" id="address" name="address" placeholder="Address" value="{{ franchise.address|default:'' }}">
 										</div>
 									</div>
 								</div>
@@ -122,31 +122,31 @@
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Aadhaar Number<span class="error">*</span></label>
-											<input type="number" class="form-control required" id="aadhaar_number" name="aadhaar_number" placeholder="Aadhaar Number">
+											<input type="number" class="form-control required" id="aadhaar_number" name="aadhaar_number" placeholder="Aadhaar Number" value="{{ franchise.aadhaar_number|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">PAN Number<span class="error">*</span></label>
-											<input type="text" class="form-control required" id="pan_number" name="pan_number" placeholder="PAN Number">
+											<input type="text" class="form-control required" id="pan_number" name="pan_number" placeholder="PAN Number" value="{{ franchise.pan_number|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">GST Number</label>
-											<input type="text" class="form-control" id="gst_number" name="gst_number" placeholder="GST Number">
+											<input type="text" class="form-control" id="gst_number" name="gst_number" placeholder="GST Number" value="{{ franchise.gst_number|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-6">
 										<div class="form-group">
 											<label class="form-label">Agent Id</label>
-											<input type="text" class="form-control" id="agent_id" name="agent_id" placeholder="Agent Id">
+											<input type="text" class="form-control" id="agent_id" name="agent_id" placeholder="Agent Id" value="{{ franchise.agent_id|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-6">
 										<div class="form-group">
 											<label class="form-label">Access Control</label><br/>
-											<input type="checkbox" class="filled-in chk-col-success"  id="access" name="access" checked />
+											<input type="checkbox" class="filled-in chk-col-success"  id="access" name="access" {% if not franchise or franchise.access == "Granted" %}checked{% endif %} />
 											<label for="access" style="margin-top: 7px;margin-bottom:0px;">Granted</label>
 										</div>
 									</div>
@@ -164,19 +164,28 @@
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Aadhaar Document<span class="error">*</span></label>
-											<input type="file" class="form-control filedata requiredFile" id="aadhaar_doc"  name="aadhaar_doc">
+											<input type="file" class="form-control filedata {% if not franchise %}requiredFile{% endif %}" id="aadhaar_doc"  name="aadhaar_doc">
+											{% if documents.AADHAAR %}
+											<p style="margin-top: 5px; font-size:12px;"><a href="/media/{{ documents.AADHAAR }}" target="_blank" class="text-success"><i class="fa fa-file"></i> View Current Aadhaar</a></p>
+											{% endif %}
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">PAN Document<span class="error">*</span></label>
-											<input type="file" class="form-control filedata requiredFile" id="pan_doc" name="pan_doc">
+											<input type="file" class="form-control filedata {% if not franchise %}requiredFile{% endif %}" id="pan_doc" name="pan_doc">
+											{% if documents.PAN %}
+											<p style="margin-top: 5px; font-size:12px;"><a href="/media/{{ documents.PAN }}" target="_blank" class="text-success"><i class="fa fa-file"></i> View Current PAN</a></p>
+											{% endif %}
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Agreement<span class="error">*</span></label>
-											<input type="file" class="form-control filedata requiredFile" id="agreement_doc"  name="agreement_doc">
+											<input type="file" class="form-control filedata {% if not franchise %}requiredFile{% endif %}" id="agreement_doc"  name="agreement_doc">
+											{% if documents.AGREEMENT %}
+											<p style="margin-top: 5px; font-size:12px;"><a href="/media/{{ documents.AGREEMENT }}" target="_blank" class="text-success"><i class="fa fa-file"></i> View Current Agreement</a></p>
+											{% endif %}
 										</div>
 									</div>
 								</div>
@@ -193,31 +202,31 @@
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Bank Name<span class="error">*</span></label>
-											<input type="text" class="form-control required" id="bank_name" name="bank_name" placeholder="Bank Name">
+											<input type="text" class="form-control required" id="bank_name" name="bank_name" placeholder="Bank Name" value="{{ bank_details.bank_name|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Account Holder Name<span class="error">*</span></label>
-											<input type="text" class="form-control required" id="account_holder_name" name="account_holder_name" placeholder="Account Holder Name">
+											<input type="text" class="form-control required" id="account_holder_name" name="account_holder_name" placeholder="Account Holder Name" value="{{ bank_details.account_holder_name|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Account Number<span class="error">*</span></label>
-											<input type="number" class="form-control required" id="account_number" name="account_number" placeholder="Account Number">
+											<input type="number" class="form-control required" id="account_number" name="account_number" placeholder="Account Number" value="{{ bank_details.account_number|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">IFSC Code<span class="error">*</span></label>
-											<input type="text" class="form-control required" id="ifsc_code" name="ifsc_code" placeholder="IFSC Code">
+											<input type="text" class="form-control required" id="ifsc_code" name="ifsc_code" placeholder="IFSC Code" value="{{ bank_details.ifsc_code|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Branch Name</label>
-											<input type="text" class="form-control" id="branch_name" name="branch_name" placeholder="Branch Name">
+											<input type="text" class="form-control" id="branch_name" name="branch_name" placeholder="Branch Name" value="{{ bank_details.branch_name|default:'' }}">
 										</div>
 									</div>
 								</div>
@@ -235,30 +244,30 @@
 										<div class="form-group">
 											<label class="form-label">Cancelled Cheque</label>
 											<input type="file" class="form-control filedata" id="cancelled_cheque" name="cancelled_cheque">
+											{% if documents.BANK_CHEQUE %}
+											<p style="margin-top: 5px; font-size:12px;"><a href="/media/{{ documents.BANK_CHEQUE }}" target="_blank" class="text-success"><i class="fa fa-file"></i> View Current Cheque</a></p>
+											{% endif %}
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Passbook</label>
 											<input type="file" class="form-control filedata" id="passbook" name="passbook">
+											{% if documents.BANK_PASSBOOK %}
+											<p style="margin-top: 5px; font-size:12px;"><a href="/media/{{ documents.BANK_PASSBOOK }}" target="_blank" class="text-success"><i class="fa fa-file"></i> View Current Passbook</a></p>
+											{% endif %}
 										</div>
 									</div>
-									<!-- <div class="col-md-12">
-										<div class="form-group">
-											<label class="form-label">Bank Statement</label>
-											<input type="file" class="form-control filedata" id="bank_statement" name="bank_statement">
-										</div>
-									</div>	 -->
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Commission Slab<span class="error">*</span></label>
-											<input type="number" class="form-control required" id="commission_slab" name="commission_slab" placeholder="Commission Slab">
+											<input type="number" class="form-control required" id="commission_slab" name="commission_slab" placeholder="Commission Slab" value="{{ franchise.commission_slab|default:'' }}">
 										</div>
 									</div>
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Commission Percentage<span class="error">*</span></label>
-											<input type="number" class="form-control required" id="commission_percentage" name="commission_percentage" placeholder="Commission Percentage">
+											<input type="number" class="form-control required" id="commission_percentage" name="commission_percentage" placeholder="Commission Percentage" value="{{ franchise.commission_percentage|default:'' }}">
 										</div>
 									</div>
 								</div>
@@ -268,9 +277,12 @@
 					<!-- ================= ACTION ================= -->
 					<div class="col-lg-12 col-12">
 						<div class="box-footer text-end">
+							{% if franchise %}
+							<input type="hidden" name="id" id="id" value="{{ franchise.unique_id }}">
+							{% endif %}
 							<input type="hidden" name="btn_addFranchise" value="btn_addFranchise">
 							<button type="button" class="btn btn-primary btn_submitForm" id="btn_addFranchise" name="btn_addFranchise">
-								<i class="ti-save-alt"></i> Save Franchise
+								<i class="ti-save-alt"></i> {% if franchise %}Update{% else %}Save{% endif %} Franchise
 							</button>
 						</div>
 					</div>

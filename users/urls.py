@@ -15,4 +15,5 @@ urlpatterns = [
     re_path(r'^updateFranchiseStatus', user_obj.update_franchise_status, name='update_franchise_status'),
     re_path(r'^getAllAgents', user_obj.getAllAgents, name='getAllAgents'),
     re_path(r'^transferAgent', user_obj.transferAgent, name='transferAgent'),
+    re_path(r'^deleteFranchise$', user_obj.deleteFranchise, name='deleteFranchise'),
 ]

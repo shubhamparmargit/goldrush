@@ -21,7 +21,22 @@ mail_obj = MailNotification()
 class Pages:
     def franchise_module(self,request):
         if util_obj.checkSession(request) == False:
-            return render(request,'portal/franchise-module.html')
+            franchise_id = request.GET.get('id', '').strip()
+            context = {}
+            if franchise_id:
+                try:
+                    franchise = Franchise.objects.get(unique_id=franchise_id)
+                    context['franchise'] = franchise
+                    # Get files / documents
+                    docs = FranchiseDocuments.objects.filter(franchise=franchise)
+                    doc_map = {doc.doc_type: doc.file_path for doc in docs}
+                    context['documents'] = doc_map
+                    # Get bank details
+                    bank = FranchiseBankDetails.objects.filter(franchise=franchise).first()
+                    context['bank_details'] = bank
+                except Franchise.DoesNotExist:
+                    pass
+            return render(request,'portal/franchise-module.html', context)
         else:
             return util_obj.goToLogin(request)
         
@@ -41,6 +56,8 @@ class TradingUser:
             if request.method == 'POST':
                 try:
                     errors = {}
+                    franchise_id = request.POST.get('id', '').strip()
+                    is_edit = bool(franchise_id)
 
                     rules = {
                         "franchise_name": (r"^[A-Za-z.\s]+$", "Please input alphabet characters only."),
@@ -82,12 +99,12 @@ class TradingUser:
                             errors[field] = msg
 
                     # ================= FILE VALIDATION =================
-                    # allowed_ext = (".pdf", ".doc", ".docx", ".ppt", ".pptx")
                     allowed_ext = (".jpg", ".jpeg", ".png", ".pdf")
                     max_file_size = 10 * 1024 * 1024  # 10MB
                     allowed_mime = ["image/jpeg","image/png","application/pdf"]
-                    required_files = ["aadhaar_doc", "pan_doc", "agreement_doc"]
-                    # optional_files = ["cancelled_cheque", "passbook", "bank_statement"]
+                    
+                    # File fields are only required on creation, optional on edit
+                    required_files = [] if is_edit else ["aadhaar_doc", "pan_doc", "agreement_doc"]
                     optional_files = ["cancelled_cheque", "passbook"]
 
                     for file_field in required_files:
@@ -97,20 +114,20 @@ class TradingUser:
                         elif not f.name.lower().endswith(allowed_ext):
                             errors[file_field] = "Only JPG, PNG and PDF files are allowed"
                         elif f.content_type not in allowed_mime:
-                            errors[field_name] = "Invalid file type"
+                            errors[file_field] = "Invalid file type"
                         elif f.size > max_file_size:
-                            errors[field_name] = "File size should not exceed 10MB"
+                            errors[file_field] = "File size should not exceed 10MB"
 
                     # 🟡 OPTIONAL FILES CHECK (only if uploaded)
-                    for file_field in optional_files:
+                    for file_field in (optional_files + (["aadhaar_doc", "pan_doc", "agreement_doc"] if is_edit else [])):
                         f = request.FILES.get(file_field)
                         if f:
                             if not f.name.lower().endswith(allowed_ext):
                                 errors[file_field] = "Only JPG, PNG and PDF files are allowed"
                             elif f.content_type not in allowed_mime:
-                                errors[field_name] = "Invalid file type"
+                                errors[file_field] = "Invalid file type"
                             elif f.size > max_file_size:
-                                errors[field_name] = "File size should not exceed 10MB"
+                                errors[file_field] = "File size should not exceed 10MB"
 
                     # ================= FINAL RESPONSE =================
                     if errors:
@@ -119,7 +136,7 @@ class TradingUser:
                     # ================= CHECK MOBILE EMAIL =================
                     mobile = request.POST.get("mobile")
                     email = request.POST.get("email")
-                    if not util_obj.is_mobile_email_available(mobile, email):
+                    if not util_obj.is_mobile_email_available(mobile, email, unique_id=franchise_id if is_edit else None):
                         return JsonResponse({"success": '0', "message": "Mobile number or Email already registered."}, status=status.HTTP_200_OK)
                     
                     # ================= FETCH SESSION =================
@@ -131,7 +148,6 @@ class TradingUser:
                     if role == 1:
                         # 🔵 SUPER ADMIN (Manual selection from form)
                         franchise_model = request.POST.get("franchise_model")
-
                         parent_unique_id = request.POST.get("parent_franchise")
                         parent_id = None
 
@@ -164,7 +180,6 @@ class TradingUser:
                         franchise_model, parent_id = self.get_auto_franchise_data(role, login_id)
 
                     # ================= FETCH FORM DATA =================
-                    # franchise_model = request.POST.get("franchise_model")
                     franchise_type = request.POST.get("franchise_type")
                     franchise_name = request.POST.get("franchise_name")
                     holder_name = request.POST.get("holder_name")
@@ -186,88 +201,129 @@ class TradingUser:
 
                     access = "Granted" if request.POST.get("access") else "Blocked"
 
-                    # ================= GENERATE UNIQUE IDS =================
-                    unique_id = random_obj.generateUID()
-                    bank_unique_id = random_obj.generateUID()
-
-                    # ================= GENERATE REFERRAL DATA =================
-                    referral_prefix = franchise_model
-                    referral_id, referral_sequence = self.generate_referral_id(referral_prefix)
-
-                    # ================= GENERATE PASSWORD DATA =================
-                    password_text = random_obj.generate_short_uuid(10)
-                    salt, password = encrypt_obj.runEncryprion(password_text)
-
-                    # ================= GET ROLE =================
-                    role = User_Role.get_by_franchise_model(franchise_model)
-
                     with transaction.atomic():
-                        # ================= CREATE FRANCHISE =================
-                        franchise = Franchise.objects.create(
-                            date=timezone.now(),
-                            unique_id=unique_id,
-                            parent_id=parent_id,
-                            franchise_model=franchise_model,
-                            company_support_id=company_support_id,
-                            referral_id=referral_id,
-                            referral_prefix=referral_prefix,
-                            referral_sequence=referral_sequence,
-                            franchise_type=franchise_type,
-                            franchise_name=franchise_name,
-                            holder_name=holder_name,
-                            aadhaar_number=aadhaar_number,
-                            pan_number=pan_number,
-                            gst_number=gst_number,
-                            agent_id=agent_id,
-                            mobile=mobile,
-                            email=email,
-                            address=address,
-                            commission_slab=commission_slab,
-                            commission_percentage=commission_percentage,
-                            access=access,
-                            created_by=login_id
-                        )
+                        if is_edit:
+                            franchise = Franchise.objects.select_for_update().get(unique_id=franchise_id)
+                            # If Super Admin, update franchise model/parent
+                            if role == 1:
+                                franchise.franchise_model = franchise_model
+                                franchise.parent_id = parent_id
+                            
+                            franchise.franchise_type = franchise_type
+                            franchise.franchise_name = franchise_name
+                            franchise.holder_name = holder_name
+                            franchise.aadhaar_number = aadhaar_number
+                            franchise.pan_number = pan_number
+                            franchise.gst_number = gst_number
+                            franchise.agent_id = agent_id
+                            franchise.mobile = mobile
+                            franchise.email = email
+                            franchise.address = address
+                            franchise.commission_slab = commission_slab
+                            franchise.commission_percentage = commission_percentage
+                            franchise.access = access
+                            franchise.save()
 
-                        # ================= CREATE LOGIN =================
-                        login = Login.objects.create(
-                            date=timezone.now(),
-                            name=holder_name,
-                            mobile_number=mobile,
-                            email=email,
-                            password=password,
-                            salt=salt,
-                            password_text=password_text,
-                            access=access,
-                            role=role,
-                            added_by=username,
-                            table_name="franchise",
-                            table_id=unique_id
-                        )
+                            # Update corresponding Login account
+                            login_role = User_Role.get_by_franchise_model(franchise.franchise_model)
+                            Login.objects.filter(table_id=franchise.unique_id, table_name="franchise").update(
+                                name=holder_name,
+                                mobile_number=mobile,
+                                email=email,
+                                access=access,
+                                role=login_role
+                            )
 
-                        # ================= BANK DETAILS =================
-                        FranchiseBankDetails.objects.create(
-                            franchise=franchise,
-                            unique_id=bank_unique_id,
-                            date=timezone.now(),
-                            bank_name=bank_name,
-                            account_holder_name=account_holder_name,
-                            account_number=account_number,
-                            ifsc_code=ifsc_code,
-                            branch_name=branch_name
-                        )
+                            # Update Bank details
+                            FranchiseBankDetails.objects.filter(franchise=franchise).update(
+                                bank_name=bank_name,
+                                account_holder_name=account_holder_name,
+                                account_number=account_number,
+                                ifsc_code=ifsc_code,
+                                branch_name=branch_name
+                            )
+                            target_unique_id = franchise.unique_id
+                        else:
+                            # ================= GENERATE UNIQUE IDS =================
+                            unique_id = random_obj.generateUID()
+                            bank_unique_id = random_obj.generateUID()
+
+                            # ================= GENERATE REFERRAL DATA =================
+                            referral_prefix = franchise_model
+                            referral_id, referral_sequence = self.generate_referral_id(referral_prefix)
+
+                            # ================= GENERATE PASSWORD DATA =================
+                            password_text = random_obj.generate_short_uuid(10)
+                            salt, password = encrypt_obj.runEncryprion(password_text)
+
+                            # ================= GET ROLE =================
+                            role_obj = User_Role.get_by_franchise_model(franchise_model)
+
+                            # ================= CREATE FRANCHISE =================
+                            franchise = Franchise.objects.create(
+                                date=timezone.now(),
+                                unique_id=unique_id,
+                                parent_id=parent_id,
+                                franchise_model=franchise_model,
+                                company_support_id=company_support_id,
+                                referral_id=referral_id,
+                                referral_prefix=referral_prefix,
+                                referral_sequence=referral_sequence,
+                                franchise_type=franchise_type,
+                                franchise_name=franchise_name,
+                                holder_name=holder_name,
+                                aadhaar_number=aadhaar_number,
+                                pan_number=pan_number,
+                                gst_number=gst_number,
+                                agent_id=agent_id,
+                                mobile=mobile,
+                                email=email,
+                                address=address,
+                                commission_slab=commission_slab,
+                                commission_percentage=commission_percentage,
+                                access=access,
+                                created_by=login_id
+                            )
+
+                            # ================= CREATE LOGIN =================
+                            login = Login.objects.create(
+                                date=timezone.now(),
+                                name=holder_name,
+                                mobile_number=mobile,
+                                email=email,
+                                password=password,
+                                salt=salt,
+                                password_text=password_text,
+                                access=access,
+                                role=role_obj,
+                                added_by=username,
+                                table_name="franchise",
+                                table_id=unique_id
+                            )
+
+                            # ================= BANK DETAILS =================
+                            FranchiseBankDetails.objects.create(
+                                franchise=franchise,
+                                unique_id=bank_unique_id,
+                                date=timezone.now(),
+                                bank_name=bank_name,
+                                account_holder_name=account_holder_name,
+                                account_number=account_number,
+                                ifsc_code=ifsc_code,
+                                branch_name=branch_name
+                            )
+                            target_unique_id = unique_id
 
                         # ================= DOCUMENTS =================
-                        base_dir = os.path.join(settings.MEDIA_ROOT, f"franchise-documents/{unique_id}/")
+                        base_dir = os.path.join(settings.MEDIA_ROOT, f"franchise-documents/{target_unique_id}/")
                         os.makedirs(base_dir, exist_ok=True)
 
                         documents = {
                             "aadhaar_doc": ("AADHAAR", "aadhaar"),
                             "pan_doc": ("PAN", "pan"),
                             "agreement_doc": ("AGREEMENT", "agreement"),
-
                             "cancelled_cheque": ("BANK_CHEQUE", "cancelled_cheque"),
                             "passbook": ("BANK_PASSBOOK", "passbook"),
-                            # "bank_statement": ("BANK_STATEMENT", "bank_statement"),
                         }
 
                         for field_name, (doc_type, file_prefix) in documents.items():
@@ -276,26 +332,26 @@ class TradingUser:
                                 continue
 
                             file_name = util_obj.save_document(file_obj, base_dir, file_prefix)
+                            
+                            # If edit, delete existing doc database row first to avoid duplicate rows
+                            if is_edit:
+                                FranchiseDocuments.objects.filter(franchise=franchise, doc_type=doc_type).delete()
 
                             FranchiseDocuments.objects.create(
                                 franchise=franchise,
                                 unique_id=random_obj.generateUID(),
                                 date=timezone.now(),
                                 doc_type=doc_type,
-                                file_path=f"franchise-documents/{unique_id}/{file_name}"
+                                file_path=f"franchise-documents/{target_unique_id}/{file_name}"
                             )
 
-                        util_obj.activity_log(login_id, username, "Franchise", f"Franchise Created => {unique_id}")
+                        log_msg = f"Franchise Updated => {target_unique_id}" if is_edit else f"Franchise Created => {target_unique_id}"
+                        util_obj.activity_log(login_id, username, "Franchise", log_msg)
 
                         return JsonResponse({
                             "success": 1,
-                            "message": "Franchise created successfully"
+                            "message": "Franchise saved successfully"
                         })
-                # except IntegrityError:
-                #     return JsonResponse({
-                #         "success": 0,
-                #         "message": "Mobile or Email already exists"
-                #     })
                 except Exception as e:
                     return JsonResponse({
                         "success": 0,
@@ -306,6 +362,32 @@ class TradingUser:
                 return util_obj.printErrorResponse_200('Something went wrong. Please try again later.')
         else:
             return util_obj.goToLogin(request)
+
+    def deleteFranchise(self, request):
+        if util_obj.checkSession(request) == False:
+            if request.method != 'POST':
+                return JsonResponse({'success': 0, 'message': 'Invalid request method'})
+            
+            unique_id = request.POST.get('unique_id', '').strip()
+            if not unique_id:
+                return JsonResponse({'success': 0, 'message': 'Invalid franchise ID'})
+            
+            try:
+                with transaction.atomic():
+                    franchise = Franchise.objects.select_for_update().get(unique_id=unique_id)
+                    Login.objects.filter(table_id=franchise.unique_id, table_name="franchise").delete()
+                    franchise.delete()
+                    
+                    username = request.session.get('logged', 'admin')
+                    login_id = request.session.get('login_id')
+                    util_obj.activity_log(login_id, username, "Delete Franchise", f"Franchise deleted: {unique_id}")
+                    
+                return JsonResponse({'success': 1, 'message': 'Franchise deleted successfully'})
+            except Franchise.DoesNotExist:
+                return JsonResponse({'success': 0, 'message': 'Franchise not found'})
+            except Exception as e:
+                return JsonResponse({'success': 0, 'message': 'Something went wrong', 'error': str(e)})
+        return util_obj.goToLogin(request)
         
     def generate_referral_id(self,prefix):
         with transaction.atomic():

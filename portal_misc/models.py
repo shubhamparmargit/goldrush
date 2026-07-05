@@ -27,6 +27,12 @@ class CompanyBankDetails(models.Model):
     base_gold_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Anchor INR/gm gold price used in dynamic scale formula. MUST be set — system will error if blank.")
     rate_refresh_interval = models.IntegerField(default=10, help_text="Live rate refresh interval in seconds")
     pnl_refresh_interval  = models.IntegerField(default=5, help_text="Live PNL refresh interval in seconds")
+    manual_market_closed  = models.BooleanField(default=False)
+    stop_api_hits        = models.BooleanField(default=False)
+    bulk_override_min_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    bulk_override_min_weight = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    bulk_override_gold_rate  = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    bulk_override_silver_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     is_active      = models.BooleanField(default=True)
     updated_on     = models.DateTimeField(auto_now=True)
 

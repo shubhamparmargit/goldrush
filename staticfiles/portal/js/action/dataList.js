@@ -904,8 +904,19 @@ $(document).ready(function()
         form.append('<input type="hidden" name="days" value="'+days+'">');
         form.append('<input type="hidden" name="franchise_model" value="'+franchise_model+'">');
         form.append('<input type="hidden" name="export" value="excel">');
+        
+        var min_amount = $("#min_amount_filter").length ? $("#min_amount_filter").val().trim() : "";
+        var min_weight = $("#min_weight_filter").length ? $("#min_weight_filter").val().trim() : "";
+        form.append('<input type="hidden" name="min_amount" value="'+min_amount+'">');
+        form.append('<input type="hidden" name="min_weight" value="'+min_weight+'">');
+
         $("body").append(form);
         form.submit();
+    });
+
+    $(document).on("change keyup", "#min_amount_filter, #min_weight_filter", function() {
+        page = 1;
+        load_data(page,type,query,from_date,to_date,access,limit,franchise_model,days);
     });
 });
 
@@ -913,10 +924,13 @@ var franchise_model = "SMRA";
 function load_data(page,type,query='',from_date='',to_date='',access='',limit='',fm=franchise_model, days='')
 {
     // showModal();
+    var min_amount = $("#min_amount_filter").length ? $("#min_amount_filter").val().trim() : '';
+    var min_weight = $("#min_weight_filter").length ? $("#min_weight_filter").val().trim() : '';
+
     $.ajax({
         url:window.APP_URLS.getAllDataByTable,
         method:"POST",
-        data:{page:page, query:query,type:type,from_date:from_date,to_date:to_date,access:access,limit:limit,franchise_model:fm,days:days,csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()},
+        data:{page:page, query:query,type:type,from_date:from_date,to_date:to_date,access:access,limit:limit,franchise_model:fm,days:days,min_amount:min_amount,min_weight:min_weight,csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()},
         success:function(data)
         {
             // console.log(data)
@@ -1229,7 +1243,9 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 </label>\
                             </td>\
                             <td>\
-                                <button data-toggle="modal" data-target="#view-modal" data-id="'+data.table_data[i].unique_id+'" id="'+data.table_data[i].unique_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-info view'+type+'" title="View Details"><span class="fa fa-eye"></span></button>';
+                                <button data-toggle="modal" data-target="#view-modal" data-id="'+data.table_data[i].unique_id+'" id="'+data.table_data[i].unique_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-info view'+type+'" title="View Details"><span class="fa fa-eye"></span></button>\
+                                <a href="/portal/franchise-module?id='+data.table_data[i].unique_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-primary" title="Edit Franchise"><span class="fa fa-pencil"></span></a>\
+                                <button data-id="'+data.table_data[i].unique_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-danger deleteFranchise" title="Delete Franchise"><span class="fa fa-trash"></span></button>';
                                 if(data.table_data[i].roleAccess)
                                 {
                                     output += '<button data-toggle="modal" data-target="#view-franchise-modal" data-id="'+data.table_data[i].unique_id+'" id="'+data.table_data[i].unique_id+'" class="waves-effect waves-circle btn btn-social-icon btn-circle btn-warning viewHierarchy" title="View Hierarchy"><span class="mdi mdi-account-network"></span></button>';
@@ -1347,6 +1363,10 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                     output = '';
                     for(var i=0;i<data.table_data.length;i++)
                     {
+                        var pnlClass = data.table_data[i].profit_loss === "PROFIT" ? "success" : (data.table_data[i].profit_loss === "LOSS" ? "danger" : "");
+                        var pnlColor = pnlClass === "success" ? "green" : (pnlClass === "danger" ? "red" : "black");
+                        var pnlTextHtml = pnlClass ? '<span style="color:' + pnlColor + '; font-weight: bold;">' + data.table_data[i].pnl_amount + '</span>' : data.table_data[i].pnl_amount;
+                        var profitLossText = data.table_data[i].profit_loss ? '<span class="badge badge-' + (pnlClass === 'success' ? 'success' : 'danger') + '">' + data.table_data[i].profit_loss + '</span>' : '-';
                         output +='\
                             <tr>\
                                 <td>'+data.table_data[i].sr_no+'</td>\
@@ -1357,13 +1377,44 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].metal_type+'</td>\
                                 <td>'+data.table_data[i].quantity+'</td>\
                                 <td>'+data.table_data[i].invested_amount+'</td>\
+                                <td>'+data.table_data[i].service_fee+'</td>\
                                 <td>'+data.table_data[i].buy_price+'</td>\
                                 <td>'+data.table_data[i].buy_date+'</td>\
                                 <td>'+data.table_data[i].sell_price+'</td>\
                                 <td>'+data.table_data[i].sell_date+'</td>\
                                 <td>'+data.table_data[i].order_type+'</td>\
-                                <td>'+data.table_data[i].profit_loss+'</td>\
-                                <td>'+data.table_data[i].pnl_amount+'</td>\
+                                <td>'+profitLossText+'</td>\
+                                <td>'+pnlTextHtml+'</td>\
+                            </tr>';
+                    }
+                    $('.dynamic_content').append(output);
+                }
+                else if(type=="live_order_report" || type=="high_value_live_orders_report")
+                {
+                    output = '';
+                    for(var i=0;i<data.table_data.length;i++)
+                    {
+                        var pnlClass = data.table_data[i].pnl_class;
+                        var pnlText = data.table_data[i].pnl_text;
+                        output +='\
+                            <tr>\
+                                <td>'+data.table_data[i].sr_no+'</td>\
+                                <td>'+data.table_data[i].customer_name+'</td>\
+                                <td>'+data.table_data[i].mobile_number+'</td>\
+                                <td>'+data.table_data[i].referral_code+'</td>\
+                                <td>'+data.table_data[i].referral_holder_name+'</td>\
+                                <td>'+data.table_data[i].metal_type+'</td>\
+                                <td>'+data.table_data[i].quantity+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].invested_amount+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].buy_price+'</td>\
+                                <td>'+data.table_data[i].buy_date+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].current_rate+'</td>\
+                                <td><span style="color:' + (pnlClass === 'success' ? 'green' : 'red') + '; font-weight: bold;">' + pnlText + '</span></td>\
+                                <td>'+data.table_data[i].order_type+'</td>\
+                                <td>\
+                                    <button data-id="'+data.table_data[i].transaction_id+'" class="btn btn-danger closeLiveOrder" title="Close Order" style="padding: 4px 8px; font-size: 11px;"><span class="fa fa-times"></span> Close</button>\
+                                    <button data-id="'+data.table_data[i].transaction_id+'" data-override="'+data.table_data[i].admin_rate_override+'" class="btn btn-warning overrideOrderRate" title="Override Rate" style="padding: 4px 8px; font-size: 11px;"><span class="fa fa-edit"></span> Override ('+(data.table_data[i].admin_rate_override || 'None')+')</button>\
+                                </td>\
                             </tr>';
                     }
                     $('.dynamic_content').append(output);
@@ -1517,9 +1568,12 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].sr_no+'</td>\
                                 <td>'+data.table_data[i].customer_name+'</td>\
                                 <td>'+data.table_data[i].mobile_number+'</td>\
+                                <td>'+data.table_data[i].email+'</td>\
+                                <td>'+data.table_data[i].state+'</td>\
                                 <td>'+data.table_data[i].date+'</td>\
                                 <td>'+data.table_data[i].referral_code+'</td>\
                                 <td>'+data.table_data[i].referral_holder_name+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].recharge_till_date+'</td>\
                                 <td><i class="fa fa-inr"></i> '+data.table_data[i].request_amount+'</td>\
                                 <td>'+data.table_data[i].request_date+'</td>\
                                 <td><i class="fa fa-inr"></i> '+data.table_data[i].service_charge+'</td>\
@@ -1705,3 +1759,208 @@ function processWithdrawal(id, status, txn, remark) {
         }
     });
 }
+
+$(document).on('click', '.closeLiveOrder', function () {
+    let id = $(this).data("id");
+
+    const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+            confirmButton: 'btn btn-success m-10',
+            cancelButton: 'btn btn-danger m-10'
+        },
+        buttonsStyling: false
+    });
+
+    swalWithBootstrapButtons.fire({
+        title: 'Are you sure?',
+        text: "You want to manually close this live order?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, close it!',
+        cancelButtonText: 'No, keep it open!',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: window.APP_URLS.closeLiveOrder,
+                type: 'POST',
+                data: {
+                    unique_id: id,
+                    csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val()
+                },
+                success: function (response) {
+                    try {
+                        if (response.success == 1) {
+                            $.toast({
+                                heading: 'Success',
+                                text: response.message,
+                                position: 'top-right',
+                                loaderBg: '#ff6849',
+                                icon: 'success',
+                                hideAfter: 3500,
+                                stack: 6
+                            });
+                            load_data($('ul.pagination').find('li.active>a').data('page_number'), $("#type").val(), $('#search').val(), $("#from_date").val(), $("#to_date").val(), $("#access").val(), $('#limit').val());
+                        } else {
+                            $.toast({
+                                heading: 'Error',
+                                text: response.message,
+                                position: 'top-right',
+                                loaderBg: '#ff6849',
+                                icon: 'error',
+                                hideAfter: 3500
+                            });
+                        }
+                    } catch (error) {
+                        $.toast({
+                            heading: 'Error',
+                            text: "Sorry, looks like there are some errors detected, please try again.",
+                            position: 'top-right',
+                            loaderBg: '#ff6849',
+                            icon: 'error',
+                            hideAfter: 3500
+                        });
+                    }
+                },
+                error: function (jqXHR, textStatus, error) {
+                    $.toast({
+                        heading: 'Error',
+                        text: 'Something went wrong. Please try again later.',
+                        position: 'top-right',
+                        loaderBg: '#ff6849',
+                        icon: 'error',
+                        hideAfter: 3500
+                    });
+                }
+            });
+        }
+    });
+});
+
+$(document).on('click', '.deleteFranchise', function () {
+    let id = $(this).data("id");
+
+    const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+            confirmButton: 'btn btn-success m-10',
+            cancelButton: 'btn btn-danger m-10'
+        },
+        buttonsStyling: false
+    });
+
+    swalWithBootstrapButtons.fire({
+        title: 'Are you sure?',
+        text: "You want to delete this franchise? This will delete the login account and all associated records permanently.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'No, keep it!',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: window.APP_URLS.deleteFranchise,
+                type: 'POST',
+                data: {
+                    unique_id: id,
+                    csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val()
+                },
+                success: function (response) {
+                    try {
+                        if (response.success == 1) {
+                            $.toast({
+                                heading: 'Success',
+                                text: response.message,
+                                position: 'top-right',
+                                loaderBg: '#ff6849',
+                                icon: 'success',
+                                hideAfter: 3500,
+                                stack: 6
+                            });
+                            load_data($('ul.pagination').find('li.active>a').data('page_number'), $("#type").val(), $('#search').val(), $("#from_date").val(), $("#to_date").val(), $("#access").val(), $('#limit').val());
+                        } else {
+                            $.toast({
+                                heading: 'Error',
+                                text: response.message,
+                                position: 'top-right',
+                                loaderBg: '#ff6849',
+                                icon: 'error',
+                                hideAfter: 3500
+                            });
+                        }
+                    } catch (error) {
+                        $.toast({
+                            heading: 'Error',
+                            text: "Sorry, looks like there are some errors detected, please try again.",
+                            position: 'top-right',
+                            loaderBg: '#ff6849',
+                            icon: 'error',
+                            hideAfter: 3500
+                        });
+                    }
+                },
+                error: function (jqXHR, textStatus, error) {
+                    $.toast({
+                        heading: 'Error',
+                        text: 'Something went wrong. Please try again later.',
+                        position: 'top-right',
+                        loaderBg: '#ff6849',
+                        icon: 'error',
+                        hideAfter: 3500
+                    });
+                }
+            });
+        }
+    });
+});
+
+$(document).on('click', '.overrideOrderRate', function () {
+    let id = $(this).data("id");
+    let currentOverride = $(this).data("override");
+
+    Swal.fire({
+        title: 'Override Order Rate',
+        text: 'Enter a custom rate per gram for this order to force a profit/loss (leave empty to remove override):',
+        input: 'number',
+        inputValue: currentOverride || '',
+        inputAttributes: {
+            step: '0.01',
+            min: '0'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Set Rate',
+        cancelButtonText: 'Cancel',
+        showLoaderOnConfirm: true,
+        preConfirm: (rate) => {
+            return $.ajax({
+                url: window.APP_URLS.override_order_rate,
+                type: 'POST',
+                data: {
+                    unique_id: id,
+                    override_rate: rate,
+                    csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val()
+                }
+            }).then(response => {
+                if (response.success != 1) {
+                    throw new Error(response.message || 'Failed to update rate');
+                }
+                return response;
+            }).catch(error => {
+                Swal.showValidationMessage(`Request failed: ${error}`);
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.toast({
+                heading: 'Success',
+                text: 'Order rate override updated successfully.',
+                position: 'top-right',
+                loaderBg: '#ff6849',
+                icon: 'success',
+                hideAfter: 3500
+            });
+            load_data($('ul.pagination').find('li.active>a').data('page_number'), $("#type").val(), $('#search').val(), $("#from_date").val(), $("#to_date").val(), $("#access").val(), $('#limit').val());
+        }
+    });
+});

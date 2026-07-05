@@ -222,6 +222,7 @@ EXPORT_COLUMNS = {
         ("Registered On", "date"),
         ("Referral Code", "referral_code"),
         ("Referral Holder Name", "referral_holder_name"),
+        ("Recharge Till Date", "recharge_till_date"),
         ("Request Amount", "request_amount"),
         ("Request Date", "request_date"),
         ("Service Charge", "service_charge"),
@@ -237,6 +238,36 @@ EXPORT_COLUMNS = {
         ("IFSC Code", "ifsc_code"),
         ("Bank Name", "bank_name"),
     ],  
+    "live_order_report": [
+        ("Sr. No.", "sr_no"),
+        ("Full Name", "customer_name"),
+        ("Mobile Number", "mobile_number"),
+        ("Referral Code", "referral_code"),
+        ("Referral Holder Name", "referral_holder_name"),
+        ("Metal", "metal_type"),
+        ("Quantity", "quantity"),
+        ("Invested Amount", "invested_amount"),
+        ("Buy Rate", "buy_price"),
+        ("Buy Date", "buy_date"),
+        ("Current Rate", "current_rate"),
+        ("Profit/Loss", "pnl_text"),
+        ("Order Type", "order_type")
+    ],
+    "high_value_live_orders_report": [
+        ("Sr. No.", "sr_no"),
+        ("Full Name", "customer_name"),
+        ("Mobile Number", "mobile_number"),
+        ("Referral Code", "referral_code"),
+        ("Referral Holder Name", "referral_holder_name"),
+        ("Metal", "metal_type"),
+        ("Quantity", "quantity"),
+        ("Invested Amount", "invested_amount"),
+        ("Buy Rate", "buy_price"),
+        ("Buy Date", "buy_date"),
+        ("Current Rate", "current_rate"),
+        ("Profit/Loss", "pnl_text"),
+        ("Order Type", "order_type")
+    ],
 }
 
 class Pages:
@@ -877,8 +908,8 @@ class DataList:
                                 'email': r.customer.email or 'N/A',
                                 'amount': float(r.amount),
                                 'membership': r.membership.level if r.membership else 'N/A',
-                                'razorpay_order_id': 'Manual Recharge Request',
-                                'razorpay_payment_id': r.utr_number,
+                                'razorpay_order_id': f"Manually added by admin ({r.action_by or 'Admin'})",
+                                'razorpay_payment_id': f"UTR: {r.utr_number}",
                                 'transaction_date': txn_date,
                                 'transaction_date_str': timezone.localtime(txn_date).strftime('%d-%m-%Y @ %I:%M %p'),
                                 'status': r.status,
@@ -895,8 +926,8 @@ class DataList:
                                 'email': r.customer.email or 'N/A',
                                 'amount': float(r.amount),
                                 'membership': get_membership_for_balance(r.balance_after),
-                                'razorpay_order_id': 'manually added by admin',
-                                'razorpay_payment_id': f"{r.utr_number} (manually added by admin)" if r.utr_number else "manually added by admin",
+                                'razorpay_order_id': f"Manually added by admin ({r.credited_by or 'Admin'})",
+                                'razorpay_payment_id': f"UTR: {r.utr_number} (Wallet Manual Credit)" if r.utr_number else "Manually added by admin",
                                 'transaction_date': r.credited_on,
                                 'transaction_date_str': timezone.localtime(r.credited_on).strftime('%d-%m-%Y @ %I:%M %p'),
                                 'status': 'APPROVED',
@@ -957,6 +988,187 @@ class DataList:
                         total_links = math.ceil(total_data / limit)
                         paginate = self.pagination(total_links, page)
                         
+                        arr = {
+                            'table_data': table_data,
+                            'page_array': paginate,
+                            'total_links': total_links,
+                            'total_data': total_data,
+                            'total_filter_data': total_filter_data
+                        }
+                        return JsonResponse(arr, status=status.HTTP_200_OK, safe=False)
+
+                    if table_name == "withdrawal_report":
+                        from datetime import datetime, time
+                        from django.db.models import Sum
+                        import math
+
+                        allowed_referral_codes = None
+                        if role == 4:
+                            login = Login.objects.get(id=login_id)
+                            parent_franchise = Franchise.objects.get(unique_id=login.table_id)
+                            allowed_referral_codes = [parent_franchise.referral_id]
+
+                        franchise_map = {f.referral_id: f.holder_name for f in Franchise.objects.all()}
+
+                        search_term = request.POST.get('query', '').strip()
+
+                        from_date = request.POST.get('from_date', '').strip()
+                        to_date = request.POST.get('to_date', '').strip()
+                        start_dt = None
+                        end_dt = None
+                        if from_date:
+                            start_dt = timezone.make_aware(datetime.strptime(from_date, "%Y-%m-%d"))
+                        if to_date:
+                            parsed_end = datetime.strptime(to_date, "%Y-%m-%d")
+                            end_dt = timezone.make_aware(datetime.combine(parsed_end.date(), time.max))
+
+                        from customer_wallet.models import WithdrawalRequest, WalletManualDebit
+                        withdrawal_qs = WithdrawalRequest.objects.select_related("customer", "customer__customertradingbankdetails").all()
+                        debit_qs = WalletManualDebit.objects.select_related("customer", "customer__customertradingbankdetails").all()
+
+                        if allowed_referral_codes is not None:
+                            withdrawal_qs = withdrawal_qs.filter(customer__referral_code__in=allowed_referral_codes)
+                            debit_qs = debit_qs.filter(customer__referral_code__in=allowed_referral_codes)
+
+                        if search_term:
+                            withdrawal_qs = withdrawal_qs.filter(
+                                Q(customer__name__icontains=search_term) |
+                                Q(customer__mobile__icontains=search_term) |
+                                Q(transaction_number__icontains=search_term) |
+                                Q(status__icontains=search_term) |
+                                Q(customer__customertradingbankdetails__bank_name__icontains=search_term) |
+                                Q(customer__customertradingbankdetails__account_holder_name__icontains=search_term) |
+                                Q(customer__customertradingbankdetails__account_number__icontains=search_term) |
+                                Q(customer__customertradingbankdetails__ifsc_code__icontains=search_term)
+                            )
+                            debit_qs = debit_qs.filter(
+                                Q(customer__name__icontains=search_term) |
+                                Q(customer__mobile__icontains=search_term) |
+                                Q(remark__icontains=search_term) |
+                                Q(debited_by__icontains=search_term)
+                            )
+
+                        all_withdrawals = []
+
+                        for w in withdrawal_qs:
+                            first_address = w.customer.customeraddress_set.first()
+                            state = first_address.state if first_address else 'N/A'
+                            email = w.email if w.email else (w.customer.email if w.customer.email else 'N/A')
+                            action_date_str = timezone.localtime(w.action_date).strftime('%d-%m-%Y @ %I:%M %p') if w.action_date else 'N/A'
+                            remark_str = w.remark if w.remark else 'N/A'
+                            txn_no = w.transaction_number if w.transaction_number else 'N/A'
+
+                            status_cls = 'success' if w.status == 'APPROVED' else ('warning' if w.status == 'PENDING' else 'danger')
+                            btn = 'Yes' if w.status == 'PENDING' else None
+
+                            all_withdrawals.append({
+                                'date_sort': w.request_date,
+                                'date': timezone.localtime(w.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'customer_name': w.customer.name,
+                                'mobile_number': w.customer.mobile,
+                                'email': email,
+                                'state': state,
+                                'unique_id': w.unique_id,
+                                'request_amount': float(w.request_amount),
+                                'service_charge': float(w.service_charge),
+                                'gst_amount': float(w.gst_amount),
+                                'total_deduction': float(w.total_deduction),
+                                'final_amount': float(w.final_amount),
+                                'status': w.status,
+                                'status_cls': status_cls,
+                                'btn': btn,
+                                'transaction_number': txn_no,
+                                'remark': remark_str,
+                                'action_date': action_date_str,
+                                'request_date': timezone.localtime(w.request_date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'referral_code': w.customer.referral_code,
+                                'referral_holder_name': franchise_map.get(w.customer.referral_code, 'N/A'),
+                                'bank_name': w.customer.customertradingbankdetails.bank_name if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
+                                'account_holder_name': w.customer.customertradingbankdetails.account_holder_name if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
+                                'account_number': w.customer.customertradingbankdetails.account_number if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
+                                'ifsc_code': w.customer.customertradingbankdetails.ifsc_code if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
+                                'customer_id_raw': w.customer.id
+                            })
+
+                        for d in debit_qs:
+                            first_address = d.customer.customeraddress_set.first()
+                            state = first_address.state if first_address else 'N/A'
+                            email = d.customer.email if d.customer.email else 'N/A'
+                            action_date_str = timezone.localtime(d.debited_on).strftime('%d-%m-%Y @ %I:%M %p')
+                            remark_str = d.remark if d.remark else 'N/A'
+
+                            all_withdrawals.append({
+                                'date_sort': d.debited_on,
+                                'date': timezone.localtime(d.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'customer_name': d.customer.name,
+                                'mobile_number': d.customer.mobile,
+                                'email': email,
+                                'state': state,
+                                'unique_id': d.unique_id,
+                                'request_amount': float(d.amount),
+                                'service_charge': 0.0,
+                                'gst_amount': 0.0,
+                                'total_deduction': 0.0,
+                                'final_amount': float(d.amount),
+                                'status': 'APPROVED',
+                                'status_cls': 'success',
+                                'btn': None,
+                                'transaction_number': 'Offline Debit',
+                                'remark': remark_str,
+                                'action_date': action_date_str,
+                                'request_date': timezone.localtime(d.debited_on).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'referral_code': d.customer.referral_code,
+                                'referral_holder_name': franchise_map.get(d.customer.referral_code, 'N/A'),
+                                'bank_name': d.customer.customertradingbankdetails.bank_name if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
+                                'account_holder_name': d.customer.customertradingbankdetails.account_holder_name if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
+                                'account_number': d.customer.customertradingbankdetails.account_number if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
+                                'ifsc_code': d.customer.customertradingbankdetails.ifsc_code if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
+                                'customer_id_raw': d.customer.id
+                            })
+
+                        if start_dt or end_dt:
+                            date_filtered = []
+                            for w in all_withdrawals:
+                                t_date = w['date_sort']
+                                if not timezone.is_aware(t_date):
+                                    t_date = timezone.make_aware(t_date)
+                                if start_dt and t_date < start_dt:
+                                    continue
+                                if end_dt and t_date > end_dt:
+                                    continue
+                                date_filtered.append(w)
+                            all_withdrawals = date_filtered
+
+                        all_withdrawals.sort(key=lambda x: x['date_sort'], reverse=True)
+
+                        total_data = len(all_withdrawals)
+                        export = request.POST.get("export")
+                        if export == "excel":
+                            sliced_withdrawals = all_withdrawals
+                        else:
+                            sliced_withdrawals = all_withdrawals[start: start + limit]
+
+                        table_data = []
+                        curr_sr = start + 1
+                        for w in sliced_withdrawals:
+                            w['sr_no'] = curr_sr
+                            curr_sr += 1
+                            cust_id = w['customer_id_raw']
+                            
+                            online_sum = WalletRechargeHistory.objects.filter(customer_id=cust_id, status='Success').aggregate(total=Sum('amount'))['total'] or 0
+                            manual_sum = ManualRechargeRequest.objects.filter(customer_id=cust_id, status='APPROVED').aggregate(total=Sum('amount'))['total'] or 0
+                            credit_sum = WalletManualCredit.objects.filter(customer_id=cust_id).aggregate(total=Sum('amount'))['total'] or 0
+                            w['recharge_till_date'] = float(online_sum + manual_sum + credit_sum)
+
+                            w_copy = w.copy()
+                            del w_copy['date_sort']
+                            del w_copy['customer_id_raw']
+                            table_data.append(w_copy)
+
+                        total_filter_data = len(table_data)
+                        total_links = math.ceil(total_data / limit)
+                        paginate = self.pagination(total_links, page)
+
                         arr = {
                             'table_data': table_data,
                             'page_array': paginate,
@@ -1035,6 +1247,34 @@ class DataList:
                     elif table_name == "transaction_report":
                         franchise_holder = Franchise.objects.filter(referral_id=OuterRef('customer__referral_code')).values('holder_name')[:1]
                         query = CustomerTransaction.objects.filter(transaction_type="BUY").prefetch_related("sell_transactions").select_related("customer","membership").annotate(referral_holder_name=Subquery(franchise_holder))
+                    elif table_name == "live_order_report":
+                        franchise_holder = Franchise.objects.filter(referral_id=OuterRef('customer__referral_code')).values('holder_name')[:1]
+                        query = CustomerTransaction.objects.filter(transaction_type="BUY", sell_transactions__isnull=True).select_related("customer","membership").annotate(referral_holder_name=Subquery(franchise_holder))
+                    elif table_name == "high_value_live_orders_report":
+                        min_amount = 50000.00
+                        min_weight = 1000.0000
+                        
+                        req_min_amount = request.POST.get('min_amount')
+                        req_min_weight = request.POST.get('min_weight')
+                        
+                        if req_min_amount:
+                            try:
+                                min_amount = float(req_min_amount)
+                            except ValueError:
+                                pass
+                        if req_min_weight:
+                            try:
+                                min_weight = float(req_min_weight)
+                            except ValueError:
+                                pass
+
+                        franchise_holder = Franchise.objects.filter(referral_id=OuterRef('customer__referral_code')).values('holder_name')[:1]
+                        query = CustomerTransaction.objects.filter(
+                            transaction_type="BUY", 
+                            sell_transactions__isnull=True
+                        ).filter(
+                            Q(order_amount__gte=min_amount) | Q(quantity_gm__gte=min_weight)
+                        ).select_related("customer","membership").annotate(referral_holder_name=Subquery(franchise_holder))
                     elif table_name == "customer_report":
                         franchise_holder = Franchise.objects.filter(referral_id=OuterRef('referral_code')).values('holder_name')[:1]
                         last_login = CustomerLoginReport.objects.filter(customer=OuterRef('unique_id')).order_by('-login_date_time')
@@ -1131,6 +1371,8 @@ class DataList:
                             query=query.filter(Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(razorpay_payment_id__icontains=search_tearm) | Q(order__razorpay_order_id__icontains=search_tearm))
                         elif table_name=="transaction_report":
                             query=query.filter(Q(transaction_id__icontains=search_tearm) | Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(metal_type__icontains=search_tearm) | Q(transaction_type__icontains=search_tearm) | Q(order_type__icontains=search_tearm) | Q(sell_transactions__profit_loss__icontains=search_tearm) | Q(sell_transactions__sold_via__icontains=search_tearm))
+                        elif table_name=="live_order_report" or table_name=="high_value_live_orders_report":
+                            query=query.filter(Q(transaction_id__icontains=search_tearm) | Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(metal_type__icontains=search_tearm) | Q(order_type__icontains=search_tearm))
                         elif table_name=="customer_report":
                             query=query.filter(
                                 Q(name__icontains=search_tearm) |
@@ -1200,7 +1442,7 @@ class DataList:
                         from_date = request.POST.get('from_date')
                         to_date = request.POST.get('to_date')
 
-                        if table_name in ["wallet_recharge_report", "first_recharge_report", "transaction_report"]:
+                        if table_name in ["wallet_recharge_report", "first_recharge_report", "transaction_report", "live_order_report", "high_value_live_orders_report"]:
                             if from_date:
                                 conditions['created_at__gte'] = datetime.strptime(from_date, "%Y-%m-%d")
                             if to_date:
@@ -1283,7 +1525,7 @@ class DataList:
                                     cls='danger'
                                     states=""
 
-                            if table_name in ['registration_report','wallet_recharge_report','first_recharge_report','transaction_report','customer_report','order_report','inactive_no_recharge','inactive_customers', 'withdrawal_report']:
+                            if table_name in ['registration_report','wallet_recharge_report','first_recharge_report','transaction_report','live_order_report','high_value_live_orders_report','customer_report','order_report','inactive_no_recharge','inactive_customers', 'withdrawal_report']:
                                 referral_holder = row.referral_holder_name if row.referral_holder_name else "N/A"
 
                             if table_name=="metal_purity_price":
@@ -1429,6 +1671,29 @@ class DataList:
                                     else:
                                         pnl_amount = str(raw_pnl_amt)
                                     sell_date = timezone.localtime(sell.created_at).strftime('%d-%m-%Y @ %I:%M %p')
+                                else:
+                                    from customer_transaction.views import getMetalRate, calculate_live_pnl
+                                    try:
+                                        live_rates = getMetalRate()
+                                    except Exception:
+                                        live_rates = {"sell_gold_rate": 0, "sell_silver_rate": 0, "buy_gold_rate": 0, "buy_silver_rate": 0}
+                                    
+                                    metal_type = row.metal_type.upper()
+                                    if row.order_type == "BOOKING":
+                                        current_metal_rate = Decimal(str(live_rates.get("sell_gold_rate", 0) if metal_type == 'GOLD' else live_rates.get("sell_silver_rate", 0)))
+                                    else:
+                                        current_metal_rate = Decimal(str(live_rates.get("buy_gold_rate", 0) if metal_type == 'GOLD' else live_rates.get("buy_silver_rate", 0)))
+                                    
+                                    pnl_info = calculate_live_pnl(row, current_metal_rate)
+                                    pnl_amt = float(pnl_info["pnl_amount"])
+                                    pnl_percent = float(pnl_info["pnl_percent"])
+                                    is_profit = pnl_info["is_profit"]
+                                    
+                                    sell_price = float(current_metal_rate)
+                                    pnl = "PROFIT" if is_profit else "LOSS"
+                                    pnl_prefix = "+" if pnl_amt >= 0 else ""
+                                    pnl_amount = f"{pnl_prefix}{pnl_amt:.2f} ({pnl_prefix}{pnl_percent:.2f}%)"
+                                    sell_date = "Active (Live)"
 
                                 buy_date = timezone.localtime(row.created_at).strftime('%d-%m-%Y @ %I:%M %p')
 
@@ -1458,6 +1723,49 @@ class DataList:
                                     "sell_date": sell_date,
 
                                     "sold_via": sell.sold_via if sell else "",
+                                })
+                            elif table_name == "live_order_report":
+                                from customer_transaction.views import getMetalRate, calculate_live_pnl
+                                try:
+                                    live_rates = getMetalRate()
+                                except Exception:
+                                    live_rates = {"sell_gold_rate": 0, "sell_silver_rate": 0, "buy_gold_rate": 0, "buy_silver_rate": 0}
+                                
+                                metal_type = row.metal_type.upper()
+                                if row.order_type == "BOOKING":
+                                    current_metal_rate = Decimal(str(live_rates.get("sell_gold_rate", 0) if metal_type == 'GOLD' else live_rates.get("sell_silver_rate", 0)))
+                                else:
+                                    current_metal_rate = Decimal(str(live_rates.get("buy_gold_rate", 0) if metal_type == 'GOLD' else live_rates.get("buy_silver_rate", 0)))
+                                
+                                pnl_info = calculate_live_pnl(row, current_metal_rate)
+                                
+                                pnl_amount = float(pnl_info["pnl_amount"])
+                                pnl_percent = float(pnl_info["pnl_percent"])
+                                is_profit = pnl_info["is_profit"]
+                                
+                                pnl_class = "success" if is_profit else "danger"
+                                pnl_prefix = "+" if pnl_amount > 0 else ""
+                                pnl_text = f"{pnl_prefix}{pnl_amount:.2f} ({pnl_prefix}{pnl_percent:.2f}%)"
+                                
+                                buy_date = timezone.localtime(row.created_at).strftime('%d-%m-%Y @ %I:%M %p')
+                                
+                                table_data.append({
+                                    "sr_no": sr_no,
+                                    "transaction_id": row.transaction_id,
+                                    "customer_name": row.customer.name,
+                                    "mobile_number": row.customer.mobile,
+                                    'referral_code': row.customer.referral_code,
+                                    'referral_holder_name': referral_holder,
+                                    "metal_type": row.metal_type,
+                                    "order_type": row.order_type,
+                                    "quantity": float(row.quantity_gm),
+                                    "buy_price": float(row.metal_rate_per_gm),
+                                    "invested_amount": float(row.order_amount),
+                                    "buy_date": buy_date,
+                                    "current_rate": float(current_metal_rate),
+                                    "pnl_class": pnl_class,
+                                    "pnl_text": pnl_text,
+                                    "admin_rate_override": float(row.admin_rate_override) if row.admin_rate_override else "",
                                 })
                             elif table_name=="customer_report":
                                 addresses = row.customeraddress_set.all()
@@ -1688,7 +1996,12 @@ class DataList:
                                 elif(row.status=="REJECTED"):
                                     status_cls='danger'
 
-                                table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': row.customer.mobile,'email': email,'state': state,'unique_id': row.unique_id,'request_amount': float(row.request_amount),'service_charge': float(row.service_charge),'gst_amount': float(row.gst_amount),'total_deduction': float(row.total_deduction),'final_amount': float(row.final_amount),'status': row.status, 'status_cls': status_cls, 'btn': btn, 'transaction_number':transaction_number, 'remark':remark,'action_date':action_date,'request_date': request_date,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder, 'bank_name': row.customer.customertradingbankdetails.bank_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_holder_name': row.customer.customertradingbankdetails.account_holder_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_number': row.customer.customertradingbankdetails.account_number if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'ifsc_code': row.customer.customertradingbankdetails.ifsc_code if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A'})
+                                online_sum = WalletRechargeHistory.objects.filter(customer=row.customer, status='Success').aggregate(total=Sum('amount'))['total'] or 0
+                                manual_sum = ManualRechargeRequest.objects.filter(customer=row.customer, status='APPROVED').aggregate(total=Sum('amount'))['total'] or 0
+                                credit_sum = WalletManualCredit.objects.filter(customer=row.customer).aggregate(total=Sum('amount'))['total'] or 0
+                                recharge_till_date = float(online_sum + manual_sum + credit_sum)
+
+                                table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': row.customer.mobile,'email': email,'state': state,'unique_id': row.unique_id,'recharge_till_date': recharge_till_date, 'request_amount': float(row.request_amount),'service_charge': float(row.service_charge),'gst_amount': float(row.gst_amount),'total_deduction': float(row.total_deduction),'final_amount': float(row.final_amount),'status': row.status, 'status_cls': status_cls, 'btn': btn, 'transaction_number':transaction_number, 'remark':remark,'action_date':action_date,'request_date': request_date,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder, 'bank_name': row.customer.customertradingbankdetails.bank_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_holder_name': row.customer.customertradingbankdetails.account_holder_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_number': row.customer.customertradingbankdetails.account_number if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'ifsc_code': row.customer.customertradingbankdetails.ifsc_code if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A'})
 
                             sr_no=sr_no+1
 
@@ -1965,6 +2278,91 @@ class DataList:
             {'success': 1, 'message': f'Account Type changed to {new_status} successfully'},
             status=200
         )
+
+    def closeLiveOrder(self, request):
+        if util_obj.checkSession(request):
+            return util_obj.goToLogin(request)
+
+        if request.method != 'POST':
+            return util_obj.printErrorResponse_200('Invalid request')
+
+        unique_id = request.POST.get("unique_id")
+        if not unique_id:
+            return util_obj.printErrorResponse_200('Transaction ID is required')
+
+        from customer_transaction.models import CustomerTransaction
+        from customer_transaction.views import getMetalRate, execute_sell
+
+        buy_txn = CustomerTransaction.objects.filter(transaction_id=unique_id, transaction_type="BUY").first()
+        if not buy_txn:
+            return util_obj.printErrorResponse_200('Order not found')
+
+        if buy_txn.sell_transactions.exists():
+            return util_obj.printErrorResponse_200('Order is already closed')
+
+        try:
+            metal = getMetalRate()
+            metal_type = buy_txn.metal_type.upper()
+            if buy_txn.order_type == "BOOKING":
+                current_rate = Decimal(str(metal["sell_gold_rate"] if metal_type == 'GOLD' else metal["sell_silver_rate"]))
+            else:
+                current_rate = Decimal(str(metal["buy_gold_rate"] if metal_type == 'GOLD' else metal["buy_silver_rate"]))
+
+            result = execute_sell(request, buy_txn=buy_txn, current_metal_rate=current_rate, sold_via="MANUAL")
+
+            if result:
+                util_obj.activity_log(
+                    request.session['login_id'],
+                    request.session['logged'],
+                    "Close Order",
+                    f"Admin closed live order {unique_id} for customer {buy_txn.customer.mobile}"
+                )
+                return JsonResponse({'success': 1, 'message': 'Live order closed successfully'}, status=200)
+            else:
+                return util_obj.printErrorResponse_200('Failed to close live order')
+        except Exception as e:
+            return util_obj.printErrorResponse_200(f'Something went wrong: {str(e)}')
+
+    def overrideOrderRate(self, request):
+        if util_obj.checkSession(request):
+            return util_obj.goToLogin(request)
+
+        if request.method != 'POST':
+            return util_obj.printErrorResponse_200('Invalid request')
+
+        unique_id = request.POST.get("unique_id")
+        override_rate_val = request.POST.get("override_rate", "").strip()
+
+        if not unique_id:
+            return util_obj.printErrorResponse_200('Transaction ID is required')
+
+        from customer_transaction.models import CustomerTransaction
+        from decimal import Decimal, InvalidOperation
+        try:
+            with transaction.atomic():
+                txn = CustomerTransaction.objects.select_for_update().filter(transaction_id=unique_id, transaction_type="BUY").first()
+                if not txn:
+                    return util_obj.printErrorResponse_200('Active order not found')
+
+                if override_rate_val:
+                    try:
+                        txn.admin_rate_override = Decimal(override_rate_val)
+                    except (InvalidOperation, ValueError):
+                        return util_obj.printErrorResponse_200('Invalid override rate value')
+                else:
+                    txn.admin_rate_override = None
+
+                txn.save(update_fields=['admin_rate_override'])
+
+                util_obj.activity_log(
+                    request.session['login_id'],
+                    request.session['logged'],
+                    "Override Rate",
+                    f"Admin overrode rate for live order {unique_id} to {override_rate_val or 'None'}"
+                )
+                return JsonResponse({'success': 1, 'message': 'Order rate override updated successfully'}, status=200)
+        except Exception as e:
+            return util_obj.printErrorResponse_200(f'Something went wrong: {str(e)}')
 
         # except Exception as e:
         #     return util_obj.printErrorResponse_200('Something went wrong')   

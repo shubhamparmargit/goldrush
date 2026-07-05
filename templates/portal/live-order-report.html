@@ -6,15 +6,15 @@
 		<div class="content-header">
 			<div class="d-flex align-items-center">
 				<div class="mr-auto">
-					<h3 class="page-title">Withdrawal Report</h3>
-					<input type="hidden" name="type" id="type" value="withdrawal_report">
+					<h3 class="page-title">Live Order Report</h3>
+					<input type="hidden" name="type" id="type" value="live_order_report">
 					{% csrf_token %}
 					<div class="d-inline-block align-items-center">
 						<nav>
 							<ol class="breadcrumb">
 								<li class="breadcrumb-item"><a href="#"><i class="mdi mdi-home-outline"></i></a></li>
 								<li class="breadcrumb-item" aria-current="page">Dashboard</li>
-								<li class="breadcrumb-item active" aria-current="page">Withdrawal Report</li>
+								<li class="breadcrumb-item active" aria-current="page">Live Order Report</li>
 							</ol>
 						</nav>
 					</div>
@@ -27,7 +27,7 @@
 					<div class="box-header with-bfeedback">
 						<div class="row">
 							<div class="col-2">
-								<h4 class="box-title">Withdrawal</h4>
+								<h4 class="box-title">Live Orders</h4>
 							</div>
 							<div class="col-10 dFlex">
 								<select class="form-control floatLeft w-p10" id="limit">
@@ -76,26 +76,16 @@
 										<th>Sr. No.</th>
 										<th>Full Name</th>
 										<th>Mobile Number</th>
-										<th>Email</th>
-										<th>State</th>
-										<th>Registered On</th>
 										<th>Referral Code</th>
 										<th>Referral Holder Name</th>
-										<th>Recharge Till Date</th>
-										<th>Request Amount</th>
-										<th>Request Date</th>
-										<th>Service Charge</th>
-										<th>GST (18%)</th>
-										<th>Total Deduction</th>
-										<th>Final Amount</th>
-										<th>Status</th>
-										<th>Processed On</th>
-										<th>Transaction No</th>
-										<th>Remark</th>
-										<th>Account Holder Name</th>
-										<th>Account Number</th>
-										<th>IFSC Code</th>
-										<th>Bank Name</th>
+										<th>Metal</th>
+										<th>Quantity</th>
+										<th>Invested Amount</th>
+										<th>Buy Rate</th>
+										<th>Buy Date</th>
+										<th>Current Rate</th>
+										<th>Profit/Loss</th>
+										<th>Order Type</th>
 										<th>Action</th>
 									</tr>
 								</thead>
@@ -124,50 +114,7 @@
 	</div>
 </div>
 {% endblock %}
-{% block extraModal %}
-<!-- Transfer Modal -->
-<div id="withdrawModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-sm"> 
-        <div class="modal-content"> 
-            <div class="modal-header"> 
-                <h4 class="modal-title"><i class="fa fa-pencil-square-o"></i> Approve Withdrawal</h4>
-                <button type="button" class="close close-modal" data-dismiss="modal" aria-hidden="true">×</button> 
-            </div> 
-			<input type="hidden" name="withdraw_id" id="withdraw_id">
-			<input type="hidden" name="withdraw_status" id="withdraw_status">
-			<div class="modal-body"> 
-				<div id="modal-loader" style="display: none; text-align: center;">
-					<img src="{% static 'portal/img/ajax-loader.gif' %}">
-				</div>
-				<div class="row">
-					<div class="col-lg-12 col-12">
-						<div class="row">
-							<div class="col-md-12">
-								<div class="form-group" id="txn_field">
-									<label class="form-label">Transaction Number<span class="error">*</span></label>
-									<input type="text" id="txn_number" class="form-control" required>
-								</div>
-							</div>
-							<div class="col-md-12">
-								<div class="form-group">
-									<label class="form-label">Remark</label>
-									<textarea class="form-control" id="remark" name="remark"></textarea>
-								</div>
-							</div>
-						</div>
-					</div> 
-				</div>
-			</div> 
-			<div class="modal-footer"> 
-				<div class="col-md-12 mb10 w-p100">
-					<button type="button" name="submitApprove" id="submitApprove" class="btn btn-primary pull-right">Submit</button>
-				</div>
-			</div>
-        </div> 
-    </div>
-</div>
-<!-- /.modal -->
-{% endblock %}
+{% block extraModal %}{% endblock %}
 {% block extraJS %}
 <script src="{% static 'portal/js/action/dataList.js' %}"></script>
 {% endblock %}

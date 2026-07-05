@@ -208,6 +208,18 @@ MENU_CONFIG = [
                 "icon": "icon-Commit"
             },
             {
+                "label": "Live Order",
+                "url": "live-order-report",
+                "view": "live_order_report",
+                "icon": "icon-Commit"
+            },
+            {
+                "label": "High Value Live Orders",
+                "url": "high-value-live-orders-report",
+                "view": "high_value_live_orders_report",
+                "icon": "icon-Commit"
+            },
+            {
                 "label": "Ledger Report",
                 "url": "ledger-report",
                 "view": "ledger_report",

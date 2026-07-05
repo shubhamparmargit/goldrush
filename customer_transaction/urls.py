@@ -21,4 +21,5 @@ urlpatterns = [
     re_path(r'^past-order-details$', od_obj.past_order_details, name='past_order_details'),
 
     re_path(r'^getMetalLiveRate$', getMetalData, name='getMetalData'),
+    re_path(r'^chart-data$', get_chart_data, name='chart_data'),
 ]

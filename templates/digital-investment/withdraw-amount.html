@@ -106,6 +106,8 @@ Wallet History
 <script>
     window.HAS_BANK_DETAILS = {{ has_bank_details|yesno:"true,false" }};
     window.SAVE_BANK_URL = "{% url 'saveCutomerBankDetails' %}";
+    window.CUSTOMER_EMAIL = "{{ customer_email|escapejs }}";
+    window.CUSTOMER_STATE = "{{ customer_state|escapejs }}";
 
     document.querySelectorAll('.withdrawal-request').forEach(btn => {
         btn.addEventListener('click', () => {

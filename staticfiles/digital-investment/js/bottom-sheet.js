@@ -251,7 +251,7 @@ function placeOrder(type, btn, gm, metal_type, autoSellAmount, autoSellEnabled) 
 
             $.toast({
                 heading: "Success",
-                text: type === "BOOKING" ? "Buy order placed" : "Sell order placed",
+                text: type === "BOOKING" ? "Booking placed" : "Buyback placed",
                 icon: "success",
                 position: "top-right"
             });
@@ -308,8 +308,8 @@ function openTransactionSheet(item) {
 
             const orderTypeText =
                 data.order_type === "BOOKING"
-                    ? "Buy Order – Profit when market goes UP"
-                    : "Sell Order – Profit when market goes DOWN";
+                    ? "Booking Order – Profit when market goes UP"
+                    : "Buyback Order – Profit when market goes DOWN";
 
             const orderTypeClass =
                 data.order_type === "BOOKING" ? "booking" : "buyback";
@@ -758,7 +758,7 @@ function openPastOrderSheet(item) {
                 <div class="sheet-row">
                     <span>Order Type</span>
                     <span class="order-type ${data.order_type === "BOOKING" ? "booking" : "buyback"}">
-                        ${data.order_type === "BOOKING" ? "BUY" : "SELL"}
+                        ${data.order_type}
                     </span>
                 </div>
 
@@ -989,7 +989,17 @@ function openWithdrawalAmountSheet() {
                    id="withdrawEmail"
                    class="form-control"
                    placeholder="Enter Email ID *"
-                   style="width: 100%;">
+                   style="width: 100%;"
+                   value="${window.CUSTOMER_EMAIL || ''}">
+        </div>
+
+        <div class="sheet-row mt-2">
+            <input type="text"
+                   id="withdrawState"
+                   class="form-control"
+                   placeholder="Enter State *"
+                   style="width: 100%;"
+                   value="${window.CUSTOMER_STATE || ''}">
         </div>
 
         <div class="sheet-row mt-2">
@@ -1006,6 +1016,7 @@ function openWithdrawalAmountSheet() {
         document.getElementById("confirmWithdraw").onclick = function () {
             const amount = parseFloat(document.getElementById("withdrawAmount").value);
             const email = document.getElementById("withdrawEmail").value.trim();
+            const state = document.getElementById("withdrawState").value.trim();
             const balanceText = document.getElementById("walletBalance").innerText;
             const closingBalance = parseFloat(balanceText.replace(/[₹,\/-]/g, ''));
 
@@ -1014,8 +1025,9 @@ function openWithdrawalAmountSheet() {
             if (amount < 100) { showError("Minimum withdrawal is ₹100"); return; }
             if (!email) { showError("Email ID is required"); return; }
             if (!/[^@]+@[^@]+\.[^@]+/.test(email)) { showError("Please enter a valid email ID"); return; }
+            if (!state) { showError("State is required"); return; }
 
-            submitWithdrawal(amount, email);
+            submitWithdrawal(amount, email, state);
         };
 
         const input = document.getElementById("withdrawAmount");
@@ -1040,7 +1052,7 @@ function showError(msg) {
     });
 }
 
-function submitWithdrawal(amount, email) {
+function submitWithdrawal(amount, email, state) {
 
     const path = window.APP_URLS.withdraw_request;
 
@@ -1057,7 +1069,8 @@ function submitWithdrawal(amount, email) {
         },
         body: JSON.stringify({
             amount: amount,
-            email: email
+            email: email,
+            state: state
         })
     })
     .then(res => res.json())

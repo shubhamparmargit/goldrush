@@ -25,10 +25,10 @@
     // const allowedFileExtensions = /(\.pdf|\.doc|\.docx|\.ppt|\.pptx)$/i;
     // const fileErrorMessage = "Invalid file type! Only PDF, Word, and PowerPoint files are allowed.";
     const allowedFileExtensions = /(\.jpg|\.jpeg|\.png|\.pdf)$/i;
-    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
 
     const fileErrorMessage = "Invalid file type! Only JPG, PNG and PDF files are allowed.";
-    const fileSizeErrorMessage = "File size should not exceed 5MB.";
+    const fileSizeErrorMessage = "File size should not exceed 10MB.";
     
     // Validate Input Fields
     $(document).on("input", Object.keys(validationRules).map(id => `#${id}`).join(", "), function () {
@@ -157,11 +157,16 @@
         } else {
             $('#parent_div').show();
             $('#parent_franchise').addClass('required');
-            fetchParentList(model);
+            let selectedParent = $('#parent_franchise').data('selected-parent') || null;
+            fetchParentList(model, selectedParent);
         }
     });
 
-    function fetchParentList(model) 
+    if ($('#franchise_model').val()) {
+        $('#franchise_model').trigger('change');
+    }
+
+    function fetchParentList(model, selectedParentId = null) 
     {
         $.ajax({
             type: 'POST',
@@ -170,7 +175,8 @@
             success: function(res) {
                 let options = '<option value="">Select Parent</option>';
                 res.parents.forEach(function(parent){
-                    options += `<option value="${parent.unique_id}">${parent.franchise_name} (${parent.referral_id})</option>`;
+                    let sel = (selectedParentId && parent.unique_id == selectedParentId) ? 'selected' : '';
+                    options += `<option value="${parent.unique_id}" ${sel}>${parent.franchise_name} (${parent.referral_id})</option>`;
                 });
                 $('#parent_franchise').html(options);
             }

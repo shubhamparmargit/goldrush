@@ -30,6 +30,12 @@ def is_withdrawal_window_open():
 
     return True, None
 from django.utils import timezone
+from datetime import datetime
+
+def get_customer_membership_queryset(customer):
+    cutoff = timezone.make_aware(datetime(2026, 7, 5, 14, 30, 0))
+    is_new = customer.date >= cutoff
+    return MembershipMaster.objects.filter(is_new_plan=is_new)
 
 util_obj = Utility()
 random_obj = RandomIdGenerate()
@@ -178,10 +184,16 @@ class Pages:
 
         has_bank_details = CustomerTradingBankDetails.objects.filter(customer=customer).exists()
 
+        first_address = customer.customeraddress_set.first()
+        state = first_address.state if first_address else ''
+        email = customer.email if customer.email else ''
+
         return render(request,'digital-investment/withdraw-amount.html', {
             'wallet_balance': wallet_balance,
             'withdrawals': withdrawals,
             'has_bank_details': has_bank_details,
+            'customer_state': state,
+            'customer_email': email,
         })
     
 class WalletOperations:
@@ -228,7 +240,7 @@ class WalletOperations:
         projected_balance = int(current_balance) + amount
 
         membership = (
-            MembershipMaster.objects
+            get_customer_membership_queryset(customer)
             .filter(min_amount__lte=projected_balance)
             .order_by("-min_amount")
             .first()
@@ -383,7 +395,7 @@ class WalletOperations:
 
                 # 💡 Membership upgrade based on TOTAL wallet balance (cumulative)
                 new_membership = (
-                    MembershipMaster.objects
+                    get_customer_membership_queryset(customer)
                     .filter(min_amount__lte=wallet.balance)
                     .order_by("-min_amount")
                     .first()
@@ -609,7 +621,7 @@ class WalletOperations:
             projected_balance = int(existing_balance) + amount
 
             membership = (
-                MembershipMaster.objects
+                get_customer_membership_queryset(customer)
                 .filter(min_amount__lte=projected_balance)
                 .order_by('-min_amount')
                 .first()
@@ -1033,7 +1045,7 @@ class ManualRechargePortal:
 
                     # 💡 Auto-upgrade membership based on TOTAL wallet balance (cumulative)
                     new_membership = (
-                        MembershipMaster.objects
+                        get_customer_membership_queryset(obj.customer)
                         .filter(min_amount__lte=wallet.balance)
                         .order_by('-min_amount')
                         .first()
@@ -1198,15 +1210,51 @@ class CompanyBankPortal:
                 except ValueError:
                     return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be an integer'})
 
+                manual_market_closed = request.POST.get('manual_market_closed', 'false').strip() == 'true'
+                stop_api_hits = request.POST.get('stop_api_hits', 'false').strip() == 'true'
+
+                def parse_decimal_or_none(value):
+                    if not value:
+                        return None
+                    try:
+                        dec = Decimal(value)
+                        if dec < 0:
+                            return -1
+                        return dec
+                    except Exception:
+                        return -1
+
+                bulk_min_amount = parse_decimal_or_none(request.POST.get('bulk_override_min_amount', '').strip())
+                if bulk_min_amount == -1:
+                    return JsonResponse({'success': '0', 'message': 'Minimum override amount must be a positive number'})
+
+                bulk_min_weight = parse_decimal_or_none(request.POST.get('bulk_override_min_weight', '').strip())
+                if bulk_min_weight == -1:
+                    return JsonResponse({'success': '0', 'message': 'Minimum override weight must be a positive number'})
+
+                bulk_gold_rate = parse_decimal_or_none(request.POST.get('bulk_override_gold_rate', '').strip())
+                if bulk_gold_rate == -1:
+                    return JsonResponse({'success': '0', 'message': 'Override Gold rate must be a positive number'})
+
+                bulk_silver_rate = parse_decimal_or_none(request.POST.get('bulk_override_silver_rate', '').strip())
+                if bulk_silver_rate == -1:
+                    return JsonResponse({'success': '0', 'message': 'Override Silver rate must be a positive number'})
+
                 bank, created = CompanyBankDetails.objects.get_or_create(id=1)
                 bank.spread = spread_int
                 bank.rate_refresh_interval = rate_interval_int
                 bank.pnl_refresh_interval = pnl_interval_int
+                bank.manual_market_closed = manual_market_closed
+                bank.stop_api_hits = stop_api_hits
+                bank.bulk_override_min_amount = bulk_min_amount
+                bank.bulk_override_min_weight = bulk_min_weight
+                bank.bulk_override_gold_rate = bulk_gold_rate
+                bank.bulk_override_silver_rate = bulk_silver_rate
                 bank.save()
 
                 username = request.session.get('logged', 'admin')
                 login_id = request.session.get('login_id')
-                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated. Spread: {spread_int}, Rate Interval: {rate_interval_int}s, PNL Interval: {pnl_interval_int}s")
+                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated. Spread: {spread_int}, Rate Interval: {rate_interval_int}s, PNL Interval: {pnl_interval_int}s, Manual Closed: {manual_market_closed}, Stop Hits: {stop_api_hits}, Bulk Override Min Amount: {bulk_min_amount}, Bulk Override Min Weight: {bulk_min_weight}, Bulk Gold: {bulk_gold_rate}, Bulk Silver: {bulk_silver_rate}")
 
                 return JsonResponse({'success': '1', 'message': 'Settings saved successfully'})
 
@@ -1271,7 +1319,7 @@ class AddWalletBalance:
 
                     # 💡 Auto-assign membership based on TOTAL wallet balance (cumulative)
                     new_membership = (
-                        MembershipMaster.objects
+                        get_customer_membership_queryset(customer)
                         .filter(min_amount__lte=wallet.balance)
                         .order_by('-min_amount')
                         .first()

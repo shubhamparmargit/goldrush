@@ -13,10 +13,10 @@
     // Allowed File Types
     // const allowedFileExtensions = /(\.pdf|\.doc|\.docx|\.ppt|\.pptx)$/i;
     const allowedFileExtensions = /(\.jpg|\.jpeg|\.png|\.pdf)$/i;
-    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
 
     const fileErrorMessage = "Invalid file type! Only JPG, PNG and PDF files are allowed.";
-    const fileSizeErrorMessage = "File size should not exceed 5MB.";
+    const fileSizeErrorMessage = "File size should not exceed 10MB.";
 
     // Validate Input Fields
     $(document).on("input", Object.keys(validationRules).map(id => `#${id}`).join(", "), function () {

@@ -104,6 +104,18 @@ class Pages:
         else:
             return util_obj.goToLogin(request)
 
+    def live_order_report(self,request):
+        if util_obj.checkSession(request) == False:
+            return render(request,'portal/live-order-report.html')
+        else:
+            return util_obj.goToLogin(request)
+
+    def high_value_live_orders_report(self,request):
+        if util_obj.checkSession(request) == False:
+            return render(request,'portal/high-value-live-orders-report.html')
+        else:
+            return util_obj.goToLogin(request)
+
     def ledger_report(self, request):
         if util_obj.checkSession(request) == False:
             customers = Customer.objects.all().order_by('name')

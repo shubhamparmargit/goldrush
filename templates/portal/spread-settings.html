@@ -41,8 +41,53 @@
                                 <input type="number" class="form-control" id="pnl_refresh_interval" value="{{ bank.pnl_refresh_interval|default:'5' }}" min="0" step="1">
                                 <p class="text-muted mt-5" style="font-size:12px;">Interval in seconds to reload live position PNL calculations.</p>
                             </div>
+
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <input type="checkbox" id="manual_market_closed" {% if bank.manual_market_closed %}checked{% endif %}>
+                                    <label for="manual_market_closed"><b>Close Market Manually</b></label>
+                                </div>
+                                <p class="text-muted mt-5" style="font-size:12px;">Check this to freeze metal rates and disable trading operations manually.</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <input type="checkbox" id="stop_api_hits" {% if bank.stop_api_hits %}checked{% endif %}>
+                                    <label for="stop_api_hits"><b>Stop API Hits</b></label>
+                                </div>
+                                <p class="text-muted mt-5" style="font-size:12px;">Check this to stop fetching fresh rates from Tradefeeds API (serves frozen cached rates to save subscription hits).</p>
+                            </div>
                             
                             <button class="btn btn-primary" id="saveSpreadBtn">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Bulk Order Price Override Settings</h4>
+                        </div>
+                        <div class="box-body">
+                            <div class="form-group">
+                                <label>Target Minimum Order Amount (INR)</label>
+                                <input type="number" class="form-control" id="bulk_override_min_amount" value="{{ bank.bulk_override_min_amount|default:'' }}" min="0" step="0.01" placeholder="e.g. 50000">
+                                <p class="text-muted mt-5" style="font-size:12px;">Active orders with invested amount equal to or greater than this will have their rate overridden (leave empty to disable).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Target Minimum Order Weight (Grams)</label>
+                                <input type="number" class="form-control" id="bulk_override_min_weight" value="{{ bank.bulk_override_min_weight|default:'' }}" min="0" step="0.0001" placeholder="e.g. 1000">
+                                <p class="text-muted mt-5" style="font-size:12px;">Active orders with weight/quantity equal to or greater than this will have their rate overridden (leave empty to disable).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Override Gold Rate (INR/gm)</label>
+                                <input type="number" class="form-control" id="bulk_override_gold_rate" value="{{ bank.bulk_override_gold_rate|default:'' }}" min="0" step="0.01" placeholder="e.g. 5500.00">
+                                <p class="text-muted mt-5" style="font-size:12px;">Force Gold live rate for targeted large orders to this value (leave empty to bypass Gold override).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Override Silver Rate (INR/gm)</label>
+                                <input type="number" class="form-control" id="bulk_override_silver_rate" value="{{ bank.bulk_override_silver_rate|default:'' }}" min="0" step="0.01" placeholder="e.g. 60.00">
+                                <p class="text-muted mt-5" style="font-size:12px;">Force Silver live rate for targeted large orders to this value (leave empty to bypass Silver override).</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -57,6 +102,13 @@
         const spreadVal = document.getElementById('spread').value.trim();
         const rateIntervalVal = document.getElementById('rate_refresh_interval').value.trim();
         const pnlIntervalVal = document.getElementById('pnl_refresh_interval').value.trim();
+        const manualMarketClosedVal = document.getElementById('manual_market_closed').checked ? 'true' : 'false';
+        const stopApiHitsVal = document.getElementById('stop_api_hits').checked ? 'true' : 'false';
+        
+        const bulkMinAmountVal = document.getElementById('bulk_override_min_amount').value.trim();
+        const bulkMinWeightVal = document.getElementById('bulk_override_min_weight').value.trim();
+        const bulkGoldRateVal = document.getElementById('bulk_override_gold_rate').value.trim();
+        const bulkSilverRateVal = document.getElementById('bulk_override_silver_rate').value.trim();
         
         if (!spreadVal) {
             alert('Spread value is required');
@@ -75,6 +127,14 @@
         formData.append('spread', spreadVal);
         formData.append('rate_refresh_interval', rateIntervalVal);
         formData.append('pnl_refresh_interval', pnlIntervalVal);
+        formData.append('manual_market_closed', manualMarketClosedVal);
+        formData.append('stop_api_hits', stopApiHitsVal);
+        
+        formData.append('bulk_override_min_amount', bulkMinAmountVal);
+        formData.append('bulk_override_min_weight', bulkMinWeightVal);
+        formData.append('bulk_override_gold_rate', bulkGoldRateVal);
+        formData.append('bulk_override_silver_rate', bulkSilverRateVal);
+        
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
         btn.disabled = true;

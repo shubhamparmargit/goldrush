@@ -70,6 +70,7 @@ class CustomerTransaction(models.Model):
     auto_sell_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Auto sell trigger value set by user")
     sold_via = models.CharField(max_length=20, choices=SOLD_VIA_CHOICES, default="MANUAL")
     auto_closed_weekly = models.BooleanField(default=False)
+    admin_rate_override = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 class TransactionAutoSellHistory(models.Model):
     class Meta:
@@ -134,4 +135,16 @@ class DemoTransactionAutoSellHistory(models.Model):
     old_auto_sell_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     new_auto_sell_amount = models.DecimalField(max_digits=12, decimal_places=2)
     changed_by = models.CharField(max_length=20, default="CUSTOMER", help_text="CUSTOMER / SYSTEM")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class MetalRateLog(models.Model):
+    class Meta:
+        db_table = "metal_rate_log"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["metal_type", "created_at"]),
+        ]
+
+    metal_type = models.CharField(max_length=6, choices=METAL_TYPE)
+    rate = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)

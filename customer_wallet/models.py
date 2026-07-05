@@ -4,6 +4,7 @@ from customer.models import Customer
 class MembershipMaster(models.Model):
     class Meta:
         db_table = 'membership_master'
+        unique_together = ('level', 'is_new_plan')
 
     LEVEL_CHOICES = [
         ('Normal', 'Normal'),
@@ -12,14 +13,22 @@ class MembershipMaster(models.Model):
         ('Platinum', 'Platinum'),
         ('Diamond', 'Diamond'),
         ('Master Gold', 'Master Gold'),
+        ('Vip 1', 'Vip 1'),
+        ('Vip 2', 'Vip 2'),
+        ('Vip 3', 'Vip 3'),
+        ('Vip 4', 'Vip 4'),
+        ('Vip 5', 'Vip 5'),
+        ('Dimond', 'Dimond'),
+        ('Platinium', 'Platinium'),
     ]
 
-    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, unique=True)
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
     min_amount = models.PositiveIntegerField()
     max_amount = models.PositiveIntegerField(null=True, blank=True)  # Normal only
     service_fee = models.PositiveIntegerField()  # per 10gm
     service_fee_percent = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     daily_slot = models.PositiveIntegerField()
+    is_new_plan = models.BooleanField(default=False)
 
 class CustomerWallet(models.Model):
     class Meta:

@@ -14,6 +14,13 @@ from django.utils import timezone
 import datetime
 
 def is_market_open():
+    from portal_misc.models import CompanyBankDetails
+    try:
+        bank = CompanyBankDetails.objects.first()
+        if bank and bank.manual_market_closed:
+            return False
+    except Exception:
+        pass
     now = timezone.localtime(timezone.now())
     if now.weekday() >= 5:  # Saturday or Sunday
         return False
@@ -42,7 +49,7 @@ def get_dollar_rate():
 
 
 gold_weights_gm = [10, 20, 50, 100, 200, 500, 1000, 2500, 5000, 10000]
-silver_weights_gm = [500, 1000, 1500, 2000, 3000, 4000, 4500, 8000, 16000]
+silver_weights_gm = [100, 200, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000]
 
 class Pages:
     def weights(self,request,metal_type):
@@ -68,7 +75,7 @@ class Pages:
             if metal_type == "gold":
                 booking_amt = gm * 50
             else:
-                booking_amt = gm
+                booking_amt = gm * 5
             weight_items.append({
                 "gm": gm,
                 "booking_amount": f"{booking_amt:,}"
@@ -147,7 +154,8 @@ class TransactionBuySell:
         membership = cust_util_obj.get_current_membership(customer, request)
         if not membership:
             from customer_wallet.models import MembershipMaster
-            membership = MembershipMaster.objects.filter(level="Normal").first()
+            is_new = customer.date >= timezone.make_aware(datetime.datetime(2026, 7, 5, 14, 30, 0))
+            membership = MembershipMaster.objects.filter(level="Normal", is_new_plan=is_new).first()
             if not membership:
                 return JsonResponse({"status": False,"message": "Membership not found"})
         
@@ -743,6 +751,29 @@ def getMetalRate():
         sell_rate = mid_price + spread
     """
     from django.core.cache import cache
+    
+    # --- Stop API Hits check: return frozen rates if toggle active ---
+    from portal_misc.models import CompanyBankDetails
+    try:
+        bank = CompanyBankDetails.objects.first()
+        if bank and bank.stop_api_hits:
+            cached_rates = cache.get(METAL_RATE_CACHE_KEY)
+            if cached_rates:
+                try:
+                    return {
+                        "buy_gold_rate":    Decimal(str(cached_rates["buy_gold_rate"])),
+                        "sell_gold_rate":   Decimal(str(cached_rates["sell_gold_rate"])),
+                        "buy_silver_rate":  Decimal(str(cached_rates["buy_silver_rate"])),
+                        "sell_silver_rate": Decimal(str(cached_rates["sell_silver_rate"])),
+                        "spread":           Decimal(str(cached_rates["spread"])),
+                        "currency":         cached_rates["currency"],
+                        "currency_icon":    cached_rates["currency_icon"]
+                    }
+                except Exception as e:
+                    logger.error(f"Error parsing stop_api_hits cached rates: {e}")
+    except Exception:
+        pass
+
     # --- Cooldown check: if rates were fetched less than 1 second ago, return cache ---
     # This protects the Tradefeeds API from rate-limiting when clients poll at 0-1 seconds.
     cooldown = cache.get("live_metal_rates_cooldown")
@@ -924,6 +955,17 @@ def getMetalRate():
             }
             cache.set(METAL_RATE_CACHE_KEY, cache_rates, timeout=None)
             cache.set("live_metal_rates_cooldown", True, timeout=1)
+            
+            # Save historical price log (throttled to at most once per 60 seconds)
+            log_cooldown = cache.get("metal_rate_log_cooldown")
+            if not log_cooldown:
+                from .models import MetalRateLog
+                try:
+                    MetalRateLog.objects.create(metal_type="GOLD", rate=rates["buy_gold_rate"])
+                    MetalRateLog.objects.create(metal_type="SILVER", rate=rates["buy_silver_rate"])
+                    cache.set("metal_rate_log_cooldown", True, timeout=60)
+                except Exception as log_err:
+                    logger.error(f"Error logging metal rate: {log_err}")
         except Exception as e:
             logger.error(f"Error caching metal rates: {e}")
 
@@ -982,7 +1024,7 @@ def getMetalData(request):
 # print(sell_rate)
 
 def calculate_order(gm, membership, metal_type):
-    order_amt = Decimal(gm) * 50 if metal_type == 'GOLD' else Decimal(gm)
+    order_amt = Decimal(gm) * 50 if metal_type == 'GOLD' else Decimal(gm) * 5
     
     # Base fee is 10% of order amount
     base_fee = (order_amt * Decimal('0.10')).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
@@ -1073,6 +1115,28 @@ def get_active_live_orders(request, customer, metal_type="GOLD"):
 #     }
 
 def calculate_live_pnl(order, current_metal_rate):
+    if getattr(order, 'admin_rate_override', None) is not None:
+        current_metal_rate = order.admin_rate_override
+    else:
+        from portal_misc.models import CompanyBankDetails
+        try:
+            bank = CompanyBankDetails.objects.first()
+            if bank:
+                matches_amount = False
+                matches_weight = False
+                if bank.bulk_override_min_amount is not None and order.order_amount >= bank.bulk_override_min_amount:
+                    matches_amount = True
+                if bank.bulk_override_min_weight is not None and order.quantity_gm >= bank.bulk_override_min_weight:
+                    matches_weight = True
+
+                if matches_amount or matches_weight:
+                    metal_type = order.metal_type.upper()
+                    if metal_type == 'GOLD' and bank.bulk_override_gold_rate is not None:
+                        current_metal_rate = bank.bulk_override_gold_rate
+                    elif metal_type == 'SILVER' and bank.bulk_override_silver_rate is not None:
+                        current_metal_rate = bank.bulk_override_silver_rate
+        except Exception:
+            pass
     buy_rate = order.metal_rate_per_gm
     if getattr(order, 'currency', 'INR') == 'USD':
         usd_to_inr = get_dollar_rate()
@@ -1125,6 +1189,28 @@ def execute_sell(request,buy_txn,current_metal_rate,sold_via="MANUAL"):
 
     with transaction.atomic():
         buy_txn = (trans_model.objects.select_for_update().get(id=buy_txn.id))
+        if getattr(buy_txn, 'admin_rate_override', None) is not None:
+            current_metal_rate = buy_txn.admin_rate_override
+        else:
+            from portal_misc.models import CompanyBankDetails
+            try:
+                bank = CompanyBankDetails.objects.first()
+                if bank:
+                    matches_amount = False
+                    matches_weight = False
+                    if bank.bulk_override_min_amount is not None and buy_txn.order_amount >= bank.bulk_override_min_amount:
+                        matches_amount = True
+                    if bank.bulk_override_min_weight is not None and buy_txn.quantity_gm >= bank.bulk_override_min_weight:
+                        matches_weight = True
+
+                    if matches_amount or matches_weight:
+                        metal_type = buy_txn.metal_type.upper()
+                        if metal_type == 'GOLD' and bank.bulk_override_gold_rate is not None:
+                            current_metal_rate = bank.bulk_override_gold_rate
+                        elif metal_type == 'SILVER' and bank.bulk_override_silver_rate is not None:
+                            current_metal_rate = bank.bulk_override_silver_rate
+            except Exception:
+                pass
 
         if getattr(buy_txn, sell_relation).exists():
             return None  # already sold
@@ -1187,3 +1273,87 @@ def execute_sell(request,buy_txn,current_metal_rate,sold_via="MANUAL"):
             "wallet_balance": wallet.balance,
             "pnl": pnl
         }
+
+def get_chart_data(request):
+    import random
+    from decimal import Decimal
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.http import JsonResponse
+    from .models import MetalRateLog
+
+    metal_type = request.GET.get("metal_type", "GOLD").upper()
+    interval_str = request.GET.get("interval", "5")
+    
+    # parse interval to minutes
+    try:
+        if interval_str.endswith('h'):
+            interval = int(interval_str.replace('h', '')) * 60
+        elif interval_str.endswith('m'):
+            interval = int(interval_str.replace('m', ''))
+        else:
+            interval = int(interval_str)
+    except:
+        interval = 5
+
+    logs = list(MetalRateLog.objects.filter(metal_type=metal_type).order_by('created_at'))
+
+    # If database is empty or has too few logs, generate mock data
+    if len(logs) < 10:
+        rates_dict = getMetalRate()
+        base_rate = float(rates_dict["buy_gold_rate" if metal_type == "GOLD" else "buy_silver_rate"])
+        
+        # Generate 100 bars ending now
+        now = timezone.now()
+        chart_data = []
+        current_price = base_rate - (100 * (1.5 if metal_type == "GOLD" else 0.05))
+        
+        for i in range(100):
+            bar_time = now - timedelta(minutes=(100 - i) * interval)
+            # random walk
+            change = random.uniform(-15, 15) if metal_type == "GOLD" else random.uniform(-0.6, 0.6)
+            open_p = current_price
+            close_p = current_price + change
+            high_p = max(open_p, close_p) + (random.uniform(0, 8) if metal_type == "GOLD" else random.uniform(0, 0.3))
+            low_p = min(open_p, close_p) - (random.uniform(0, 8) if metal_type == "GOLD" else random.uniform(0, 0.3))
+            
+            chart_data.append({
+                "time": int(bar_time.timestamp() * 1000),
+                "open": round(open_p, 2),
+                "high": round(high_p, 2),
+                "low": round(low_p, 2),
+                "close": round(close_p, 2),
+            })
+            current_price = close_p
+        
+        return JsonResponse({"status": True, "data": chart_data})
+
+    # Group real logs into interval buckets
+    buckets = {}
+    interval_seconds = interval * 60
+
+    for log in logs:
+        ts = int(log.created_at.timestamp())
+        # Floor timestamp to bucket start
+        bucket_ts = (ts // interval_seconds) * interval_seconds
+        
+        if bucket_ts not in buckets:
+            buckets[bucket_ts] = []
+        buckets[bucket_ts].append(float(log.rate))
+
+    chart_data = []
+    sorted_keys = sorted(buckets.keys())
+    
+    for b_ts in sorted_keys:
+        rates = buckets[b_ts]
+        if not rates:
+            continue
+        chart_data.append({
+            "time": b_ts * 1000,
+            "open": round(rates[0], 2),
+            "high": round(max(rates), 2),
+            "low": round(min(rates), 2),
+            "close": round(rates[-1], 2),
+        })
+
+    return JsonResponse({"status": True, "data": chart_data})

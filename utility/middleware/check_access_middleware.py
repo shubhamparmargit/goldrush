@@ -34,6 +34,8 @@ PAGE_ACCESS = {
     "no_recharge_report":[1],
     "inactive_customer_report":[1],
     "withdrawal_report":[1],
+    "live_order_report":[1],
+    "closeLiveOrder":[1],
     "ledger_report":[1],
     "get_customer_ledger":[1],
     'add_wallet_page': [1, 5],
