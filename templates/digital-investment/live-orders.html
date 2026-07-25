@@ -50,6 +50,7 @@ Wallet History
                 <div class="maintitle">Live Orders</div>
                 <div class="subtitle">your digital investment report</div>
                 <p id="dateTime" style="font-size: 12px; text-align: center;"></p>
+                <div id="marketClosedMarqueeContainer" style="display: none; width: 100%;"></div>
                 {% if orders %}
 
                 <div id="liveOrdersWrapper">
@@ -124,10 +125,29 @@ Wallet History
             .then(data => {
                 if (!data.status) return;
 
+                if (data.date_time) {
+                    const dateTimeEl = document.getElementById("dateTime");
+                    if (dateTimeEl) {
+                        dateTimeEl.innerHTML = data.date_time;
+                    }
+                }
+
+                const marqueeContainer = document.getElementById("marketClosedMarqueeContainer");
+                if (marqueeContainer) {
+                    if (!data.market_open && data.market_closed_message) {
+                        const expectedText = data.market_closed_message;
+                        const currentMarquee = marqueeContainer.querySelector("marquee");
+                        if (!currentMarquee || currentMarquee.textContent !== expectedText) {
+                            marqueeContainer.innerHTML = `<div style="background-color: red; color: white; font-size: 16px; padding: 6px 0; margin-top: 10px; margin-bottom: 10px; font-weight: bold; width: 100%;"><marquee scrollamount="5">${expectedText}</marquee></div>`;
+                            marqueeContainer.style.display = "block";
+                        }
+                    } else {
+                        marqueeContainer.innerHTML = "";
+                        marqueeContainer.style.display = "none";
+                    }
+                }
+
                 data.orders.forEach(o => {
-                    // console.log('live-pnl')
-                    // console.log(o.date_time)
-                    document.getElementById("dateTime").innerHTML = o.date_time
                     const card = document.querySelector(`.order-card[data-id="${o.transaction_id}"]`);
                     if (!card) return;
 

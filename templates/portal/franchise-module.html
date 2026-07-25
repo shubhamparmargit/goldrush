@@ -33,19 +33,27 @@
 								<h4 class="box-title text-info mb-0">Franchise Details</h4>
 								<hr class="my-15">
 								<div class="row">
-									{% if request.session.role == 1 %}
+									{% if request.session.role == 1 or request.session.role == 5 or request.session.role == 2 or request.session.role == 3 %}
 									<div class="col-md-12">
 										<div class="form-group">
 											<label class="form-label">Franchise Model<span class="error">*</span></label>
 											<select class="form-control required" data-placeholder="Select Franchise Model" id="franchise_model" name="franchise_model">
 												<option value="">Choose Model</option>
+												{% if request.session.role == 1 or request.session.role == 5 %}
 												<option value="SMRA" {% if franchise.franchise_model == "SMRA" %}selected{% endif %}>SMRA</option>
 												<option value="MRA" {% if franchise.franchise_model == "MRA" %}selected{% endif %}>MRA</option>
 												<option value="RA" {% if franchise.franchise_model == "RA" %}selected{% endif %}>RA</option>
 												<option value="User" {% if franchise.franchise_model == "User" %}selected{% endif %}>User</option>
+												{% elif request.session.role == 2 %}
+												<option value="MRA" {% if franchise.franchise_model == "MRA" %}selected{% endif %}>MRA</option>
+												<option value="RA" {% if franchise.franchise_model == "RA" %}selected{% endif %}>RA</option>
+												{% elif request.session.role == 3 %}
+												<option value="RA" {% if franchise.franchise_model == "RA" %}selected{% endif %}>RA</option>
+												{% endif %}
 											</select>
 										</div>
 									</div>
+									{% if request.session.role == 1 or request.session.role == 5 %}
 									<!-- Parent Franchise dropdown -->
 									<div class="col-md-12" id="parent_div" style="display:none;">
 										<div class="form-group">
@@ -55,6 +63,7 @@
 											</select>
 										</div>
 									</div>
+									{% endif %}
 									{% endif %}
 									<div class="col-md-12">
 										<div class="form-group">
@@ -77,6 +86,18 @@
 										<div class="form-group">
 											<label class="form-label">Holder Name<span class="error">*</span></label>
 											<input type="text" class="form-control required" id="holder_name"  name="holder_name" placeholder="Holder Name" value="{{ franchise.holder_name|default:'' }}">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="form-group">
+											<label class="form-label">Password 
+												{% if franchise %}
+													<span class="text-fade" style="font-size: 11px;">(Leave blank to keep existing password)</span>
+												{% else %}
+													<span class="text-fade" style="font-size: 11px;">(Leave blank to auto-generate)</span>
+												{% endif %}
+											</label>
+											<input type="password" class="form-control" id="password" name="password" placeholder="Custom Password" value="">
 										</div>
 									</div>
 								</div>

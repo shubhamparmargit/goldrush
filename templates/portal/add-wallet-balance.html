@@ -61,6 +61,7 @@
                                     <select class="form-control" id="operation_type">
                                         <option value="Credit">Credit (Add Money)</option>
                                         <option value="Debit">Debit (Deduct Money)</option>
+                                        <option value="OfflineWithdrawal">Offline Withdrawal (Deduct Money)</option>
                                     </select>
                                 </div>
 
@@ -143,7 +144,7 @@
     document.getElementById('operation_type').addEventListener('change', function() {
         const utrGroup = document.getElementById('credit_utr_group');
         const submitBtn = document.getElementById('creditBtn');
-        if (this.value === 'Debit') {
+        if (this.value === 'Debit' || this.value === 'OfflineWithdrawal') {
             utrGroup.style.display = 'none';
             submitBtn.className = 'btn btn-danger btn-block';
             submitBtn.innerHTML = '<i class="fa fa-minus-circle"></i> Deduct Wallet';
@@ -195,15 +196,16 @@
         if (!amount || parseInt(amount) < 1) { alert('Enter a valid amount'); return; }
         if (!remark) { alert('Remark is required'); return; }
         
-        const actionText = type === 'Credit' ? 'Credit' : 'Debit';
+        const actionText = type === 'Credit' ? 'Credit' : (type === 'OfflineWithdrawal' ? 'Offline Withdrawal' : 'Debit');
         if (!confirm(`${actionText} ₹${amount} for this customer?\n\nRemark: ${remark}`)) return;
 
         this.disabled = true;
         this.textContent = 'Processing...';
 
+        const isOffline = type === 'OfflineWithdrawal' ? 'true' : 'false';
         const bodyData = type === 'Credit' 
             ? `unique_id=${unique_id}&amount=${amount}&utr_number=${encodeURIComponent(utr)}&remark=${encodeURIComponent(remark)}&csrfmiddlewaretoken=${CSRF}`
-            : `unique_id=${unique_id}&amount=${amount}&remark=${encodeURIComponent(remark)}&csrfmiddlewaretoken=${CSRF}`;
+            : `unique_id=${unique_id}&amount=${amount}&remark=${encodeURIComponent(remark)}&is_offline_withdrawal=${isOffline}&csrfmiddlewaretoken=${CSRF}`;
 
         fetch(url, {
             method: 'POST',

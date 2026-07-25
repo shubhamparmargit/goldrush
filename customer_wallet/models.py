@@ -205,6 +205,7 @@ class WalletManualDebit(models.Model):
     balance_after  = models.DecimalField(max_digits=12, decimal_places=2)
     debited_by     = models.CharField(max_length=50)
     debited_on     = models.DateTimeField(auto_now_add=True)
+    is_offline_withdrawal = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.customer} - ₹{self.amount} by {self.debited_by}"

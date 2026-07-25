@@ -220,6 +220,18 @@ MENU_CONFIG = [
                 "icon": "icon-Commit"
             },
             {
+                "label": "Franchisee Commission",
+                "url": "franchise-commission-report",
+                "view": "franchise_commission_report",
+                "icon": "icon-Commit"
+            },
+            {
+                "label": "Franchisee Report",
+                "url": "franchise-wise-report",
+                "view": "franchise_wise_report",
+                "icon": "icon-Commit"
+            },
+            {
                 "label": "Ledger Report",
                 "url": "ledger-report",
                 "view": "ledger_report",

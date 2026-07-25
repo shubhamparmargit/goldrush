@@ -56,7 +56,7 @@
                                 <label>UPI QR Code Image</label>
                                 {% if bank.qr_code_image %}
                                 <div class="mb-10">
-                                    <img src="{{ MEDIA_URL }}{{ bank.qr_code_image }}" style="width:120px;height:120px;object-fit:contain;border:1px solid #eee;padding:4px;border-radius:8px;">
+                                    <img src="{{ MEDIA_URL|default:'/media/' }}{{ bank.qr_code_image }}" style="width:120px;height:120px;object-fit:contain;border:1px solid #eee;padding:4px;border-radius:8px;">
                                     <p class="text-muted" style="font-size:12px;">Current QR Code</p>
                                 </div>
                                 {% endif %}

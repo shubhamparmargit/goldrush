@@ -100,6 +100,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
                 # Start custom template
                 'utility.context_processors.sidebar_context',
                 'utility.context_processors.settings_context',
@@ -239,8 +240,17 @@ CACHES = {
 # python manage.py createcachetable trading_cache
 
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = not DEBUG        # True in production (HTTPS), False in local development (HTTP)
+# CSRF_COOKIE_SECURE = not DEBUG 
+CSRF_COOKIE_SECURE = True
+       # True in production (HTTPS), False in local development (HTTP)
 CSRF_COOKIE_SAMESITE = "Strict"
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://goldrushaura.com',
+    'https://www.goldrushaura.com',
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 DOMAIN_NAME = 'https://goldrushaura.com/'
 DOMAIN_NAME_DI = 'https://goldrushaura.com/digital-investment/'
@@ -251,11 +261,11 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 RAZORPAY_KEY_ID = "rzp_live_SWYkvLQAZBvUO0"
 RAZORPAY_KEY_SECRET = "Y7WzMRFYpD60MKccks82q7Tx"
 
-METAL_API_KEY = "1f31019f5ca7737bad3e1fc82934881cc5a8ead2"  # Tradefeeds API key (Starter plan, expires 2026-08-08)
+METAL_API_KEY = "2Ehlo6aoBuvDpF07LHgs00UMHz3jyq8NP4Yryuk0QD9IxVpzsOy1tDj2EtYZ"  # freegoldprice.org API key
 
 
 # Market spread applied on top of live buy rate when customer places an order
-ORDER_SPREAD_POINTS = 200
+ORDER_SPREAD_POINTS = 0
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

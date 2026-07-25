@@ -25,10 +25,11 @@
 			<div class="col-12">
 				<div class="box">
 					<div class="box-body">
-						{% if request.session.role == 1 or  request.session.role == 5 %}
+						{% if request.session.role == 1 or request.session.role == 5 or request.session.role == 2 or request.session.role == 3 %}
 						<!-- Nav tabs -->
 						<ul class="nav nav-tabs justify-content-center franchise-tabs" role="tablist">
 							{% for role_id, role_name in ROLE_FRANCHISE_MAP %}
+								{% if request.session.role == 1 or request.session.role == 5 %}
 								<li class="nav-item">
 									<a class="nav-link"
 									data-toggle="tab"
@@ -39,6 +40,29 @@
 										<span class="hidden-xs-down ms-15">{{ role_name }}</span>
 									</a>
 								</li>
+								{% elif request.session.role == 2 and role_name != 'SMRA' %}
+								<li class="nav-item">
+									<a class="nav-link"
+									data-toggle="tab"
+									href="#{{ role_name|lower }}"
+									role="tab"
+									title="{{ role_name }}">
+										<span><i class="mdi mdi-file-document-box"></i></span>
+										<span class="hidden-xs-down ms-15">{{ role_name }}</span>
+									</a>
+								</li>
+								{% elif request.session.role == 3 and role_name == 'RA' %}
+								<li class="nav-item">
+									<a class="nav-link"
+									data-toggle="tab"
+									href="#{{ role_name|lower }}"
+									role="tab"
+									title="{{ role_name }}">
+										<span><i class="mdi mdi-file-document-box"></i></span>
+										<span class="hidden-xs-down ms-15">{{ role_name }}</span>
+									</a>
+								</li>
+								{% endif %}
 							{% endfor %}
 						</ul>
 						{% endif %}

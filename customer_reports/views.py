@@ -116,6 +116,18 @@ class Pages:
         else:
             return util_obj.goToLogin(request)
 
+    def franchise_commission_report(self,request):
+        if util_obj.checkSession(request) == False:
+            return render(request,'portal/franchise-commission-report.html')
+        else:
+            return util_obj.goToLogin(request)
+
+    def franchise_wise_report(self,request):
+        if util_obj.checkSession(request) == False:
+            return render(request,'portal/franchise-wise-report.html')
+        else:
+            return util_obj.goToLogin(request)
+
     def ledger_report(self, request):
         if util_obj.checkSession(request) == False:
             customers = Customer.objects.all().order_by('name')
@@ -398,8 +410,8 @@ class Pages:
             credit_list = WalletManualCredit.objects.select_related("customer").all()
             debit_list = WalletManualDebit.objects.select_related("customer").all()
             withdraw_list = WithdrawalRequest.objects.select_related("customer").all()
-            txns_live = CustomerTransaction.objects.select_related("customer", "metal_type").all()
-            txns_demo = CustomerDemoTransaction.objects.select_related("customer", "metal_type").all()
+            txns_live = CustomerTransaction.objects.select_related("customer").all()
+            txns_demo = CustomerDemoTransaction.objects.select_related("customer").all()
 
             by_customer = {}
 
@@ -687,12 +699,25 @@ class CustomerOperation:
                             'address_line_2': addr.address_line_2,
                         })
 
+                    from customer_trading.models import CustomerTradingBankDetails
+                    bank = CustomerTradingBankDetails.objects.filter(customer=customer).first()
+                    bank_details = None
+                    if bank:
+                        bank_details = {
+                            'bank_name': bank.bank_name,
+                            'account_holder_name': bank.account_holder_name,
+                            'account_number': bank.account_number,
+                            'ifsc_code': bank.ifsc_code,
+                            'branch_name': bank.branch_name,
+                        }
+
                     data = {
                         'success': '1',
                         'unique_id': customer.unique_id,
                         'name': customer.name,
                         'mobile': customer.mobile,
                         'email': customer.email,
+                        'password': customer.password_text,
                         'aadhaar_number': customer.aadhaar_number,
                         'aadhaar_front_image': urlPrefix + customer.aadhaar_front_image if customer.aadhaar_front_image else '',
                         'aadhaar_back_image': urlPrefix + customer.aadhaar_back_image if customer.aadhaar_back_image else '',
@@ -702,6 +727,7 @@ class CustomerOperation:
                         'access': customer.access,
                         'trading': customer.trading,
                         'addresses': addresses,
+                        'bank_details': bank_details,
                     }
                     return JsonResponse(data, status=status.HTTP_200_OK)
                 except Exception as e:
@@ -719,11 +745,19 @@ class CustomerOperation:
                     name        = request.POST.get('name', '').strip()
                     mobile      = request.POST.get('mobile', '').strip()
                     email       = request.POST.get('email', '').strip()
+                    password    = request.POST.get('password', '').strip()
                     aadhaar_num = request.POST.get('aadhaar_number', '').strip()
                     pan_num     = request.POST.get('pan_number', '').strip()
                     referral    = request.POST.get('referral_code', '').strip()
                     access      = request.POST.get('access', '').strip()
                     trading     = request.POST.get('trading', '').strip()
+
+                    # Bank details
+                    bank_name = request.POST.get('bank_name', '').strip()
+                    account_holder_name = request.POST.get('account_holder_name', '').strip()
+                    account_number = request.POST.get('account_number', '').strip()
+                    ifsc_code = request.POST.get('ifsc_code', '').strip()
+                    branch_name = request.POST.get('branch_name', '').strip()
 
                     if not unique_id:
                         return JsonResponse({'success': '0', 'message': 'Invalid request'})
@@ -736,6 +770,16 @@ class CustomerOperation:
                     customer = Customer.objects.filter(unique_id=unique_id).first()
                     if not customer:
                         return JsonResponse({'success': '0', 'message': 'Customer not found'})
+
+                    # Password validation
+                    if password and password != customer.password_text:
+                        from django.core.exceptions import ValidationError
+                        from utility.views import Validation
+                        try:
+                            Validation().validate_password(password)
+                        except ValidationError as ve:
+                            msg = ve.messages[0] if hasattr(ve, 'messages') else str(ve)
+                            return JsonResponse({'success': '0', 'message': msg})
 
                     # duplicate mobile/email check (exclude current customer)
                     if Customer.objects.filter(mobile=mobile).exclude(unique_id=unique_id).exists():
@@ -772,6 +816,14 @@ class CustomerOperation:
                         customer.access         = access
                         customer.trading        = trading
 
+                        if password and password != customer.password_text:
+                            from utility.views import Encryption
+                            encrypt_obj = Encryption()
+                            salt, encrypted_password = encrypt_obj.runEncryprion(password)
+                            customer.password = encrypted_password
+                            customer.salt = salt
+                            customer.password_text = password
+
                         if request.FILES.get('aadhaar_front_image'):
                             customer.aadhaar_front_image = save_image(request.FILES['aadhaar_front_image'], 'aadhaar_front')
                         if request.FILES.get('aadhaar_back_image'):
@@ -780,6 +832,28 @@ class CustomerOperation:
                             customer.pan_front_image = save_image(request.FILES['pan_front_image'], 'pan_front')
 
                         customer.save()
+
+                        # update or create bank details
+                        from customer_trading.models import CustomerTradingBankDetails
+                        bank_details = CustomerTradingBankDetails.objects.filter(customer=customer).first()
+                        if bank_details:
+                            bank_details.bank_name = bank_name
+                            bank_details.account_holder_name = account_holder_name
+                            bank_details.account_number = account_number
+                            bank_details.ifsc_code = ifsc_code
+                            bank_details.branch_name = branch_name
+                            bank_details.save()
+                        elif bank_name or account_holder_name or account_number or ifsc_code or branch_name:
+                            CustomerTradingBankDetails.objects.create(
+                                customer=customer,
+                                unique_id=random_obj.generateUID(),
+                                bank_name=bank_name,
+                                account_holder_name=account_holder_name,
+                                account_number=account_number,
+                                ifsc_code=ifsc_code,
+                                branch_name=branch_name,
+                                verified='No'
+                            )
 
                         # update addresses
                         addr_count = int(request.POST.get('addr_count', 0))

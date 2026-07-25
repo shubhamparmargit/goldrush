@@ -1,5 +1,16 @@
 class EmailTemplates:
-    def welcome_message(self, name, email, mobile_number, password):
+    def welcome_message(self, name, email, mobile_number, password, portal_link=None):
+        portal_text = ""
+        if portal_link:
+            portal_text = f'''
+            <p>
+                You can access the login portal here:<br>
+                <a href="{portal_link}" target="_blank" style="color: #6f42c1; font-weight: bold; text-decoration: underline;">
+                    {portal_link}
+                </a>
+            </p>
+            '''
+
         msg = f'''
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -31,6 +42,8 @@ class EmailTemplates:
                         <strong>Password:</strong> {password}
                     </p>
                 </div>
+
+                {portal_text}
 
                 <p style="
                     background-color:#fff3cd;

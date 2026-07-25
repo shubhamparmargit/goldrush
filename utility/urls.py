@@ -12,6 +12,7 @@ urlpatterns = [
     re_path(r'^exportData$', data_obj.exportData, name='exportData'),
     re_path(r'^change-access$', data_obj.changeAccess, name='changeAccess'),
     re_path(r'^change-trading-option$', data_obj.changeTradingOption, name='changeTradingOption'),
+    re_path(r'^bulk-trading-option$', data_obj.bulkTradingOption, name='bulkTradingOption'),
     re_path(r'^change-trading-account$', data_obj.changeTradingAccount, name='changeTradingAccount'),
     re_path(r'^close-live-order$', data_obj.closeLiveOrder, name='closeLiveOrder'),
     re_path(r'^override-order-rate$', data_obj.overrideOrderRate, name='overrideOrderRate'),

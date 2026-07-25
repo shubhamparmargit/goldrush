@@ -17,6 +17,7 @@ Digital Investment
             <div class="main-wrapper">
                 {% include "digital-investment/includes/wallet-balance-card.html" %}
                 <p id="dateTime" style="font-size: 12px; text-align: center;"></p>
+                <div id="marketClosedMarqueeContainer" style="display: none; width: 100%;"></div>
                 <div class="ingot-toggle">
                     <a href="{% url 'weights' 'gold' %}" class="ingot ingot-gold" data-metal="gold">
                         <div class="ingot-inner">

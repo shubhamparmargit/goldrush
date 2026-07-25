@@ -287,6 +287,46 @@ class Pages:
             return redirect('digital_gateway')
 
         return render(request,"digital-investment/reset-pin.html")
+
+    def chart_page(self, request, metal_type):
+        """Dedicated TradingView-style candle chart page for gold or silver."""
+        if request.trading_error:
+            return redirect('digital_gateway')
+
+        customer = request.trading_customer
+        if not customer:
+            return redirect('digital_gateway')
+
+        metal_type = metal_type.lower()
+        if metal_type not in ('gold', 'silver'):
+            return redirect('digital_gateway')
+
+        wallet_balance = cust_util_obj.get_wallet_balance(customer, request)
+
+        current_metal_rate = ""
+        currency_icon = "₹"
+        try:
+            metal = getMetalRate()
+            current_metal_rate = metal["buy_gold_rate"] if metal_type == 'gold' else metal["buy_silver_rate"]
+            currency_icon = metal["currency_icon"]
+        except Exception:
+            pass
+
+        from portal_misc.models import CompanyBankDetails
+        bank = CompanyBankDetails.objects.first()
+        rate_refresh_interval = bank.rate_refresh_interval if bank else 10
+
+        title = "Gold Chart (24K · Digital)" if metal_type == 'gold' else "Silver Chart (999 · Digital)"
+
+        return render(request, 'digital-investment/chart.html', {
+            'metal_type': metal_type,
+            'title': title,
+            'current_metal_rate': current_metal_rate,
+            'currency_icon': currency_icon,
+            'wallet_balance': wallet_balance,
+            'customer_name': customer.name,
+            'rate_refresh_interval': rate_refresh_interval,
+        })
         
 class TradingOnboard:
     def saveCutomerBankDetails(self,request):
@@ -338,7 +378,16 @@ class TradingOnboard:
                 # required_files = ["cancelled_cheque", "passbook", "bank_statement"]
                 allowed_ext = (".jpg", ".jpeg", ".png", ".pdf")
                 max_file_size = 10 * 1024 * 1024  # 10MB
-                allowed_mime = ["image/jpeg","image/png","application/pdf"]
+                allowed_mime = [
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/pjpeg",
+                    "image/x-png",
+                    "application/pdf",
+                    "application/x-pdf",
+                    "application/octet-stream"
+                ]
                 
                 # required_files = ["cancelled_cheque", "passbook"]
                 # for file_field in required_files:
@@ -433,16 +482,26 @@ class TradingOnboard:
                     customer.save(update_fields=['email'])
 
                     # ================= BANK DETAILS =================
-                    CustomerTradingBankDetails.objects.create(
+                    bank_details, created = CustomerTradingBankDetails.objects.get_or_create(
                         customer=customer,
-                        unique_id=bank_unique_id,
-                        date=timezone.now(),
-                        bank_name=bank_name,
-                        account_holder_name=account_holder_name,
-                        account_number=account_number,
-                        ifsc_code=ifsc_code,
-                        branch_name=branch_name
+                        defaults={
+                            "unique_id": bank_unique_id,
+                            "bank_name": bank_name if bank_name else "",
+                            "account_holder_name": account_holder_name,
+                            "account_number": account_number,
+                            "ifsc_code": ifsc_code,
+                            "branch_name": branch_name if branch_name else "",
+                            "verified": "No"
+                        }
                     )
+                    if not created:
+                        bank_details.bank_name = bank_name if bank_name else ""
+                        bank_details.account_holder_name = account_holder_name
+                        bank_details.account_number = account_number
+                        bank_details.ifsc_code = ifsc_code
+                        bank_details.branch_name = branch_name if branch_name else ""
+                        bank_details.verified = "No"
+                        bank_details.save()
 
                     # ================= DOCUMENTS =================
                     base_dir = os.path.join(settings.MEDIA_ROOT, f"customer-documents/{customer.unique_id}/")
@@ -461,6 +520,17 @@ class TradingOnboard:
                         file_obj = request.FILES.get(field_name)
                         if not file_obj:
                             continue
+
+                        # Delete existing documents of the same type for this customer
+                        old_docs = CustomerTradingDocuments.objects.filter(customer=customer, doc_type=doc_type)
+                        for old_doc in old_docs:
+                            try:
+                                old_file_path = os.path.join(settings.MEDIA_ROOT, old_doc.file_path)
+                                if os.path.exists(old_file_path):
+                                    os.remove(old_file_path)
+                            except Exception:
+                                pass
+                            old_doc.delete()
 
                         file_name = util_obj.save_document(file_obj, base_dir, file_prefix)
 

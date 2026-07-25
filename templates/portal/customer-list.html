@@ -26,10 +26,16 @@
 				<div class="box">
 					<div class="box-header with-bfeedback">
 						<div class="row">
-							<div class="col-2">
-								<h4 class="box-title">Customer List</h4>
+							<div class="col-4">
+								<h4 class="box-title" style="display: inline-block;">Customer List</h4>
+								{% if request.session.role == 1 or request.session.role == 5 %}
+								<div class="btn-group ml-10" style="margin-left: 15px;">
+									<button type="button" class="btn btn-sm btn-danger" id="btn-bulk-disable-trading" title="Disable all customer trading options"><i class="fa fa-ban me-5"></i> Bulk Turn OFF</button>
+									<button type="button" class="btn btn-sm btn-success" id="btn-bulk-enable-trading" title="Enable all customer trading options" style="margin-left: 5px;"><i class="fa fa-check me-5"></i> Bulk Turn ON</button>
+								</div>
+								{% endif %}
 							</div>
-							<div class="col-10 dFlex">
+							<div class="col-8 dFlex">
 								<select class="form-control floatLeft w-p10" id="limit">
 									<option value="1">1</option>
 									<option value="5">5</option>
@@ -307,6 +313,20 @@
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Password <span class="error">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="edit_password" name="password" required>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-warning" id="btn_generate_pass" title="Generate Random Password">Generate</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <hr>
                     <h5 class="mb-10">KYC Documents</h5>
                     <div class="row">
@@ -343,6 +363,43 @@
                                 <label>PAN Front</label>
                                 <div><a id="edit_pan_front_link" href="#" target="_blank" class="btn btn-xs btn-info mb-5">View Current</a></div>
                                 <input type="file" class="form-control" name="pan_front_image" accept=".jpg,.jpeg,.png,.pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h5 class="mb-10">Bank Details</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Bank Name</label>
+                                <input type="text" class="form-control" id="edit_bank_name" name="bank_name">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Account Holder Name</label>
+                                <input type="text" class="form-control" id="edit_account_holder_name" name="account_holder_name">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Account Number</label>
+                                <input type="text" class="form-control" id="edit_account_number" name="account_number">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>IFSC Code</label>
+                                <input type="text" class="form-control" id="edit_ifsc_code" name="ifsc_code">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Branch Name</label>
+                                <input type="text" class="form-control" id="edit_branch_name" name="branch_name">
                             </div>
                         </div>
                     </div>
@@ -396,6 +453,21 @@
                 $('#edit_referral_code').val(res.referral_code);
                 $('#edit_access').val(res.access);
                 $('#edit_trading').val(res.trading);
+                $('#edit_password').val(res.password);
+
+                if (res.bank_details) {
+                    $('#edit_bank_name').val(res.bank_details.bank_name);
+                    $('#edit_account_holder_name').val(res.bank_details.account_holder_name);
+                    $('#edit_account_number').val(res.bank_details.account_number);
+                    $('#edit_ifsc_code').val(res.bank_details.ifsc_code);
+                    $('#edit_branch_name').val(res.bank_details.branch_name);
+                } else {
+                    $('#edit_bank_name').val('');
+                    $('#edit_account_holder_name').val('');
+                    $('#edit_account_number').val('');
+                    $('#edit_ifsc_code').val('');
+                    $('#edit_branch_name').val('');
+                }
 
                 if (res.aadhaar_front_image) $('#edit_aadhaar_front_link').attr('href', res.aadhaar_front_image).show();
                 else $('#edit_aadhaar_front_link').hide();
@@ -476,6 +548,27 @@
         });
     }
 
+    $('#btn_generate_pass').on('click', function() {
+        const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const lowercase = "abcdefghijklmnopqrstuvwxyz";
+        const numbers = "0123456789";
+        const specials = "@$!%*?&";
+        const all = uppercase + lowercase + numbers + specials;
+        
+        let newPass = "";
+        newPass += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+        newPass += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+        newPass += numbers.charAt(Math.floor(Math.random() * numbers.length));
+        newPass += specials.charAt(Math.floor(Math.random() * specials.length));
+        
+        for (let i = 0; i < 6; i++) {
+            newPass += all.charAt(Math.floor(Math.random() * all.length));
+        }
+        
+        newPass = newPass.split('').sort(() => 0.5 - Math.random()).join('');
+        $('#edit_password').val(newPass);
+    });
+
     $('#frm_editCustomer').on('submit', function(e) {
         e.preventDefault();
         const btn = $('#btn_updateCustomer');
@@ -505,6 +598,68 @@
                 toastr.error('Something went wrong');
             }
         });
+    });
+
+    // --- Bulk Trading Option Control ---
+    function toggleBulkTrading(status) {
+        const actionText = status === 'ON' ? 'Enable' : 'Disable';
+        if (!confirm(`Are you sure you want to ${actionText} Trading Option for ALL customers in bulk?`)) {
+            return;
+        }
+
+        const btnDisable = $('#btn-bulk-disable-trading');
+        const btnEnable = $('#btn-bulk-enable-trading');
+
+        btnDisable.prop('disabled', true);
+        btnEnable.prop('disabled', true);
+
+        $.ajax({
+            url: window.APP_URLS.bulkTradingOption,
+            method: 'POST',
+            data: {
+                status: status,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(res) {
+                btnDisable.prop('disabled', false);
+                btnEnable.prop('disabled', false);
+                if (res.success === 1) {
+                    $.toast({
+                        heading: "Success",
+                        text: res.message,
+                        position: "top-right",
+                        icon: "success"
+                    });
+                    $('.dynamic_content').empty();
+                    getList();
+                } else {
+                    $.toast({
+                        heading: "Error",
+                        text: res.message || "Failed to update bulk trading options",
+                        position: "top-right",
+                        icon: "error"
+                    });
+                }
+            },
+            error: function() {
+                btnDisable.prop('disabled', false);
+                btnEnable.prop('disabled', false);
+                $.toast({
+                    heading: "Error",
+                    text: "Something went wrong",
+                    position: "top-right",
+                    icon: "error"
+                });
+            }
+        });
+    }
+
+    $('#btn-bulk-disable-trading').on('click', function() {
+        toggleBulkTrading('OFF');
+    });
+
+    $('#btn-bulk-enable-trading').on('click', function() {
+        toggleBulkTrading('ON');
     });
 </script>
 {% endblock %}

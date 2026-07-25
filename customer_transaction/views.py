@@ -154,8 +154,7 @@ class TransactionBuySell:
         membership = cust_util_obj.get_current_membership(customer, request)
         if not membership:
             from customer_wallet.models import MembershipMaster
-            is_new = customer.date >= timezone.make_aware(datetime.datetime(2026, 7, 5, 14, 30, 0))
-            membership = MembershipMaster.objects.filter(level="Normal", is_new_plan=is_new).first()
+            membership = MembershipMaster.objects.filter(level="Normal", is_new_plan=True).first()
             if not membership:
                 return JsonResponse({"status": False,"message": "Membership not found"})
         
@@ -535,7 +534,21 @@ class OrderList:
                 "date_time": date_time_str,
             })
 
-        return JsonResponse({"status": True, "orders": data})
+        from portal_misc.models import CompanyBankDetails
+        bank = CompanyBankDetails.objects.first()
+        market_closed_message = bank.market_closed_message if bank else ""
+        market_open = is_market_open()
+        status_label = "<span style='color: green; font-weight: bold;'>Market Open</span>" if market_open else "<span style='color: red; font-weight: bold;'>Market Closed</span>"
+        date_time_str = timezone.localtime(timezone.now()).strftime("%d %b %Y • %I:%M:%S %p")
+        full_date_time = f"{date_time_str} • {status_label}"
+
+        return JsonResponse({
+            "status": True,
+            "orders": data,
+            "market_open": market_open,
+            "market_closed_message": market_closed_message,
+            "date_time": full_date_time
+        })
 
     def live_order_details(self, request):
         transaction_id = request.GET.get("transaction_id")
@@ -813,31 +826,37 @@ def getMetalRate():
         # No cache yet (e.g. first server start after a weekend) — fall through to fetch once
         logger.warning("Market closed but no cached rates found — fetching once to populate cache.")
 
-    BASE_URL = "https://data.tradefeeds.com/api/v1/commodity_prices"
+    BASE_URL = "https://freegoldprice.org/api/v2"
     api_key = settings.METAL_API_KEY
 
-    def fetch_price(metal_name):
+    try:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
         resp = requests.get(
             BASE_URL,
-            params={"key": api_key, "name": metal_name},
-            timeout=10
+            params={"key": api_key, "action": "GSJ"},
+            timeout=10,
+            verify=False
         )
         resp.raise_for_status()
         data = resp.json()
-        output = data.get("result", {}).get("output", [])
-        if not output:
-            raise ValueError(f"Tradefeeds: {metal_name} output missing. API Response: {data}")
-        return Decimal(str(output[0]["price"]))
 
-    try:
-        # Fetch Gold and Silver rates in parallel to cut latency in half (~3.4s down to ~1.9s)
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            gold_future   = executor.submit(fetch_price, "gold")
-            silver_future = executor.submit(fetch_price, "silver")
+        gsj = data.get("GSJ")
+        if not gsj:
+            raise ValueError(f"freegoldprice.org: GSJ missing. API Response: {data}")
 
-            gold_price_usd   = gold_future.result()
-            silver_price_usd = silver_future.result()
+        gold = gsj.get("Gold", {}).get("USD")
+        silver = gsj.get("Silver", {}).get("USD")
+
+        if not gold or not silver:
+            raise ValueError(f"freegoldprice.org: Gold or Silver USD data missing. API Response: {data}")
+
+        # GSJ action returns prices per troy ounce (ask/bid)
+        gold_price_usd = (Decimal(str(gold["ask"])) + Decimal(str(gold["bid"]))) / 2
+        silver_price_usd = (Decimal(str(silver["ask"])) + Decimal(str(silver["bid"]))) / 2
+
+
 
         # --- Currency conversion ---
         usd_to_inr = get_dollar_rate()
@@ -850,9 +869,9 @@ def getMetalRate():
         gold_mid_per_gm   = gold_price_usd / ounce_weight
         silver_mid_per_gm = silver_price_usd / ounce_weight
 
-        # Raw INR price per gram (unscaled)
+        # Standard conversion to INR/gm
         gold_raw_inr   = gold_mid_per_gm * usd_to_inr
-        silver_raw_inr = silver_mid_per_gm * usd_to_inr
+        silver_mid_inr = silver_mid_per_gm * usd_to_inr
 
         # --- Fetch all config from DB in one call ---
         from portal_misc.models import CompanyBankDetails
@@ -869,24 +888,29 @@ def getMetalRate():
             bank.save(update_fields=["base_gold_price"])
         BASE_GOLD_PRICE = Decimal(str(bank.base_gold_price))
 
-        # SCALE = ounce_weight / usd_to_inr
-        # Ensures exactly 1 INR/gm change per $1/oz move in gold price,
-        # regardless of the current USD/INR exchange rate.
-        # Proof: raw change = $1/31.1g × usd_to_inr ≈ 3.06 INR/gm
-        #        × SCALE (31.1/usd_to_inr) → = 1 INR/gm ✓
-        SCALE = ounce_weight / usd_to_inr
+        # --- Converter formula: Final Rate = Base Final Rate + (Current Live Rate - Base Live Rate) ---
+        # Base Final Rate is BASE_GOLD_PRICE (INR/gm)
+        # Current Live Rate is gold_price_usd (USD/oz)
+        # Base Live Rate is the USD/oz equivalent of BASE_GOLD_PRICE
+        base_final_rate = BASE_GOLD_PRICE
+        base_live_rate = (base_final_rate / usd_to_inr) * ounce_weight
+        current_live_rate = gold_price_usd
 
-        # Scale gold around anchor: only the DEVIATION from anchor is compressed
-        gold_mid_inr   = BASE_GOLD_PRICE + ((gold_raw_inr - BASE_GOLD_PRICE) * SCALE)
+        if bank.bulk_override_gold_rate is not None and bank.bulk_override_gold_rate > 0:
+            gold_mid_inr = Decimal(str(bank.bulk_override_gold_rate))
+        else:
+            gold_mid_inr = base_final_rate + (current_live_rate - base_live_rate)
 
-        # Scale silver: keeps the raw INR/gm rate (no gold compression scale)
-        silver_mid_inr = silver_raw_inr
+        if bank.bulk_override_silver_rate is not None and bank.bulk_override_silver_rate > 0:
+            silver_mid_inr = Decimal(str(bank.bulk_override_silver_rate))
+        else:
+            silver_mid_inr = silver_mid_inr
 
         currency = 'INR'
         currency_icon = '₹'
 
-        # Spread: also scaled so 1 USD/oz spread ≈ 1 INR/gm impact (not 3 INR/gm)
-        spread_in_inr_gold = ((spread_points / ounce_weight) * usd_to_inr) * SCALE
+        # Spread: spread points configured in admin settings are in INR/gm directly
+        spread_in_inr_gold = spread_points
 
         # Scale silver spread proportionally to gold/silver price ratio
         ratio = gold_mid_per_gm / silver_mid_per_gm if silver_mid_per_gm > 0 else Decimal("65")
@@ -902,19 +926,22 @@ def getMetalRate():
         # --- Logging ---
         log_msg = (
             f"\n========================================\n"
-            f"METAL RATE API CONVERSION LOGS (Tradefeeds - troy ounce):\n"
-            f"Raw API Gold Mid:   {gold_price_usd} USD/troy oz\n"
-            f"Raw API Silver Mid: {silver_price_usd} USD/troy oz\n"
+            f"METAL RATE API CONVERSION LOGS (freegoldprice.org - troy ounce):\n"
+            f"Raw API Gold Ask: {gold['ask']} USD/troy oz, Bid: {gold['bid']} USD/troy oz\n"
+            f"Raw API Silver Ask: {silver['ask']} USD/troy oz, Bid: {silver['bid']} USD/troy oz\n"
             f"Exchange Rate (usd_to_inr): {usd_to_inr}\n"
-            f"Spread Points (from DB): {spread_points} USD/oz\n"
+            f"Spread Points (from DB): {spread_points} INR/gm\n"
             f"----------------------------------------\n"
             f"Conversion to USD/gm (÷ {ounce_weight} g/troy oz):\n"
             f"Gold Mid:   {gold_mid_per_gm} USD/gm\n"
             f"Silver Mid: {silver_mid_per_gm} USD/gm\n"
             f"----------------------------------------\n"
-            f"Conversion to INR/gm (* {usd_to_inr}):\n"
-            f"Gold Mid INR:   {gold_mid_inr} INR/gm\n"
-            f"Silver Mid INR: {silver_mid_inr} INR/gm\n"
+            f"Converter Formula (Final Rate = Base Final Rate + (Current Live Rate - Base Live Rate)):\n"
+            f"Base Final Rate (INR/gm): {base_final_rate} INR/gm\n"
+            f"Base Live Rate (USD/oz):  {base_live_rate} USD/oz\n"
+            f"Current Live Rate (USD/oz): {current_live_rate} USD/oz\n"
+            f"Gold Mid INR:             {gold_mid_inr} INR/gm\n"
+            f"Silver Mid INR:           {silver_mid_inr} INR/gm (standard conversion)\n"
             f"----------------------------------------\n"
             f"Spread in INR per gram (symmetric):\n"
             f"Gold Spread:   {spread_in_inr_gold} INR/gm\n"
@@ -954,15 +981,23 @@ def getMetalRate():
                 "currency_icon":    rates["currency_icon"]
             }
             cache.set(METAL_RATE_CACHE_KEY, cache_rates, timeout=None)
-            cache.set("live_metal_rates_cooldown", True, timeout=1)
+            cache.set("live_metal_rates_cooldown", True, timeout=30)
             
-            # Save historical price log (throttled to at most once per 60 seconds)
+            # Save historical price log (throttled to at most once per 60 seconds unless overridden)
             log_cooldown = cache.get("metal_rate_log_cooldown")
-            if not log_cooldown:
+            is_overridden = (bank.bulk_override_gold_rate is not None and bank.bulk_override_gold_rate > 0) or \
+                            (bank.bulk_override_silver_rate is not None and bank.bulk_override_silver_rate > 0)
+            if not log_cooldown or is_overridden:
                 from .models import MetalRateLog
                 try:
-                    MetalRateLog.objects.create(metal_type="GOLD", rate=rates["buy_gold_rate"])
-                    MetalRateLog.objects.create(metal_type="SILVER", rate=rates["buy_silver_rate"])
+                    last_gold = MetalRateLog.objects.filter(metal_type="GOLD").order_by('-id').first()
+                    if not last_gold or last_gold.rate != rates["buy_gold_rate"]:
+                        MetalRateLog.objects.create(metal_type="GOLD", rate=rates["buy_gold_rate"])
+                    
+                    last_silver = MetalRateLog.objects.filter(metal_type="SILVER").order_by('-id').first()
+                    if not last_silver or last_silver.rate != rates["buy_silver_rate"]:
+                        MetalRateLog.objects.create(metal_type="SILVER", rate=rates["buy_silver_rate"])
+                    
                     cache.set("metal_rate_log_cooldown", True, timeout=60)
                 except Exception as log_err:
                     logger.error(f"Error logging metal rate: {log_err}")
@@ -1006,6 +1041,10 @@ def getMetalData(request):
             "message": "Unable to fetch gold rate"
         })   
     
+    from portal_misc.models import CompanyBankDetails
+    bank = CompanyBankDetails.objects.first()
+    market_closed_message = bank.market_closed_message if bank else ""
+
     market_open = is_market_open()
     status_label = "<span style='color: green; font-weight: bold;'>Market Open</span>" if market_open else "<span style='color: red; font-weight: bold;'>Market Closed</span>"
     date_time_str = timezone.localtime(timezone.now()).strftime("%d %b %Y • %I:%M:%S %p")
@@ -1015,6 +1054,8 @@ def getMetalData(request):
         "current_silver_rate": current_silver_rate,
         "currency_icon": currency_icon,
         "date_time": f"{date_time_str} • {status_label}",
+        "market_open": market_open,
+        "market_closed_message": market_closed_message,
     })
 
 # rates = getMetalRate()
@@ -1034,7 +1075,7 @@ def calculate_order(gm, membership, metal_type):
     service_fee = base_fee - discount
     
     # Rewards calculation
-    if membership.level == 'Normal':
+    if membership.level in ['Normal', 'Bronze']:
         reward = (service_fee * Decimal('0.10')).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
     else:
         reward = (order_amt * Decimal('0.01')).quantize(Decimal("0"), rounding=ROUND_HALF_UP)
@@ -1323,12 +1364,14 @@ def get_chart_data(request):
                 "high": round(high_p, 2),
                 "low": round(low_p, 2),
                 "close": round(close_p, 2),
+                "source": "LIVE",
             })
             current_price = close_p
         
         return JsonResponse({"status": True, "data": chart_data})
 
     # Group real logs into interval buckets
+    # Each bucket tracks: list of rates AND whether any log in this bucket was an admin override
     buckets = {}
     interval_seconds = interval * 60
 
@@ -1338,22 +1381,30 @@ def get_chart_data(request):
         bucket_ts = (ts // interval_seconds) * interval_seconds
         
         if bucket_ts not in buckets:
-            buckets[bucket_ts] = []
-        buckets[bucket_ts].append(float(log.rate))
+            buckets[bucket_ts] = {"rates": [], "sources": []}
+        buckets[bucket_ts]["rates"].append(float(log.rate))
+        buckets[bucket_ts]["sources"].append(getattr(log, "source", "LIVE"))
 
     chart_data = []
     sorted_keys = sorted(buckets.keys())
     
     for b_ts in sorted_keys:
-        rates = buckets[b_ts]
+        bucket = buckets[b_ts]
+        rates = bucket["rates"]
+        sources = bucket["sources"]
         if not rates:
             continue
+        # If any log in this bucket came from admin, mark the candle as ADMIN_OVERRIDE
+        dominant_source = "ADMIN_OVERRIDE" if "ADMIN_OVERRIDE" in sources else (
+            "SPREAD_CHANGE" if "SPREAD_CHANGE" in sources else "LIVE"
+        )
         chart_data.append({
             "time": b_ts * 1000,
             "open": round(rates[0], 2),
             "high": round(max(rates), 2),
             "low": round(min(rates), 2),
             "close": round(rates[-1], 2),
+            "source": dominant_source,
         })
 
     return JsonResponse({"status": True, "data": chart_data})

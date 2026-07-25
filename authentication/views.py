@@ -62,11 +62,24 @@ class Authentication:
                     password=request.POST['password']
                     ip = util_obj.getIPAddress(request)
                     if (username!="" and username is not None and password!="" and password is not None):
-                        mobile_validate = valid_obj.validate_mobile(username)
-                        if mobile_validate != 1:
-                            return util_obj.printErrorResponse_200(mobile_validate)
+                        username = username.strip()
+                        login_success = None
                         
-                        login_success = Login.objects.filter(mobile_number=username)[0]
+                        # First try lookup by mobile number if it's numeric/valid mobile
+                        mobile_validate = valid_obj.validate_mobile(username)
+                        if mobile_validate == 1:
+                            login_success = Login.objects.filter(mobile_number=username).first()
+
+                        # If not found by mobile, try lookup by Franchise referral code
+                        if not login_success:
+                            franchise = Franchise.objects.filter(referral_id__iexact=username).first()
+                            if franchise:
+                                login_success = Login.objects.filter(table_id=franchise.unique_id, table_name="franchise").first()
+                        
+                        # Fallback lookup by mobile number or email directly
+                        if not login_success:
+                            login_success = Login.objects.filter(mobile_number=username).first()
+
                         if not login_success:
                             return util_obj.printErrorResponse_200('Username or password is incorrect')
                         else:

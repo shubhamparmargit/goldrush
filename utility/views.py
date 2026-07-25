@@ -101,6 +101,8 @@ EXPORT_COLUMNS = {
         ("Quantity", "quantity"),
         ("Invested Amount", "invested_amount"),
         ("Service Fee", "service_fee"),
+        ("Rewards Point", "reward"),
+        ("Stop Loss", "stop_loss"),
         ("Buy Rate", "buy_price"),
         ("Buy Date", "buy_date"),
         ("Sell Rate", "sell_price"),
@@ -108,6 +110,7 @@ EXPORT_COLUMNS = {
         ("Order Type", "order_type"),
         ("Profit/Loss", "profit_loss"),
         ("PNL Amount", "pnl_amount"),
+        ("Txn", "txn"),
     ],
     "trading_user": [
         ("Sr. No.", "sr_no"),
@@ -247,11 +250,36 @@ EXPORT_COLUMNS = {
         ("Metal", "metal_type"),
         ("Quantity", "quantity"),
         ("Invested Amount", "invested_amount"),
+        ("Service Fee", "service_fee"),
+        ("Stop Loss", "stop_loss"),
         ("Buy Rate", "buy_price"),
         ("Buy Date", "buy_date"),
         ("Current Rate", "current_rate"),
         ("Profit/Loss", "pnl_text"),
         ("Order Type", "order_type")
+    ],
+    "franchise_commission_report": [
+        ("Sr No", "sr_no"),
+        ("Organization ID", "referral_id"),
+        ("Full Name", "holder_name"),
+        ("Franchise Type", "franchise_model"),
+        ("Phone Number", "mobile"),
+        ("City", "city"),
+        ("Total Transaction", "total_txn"),
+        ("Total ServiceFee", "total_service_fee"),
+        ("Commission Rate", "commission_rate"),
+        ("Total Commission", "total_commission"),
+    ],
+    "franchise_wise_report": [
+        ("Sr No", "sr_no"),
+        ("Organization ID", "referral_id"),
+        ("Full Name", "holder_name"),
+        ("Phone Number", "mobile"),
+        ("City", "city"),
+        ("Total Transaction", "total_txn"),
+        ("Total Wallet", "total_wallet"),
+        ("Total Registration", "total_registration"),
+        ("Total ServiceFee", "total_service_fee"),
     ],
     "high_value_live_orders_report": [
         ("Sr. No.", "sr_no"),
@@ -818,6 +846,48 @@ class DataList:
                     table_name = request.POST['type']
                     role = request.session.get("role")
                     login_id = request.session.get("login_id")
+
+                    # Security Check: Franchise roles (2, 3, 4) are only allowed to query specific tables
+                    if role in [2, 3, 4] and table_name not in ["registration_report", "transaction_report", "wallet_recharge_report", "withdrawal_report", "live_order_report", "franchise_commission_report", "franchise_wise_report"]:
+                        return JsonResponse({'success': '0', 'message': 'Unauthorized access'}, status=status.HTTP_200_OK)
+
+                    def get_masked_mobile(mobile):
+                        if role in [2, 3, 4] and mobile:
+                            mobile_str = str(mobile).strip()
+                            if len(mobile_str) > 4:
+                                return mobile_str[:2] + '*' * (len(mobile_str) - 4) + mobile_str[-2:]
+                            else:
+                                return '*' * len(mobile_str)
+                        return mobile
+
+                    def get_masked_email(email):
+                        if role in [2, 3, 4] and email and email != 'N/A':
+                            email_str = str(email).strip()
+                            if '@' in email_str:
+                                parts = email_str.split('@')
+                                name_part = parts[0]
+                                domain_part = parts[1]
+                                if len(name_part) > 4:
+                                    masked_name = name_part[:2] + '*' * (len(name_part) - 4) + name_part[-2:]
+                                elif len(name_part) > 2:
+                                    masked_name = name_part[:1] + '*' * (len(name_part) - 2) + name_part[-1:]
+                                else:
+                                    masked_name = '*' * len(name_part)
+                                return masked_name + '@' + domain_part
+                            else:
+                                if len(email_str) > 4:
+                                    return email_str[:2] + '*' * (len(email_str) - 4) + email_str[-2:]
+                                else:
+                                    return '*' * len(email_str)
+                        return email
+
+                    def make_dt_local_str(dt):
+                        if not dt:
+                            return 'N/A'
+                        if timezone.is_naive(dt):
+                            dt = timezone.make_aware(dt, timezone.utc)
+                        return timezone.localtime(dt).strftime('%d-%m-%Y @ %I:%M %p')
+
                     conditions={}
                     page = 1
                     start = 0
@@ -827,14 +897,13 @@ class DataList:
 
                     if table_name in ["wallet_recharge_report", "first_recharge_report"]:
                         from datetime import datetime, time
-                        import math
 
                         # 1. Determine allowed franchise referral codes if franchise user
-                        allowed_referral_codes = None
-                        if role == 4:
+                        referral_id = None
+                        if role in [2, 3, 4]:
                             login = Login.objects.get(id=login_id)
                             parent_franchise = Franchise.objects.get(unique_id=login.table_id)
-                            allowed_referral_codes = [parent_franchise.referral_id]
+                            referral_id = parent_franchise.referral_id
 
                         # Load active franchises for referral holder mapping
                         franchise_map = {f.referral_id: f.holder_name for f in Franchise.objects.all()}
@@ -858,10 +927,10 @@ class DataList:
                         manual_qs = ManualRechargeRequest.objects.select_related("customer", "membership").filter(status="APPROVED")
                         credit_qs = WalletManualCredit.objects.select_related("customer").all()
 
-                        if allowed_referral_codes is not None:
-                            online_qs = online_qs.filter(customer__referral_code__in=allowed_referral_codes)
-                            manual_qs = manual_qs.filter(customer__referral_code__in=allowed_referral_codes)
-                            credit_qs = credit_qs.filter(customer__referral_code__in=allowed_referral_codes)
+                        if referral_id is not None:
+                            online_qs = online_qs.filter(customer__referral_code__startswith=referral_id)
+                            manual_qs = manual_qs.filter(customer__referral_code__startswith=referral_id)
+                            credit_qs = credit_qs.filter(customer__referral_code__startswith=referral_id)
 
                         # Filter by search_term
                         if search_term:
@@ -873,7 +942,7 @@ class DataList:
                         all_recharges = []
 
                         # Load all memberships for manual credit membership lookup
-                        memberships = list(MembershipMaster.objects.all().order_by('-min_amount'))
+                        memberships = list(MembershipMaster.objects.filter(is_new_plan=True).order_by('-min_amount'))
                         def get_membership_for_balance(balance):
                             for m in memberships:
                                 if balance >= m.min_amount:
@@ -885,8 +954,8 @@ class DataList:
                                 'sr_no': 0,
                                 'date': timezone.localtime(r.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
                                 'customer_name': r.customer.name,
-                                'mobile_number': r.customer.mobile,
-                                'email': r.customer.email or 'N/A',
+                                'mobile_number': get_masked_mobile(r.customer.mobile),
+                                'email': get_masked_email(r.customer.email or 'N/A'),
                                 'amount': float(r.amount),
                                 'membership': r.membership_allocated.level if r.membership_allocated else 'N/A',
                                 'razorpay_order_id': r.order.razorpay_order_id if r.order else 'N/A',
@@ -904,8 +973,8 @@ class DataList:
                                 'sr_no': 0,
                                 'date': timezone.localtime(r.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
                                 'customer_name': r.customer.name,
-                                'mobile_number': r.customer.mobile,
-                                'email': r.customer.email or 'N/A',
+                                'mobile_number': get_masked_mobile(r.customer.mobile),
+                                'email': get_masked_email(r.customer.email or 'N/A'),
                                 'amount': float(r.amount),
                                 'membership': r.membership.level if r.membership else 'N/A',
                                 'razorpay_order_id': f"Manually added by admin ({r.action_by or 'Admin'})",
@@ -922,8 +991,8 @@ class DataList:
                                 'sr_no': 0,
                                 'date': timezone.localtime(r.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
                                 'customer_name': r.customer.name,
-                                'mobile_number': r.customer.mobile,
-                                'email': r.customer.email or 'N/A',
+                                'mobile_number': get_masked_mobile(r.customer.mobile),
+                                'email': get_masked_email(r.customer.email or 'N/A'),
                                 'amount': float(r.amount),
                                 'membership': get_membership_for_balance(r.balance_after),
                                 'razorpay_order_id': f"Manually added by admin ({r.credited_by or 'Admin'})",
@@ -1000,13 +1069,12 @@ class DataList:
                     if table_name == "withdrawal_report":
                         from datetime import datetime, time
                         from django.db.models import Sum
-                        import math
 
-                        allowed_referral_codes = None
-                        if role == 4:
+                        referral_id = None
+                        if role in [2, 3, 4]:
                             login = Login.objects.get(id=login_id)
                             parent_franchise = Franchise.objects.get(unique_id=login.table_id)
-                            allowed_referral_codes = [parent_franchise.referral_id]
+                            referral_id = parent_franchise.referral_id
 
                         franchise_map = {f.referral_id: f.holder_name for f in Franchise.objects.all()}
 
@@ -1024,11 +1092,11 @@ class DataList:
 
                         from customer_wallet.models import WithdrawalRequest, WalletManualDebit
                         withdrawal_qs = WithdrawalRequest.objects.select_related("customer", "customer__customertradingbankdetails").all()
-                        debit_qs = WalletManualDebit.objects.select_related("customer", "customer__customertradingbankdetails").all()
+                        debit_qs = WalletManualDebit.objects.filter(is_offline_withdrawal=True).select_related("customer", "customer__customertradingbankdetails").all()
 
-                        if allowed_referral_codes is not None:
-                            withdrawal_qs = withdrawal_qs.filter(customer__referral_code__in=allowed_referral_codes)
-                            debit_qs = debit_qs.filter(customer__referral_code__in=allowed_referral_codes)
+                        if referral_id is not None:
+                            withdrawal_qs = withdrawal_qs.filter(customer__referral_code__startswith=referral_id)
+                            debit_qs = debit_qs.filter(customer__referral_code__startswith=referral_id)
 
                         if search_term:
                             withdrawal_qs = withdrawal_qs.filter(
@@ -1052,21 +1120,31 @@ class DataList:
 
                         for w in withdrawal_qs:
                             first_address = w.customer.customeraddress_set.first()
-                            state = first_address.state if first_address else 'N/A'
+                            state = 'N/A' if role in [2, 3, 4] else (first_address.state if first_address else 'N/A')
                             email = w.email if w.email else (w.customer.email if w.customer.email else 'N/A')
-                            action_date_str = timezone.localtime(w.action_date).strftime('%d-%m-%Y @ %I:%M %p') if w.action_date else 'N/A'
+                            action_date_str = make_dt_local_str(w.action_date) if w.action_date else 'N/A'
                             remark_str = w.remark if w.remark else 'N/A'
                             txn_no = w.transaction_number if w.transaction_number else 'N/A'
 
                             status_cls = 'success' if w.status == 'APPROVED' else ('warning' if w.status == 'PENDING' else 'danger')
                             btn = 'Yes' if w.status == 'PENDING' else None
 
+                            bank_name = 'N/A'
+                            account_holder = 'N/A'
+                            account_number = 'N/A'
+                            ifsc = 'N/A'
+                            if role not in [2, 3, 4]:
+                                bank_name = w.customer.customertradingbankdetails.bank_name if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A'
+                                account_holder = w.customer.customertradingbankdetails.account_holder_name if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A'
+                                account_number = w.customer.customertradingbankdetails.account_number if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A'
+                                ifsc = w.customer.customertradingbankdetails.ifsc_code if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A'
+
                             all_withdrawals.append({
                                 'date_sort': w.request_date,
-                                'date': timezone.localtime(w.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'date': make_dt_local_str(w.customer.date),
                                 'customer_name': w.customer.name,
-                                'mobile_number': w.customer.mobile,
-                                'email': email,
+                                'mobile_number': get_masked_mobile(w.customer.mobile),
+                                'email': get_masked_email(email),
                                 'state': state,
                                 'unique_id': w.unique_id,
                                 'request_amount': float(w.request_amount),
@@ -1080,29 +1158,39 @@ class DataList:
                                 'transaction_number': txn_no,
                                 'remark': remark_str,
                                 'action_date': action_date_str,
-                                'request_date': timezone.localtime(w.request_date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'request_date': make_dt_local_str(w.request_date),
                                 'referral_code': w.customer.referral_code,
                                 'referral_holder_name': franchise_map.get(w.customer.referral_code, 'N/A'),
-                                'bank_name': w.customer.customertradingbankdetails.bank_name if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
-                                'account_holder_name': w.customer.customertradingbankdetails.account_holder_name if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
-                                'account_number': w.customer.customertradingbankdetails.account_number if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
-                                'ifsc_code': w.customer.customertradingbankdetails.ifsc_code if hasattr(w.customer, 'customertradingbankdetails') and w.customer.customertradingbankdetails else 'N/A',
+                                'bank_name': bank_name,
+                                'account_holder_name': account_holder,
+                                'account_number': account_number,
+                                'ifsc_code': ifsc,
                                 'customer_id_raw': w.customer.id
                             })
 
                         for d in debit_qs:
                             first_address = d.customer.customeraddress_set.first()
-                            state = first_address.state if first_address else 'N/A'
+                            state = 'N/A' if role in [2, 3, 4] else (first_address.state if first_address else 'N/A')
                             email = d.customer.email if d.customer.email else 'N/A'
-                            action_date_str = timezone.localtime(d.debited_on).strftime('%d-%m-%Y @ %I:%M %p')
+                            action_date_str = make_dt_local_str(d.debited_on)
                             remark_str = d.remark if d.remark else 'N/A'
+
+                            bank_name = 'N/A'
+                            account_holder = 'N/A'
+                            account_number = 'N/A'
+                            ifsc = 'N/A'
+                            if role not in [2, 3, 4]:
+                                bank_name = d.customer.customertradingbankdetails.bank_name if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A'
+                                account_holder = d.customer.customertradingbankdetails.account_holder_name if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A'
+                                account_number = d.customer.customertradingbankdetails.account_number if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A'
+                                ifsc = d.customer.customertradingbankdetails.ifsc_code if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A'
 
                             all_withdrawals.append({
                                 'date_sort': d.debited_on,
-                                'date': timezone.localtime(d.customer.date).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'date': make_dt_local_str(d.customer.date),
                                 'customer_name': d.customer.name,
-                                'mobile_number': d.customer.mobile,
-                                'email': email,
+                                'mobile_number': get_masked_mobile(d.customer.mobile),
+                                'email': get_masked_email(email),
                                 'state': state,
                                 'unique_id': d.unique_id,
                                 'request_amount': float(d.amount),
@@ -1116,13 +1204,13 @@ class DataList:
                                 'transaction_number': 'Offline Debit',
                                 'remark': remark_str,
                                 'action_date': action_date_str,
-                                'request_date': timezone.localtime(d.debited_on).strftime('%d-%m-%Y @ %I:%M %p'),
+                                'request_date': make_dt_local_str(d.debited_on),
                                 'referral_code': d.customer.referral_code,
                                 'referral_holder_name': franchise_map.get(d.customer.referral_code, 'N/A'),
-                                'bank_name': d.customer.customertradingbankdetails.bank_name if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
-                                'account_holder_name': d.customer.customertradingbankdetails.account_holder_name if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
-                                'account_number': d.customer.customertradingbankdetails.account_number if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
-                                'ifsc_code': d.customer.customertradingbankdetails.ifsc_code if hasattr(d.customer, 'customertradingbankdetails') and d.customer.customertradingbankdetails else 'N/A',
+                                'bank_name': bank_name,
+                                'account_holder_name': account_holder,
+                                'account_number': account_number,
+                                'ifsc_code': ifsc,
                                 'customer_id_raw': d.customer.id
                             })
 
@@ -1209,17 +1297,17 @@ class DataList:
                             # 🔹 Logged-in franchise
                             login = Login.objects.get(id=login_id)
 
-                            # table_id me franchise ka unique_id stored hai
                             parent_franchise = Franchise.objects.get(
                                 unique_id=login.table_id
                             )
 
-                            next_model = ROLE_FRANCHISE_MAP.get(role)
-
+                            # Fetch all descendants (excluding self)
                             query = Franchise.objects.filter(
-                                parent_id=parent_franchise.id,
-                                franchise_model=next_model
-                            )
+                                referral_id__startswith=parent_franchise.referral_id
+                            ).exclude(id=parent_franchise.id)
+
+                            if request.POST.get('franchise_model'):
+                                conditions['franchise_model__exact'] = request.POST.get("franchise_model")
                     elif table_name == "contact_messages":
                         query = ContactMessage.objects.all()
                     elif table_name == "portal_user":
@@ -1246,10 +1334,10 @@ class DataList:
                         query = WalletRechargeHistory.objects.filter(id=Subquery(first_recharge.values("id")[:1])).select_related("customer","membership_allocated","order").annotate(referral_holder_name=Subquery(franchise_holder))
                     elif table_name == "transaction_report":
                         franchise_holder = Franchise.objects.filter(referral_id=OuterRef('customer__referral_code')).values('holder_name')[:1]
-                        query = CustomerTransaction.objects.filter(transaction_type="BUY").prefetch_related("sell_transactions").select_related("customer","membership").annotate(referral_holder_name=Subquery(franchise_holder))
+                        query = CustomerTransaction.objects.filter(transaction_type="BUY").prefetch_related("sell_transactions").select_related("customer","membership","wallet").annotate(referral_holder_name=Subquery(franchise_holder))
                     elif table_name == "live_order_report":
                         franchise_holder = Franchise.objects.filter(referral_id=OuterRef('customer__referral_code')).values('holder_name')[:1]
-                        query = CustomerTransaction.objects.filter(transaction_type="BUY", sell_transactions__isnull=True).select_related("customer","membership").annotate(referral_holder_name=Subquery(franchise_holder))
+                        query = CustomerTransaction.objects.filter(transaction_type="BUY", sell_transactions__isnull=True).select_related("customer","membership","wallet").annotate(referral_holder_name=Subquery(franchise_holder))
                     elif table_name == "high_value_live_orders_report":
                         min_amount = 50000.00
                         min_weight = 1000.0000
@@ -1275,6 +1363,22 @@ class DataList:
                         ).filter(
                             Q(order_amount__gte=min_amount) | Q(quantity_gm__gte=min_weight)
                         ).select_related("customer","membership").annotate(referral_holder_name=Subquery(franchise_holder))
+                    elif table_name == "franchise_commission_report" or table_name == "franchise_wise_report":
+                        query = Franchise.objects.filter(status='Approved')
+                        if role in [2, 3, 4]:
+                            try:
+                                login_obj = Login.objects.get(id=login_id)
+                                own_f = Franchise.objects.filter(unique_id=login_obj.table_id).first()
+                                if own_f:
+                                    from dashboard.views import get_all_downline_referral_ids
+                                    ref_ids = get_all_downline_referral_ids(own_f)
+                                    query = query.filter(referral_id__in=ref_ids)
+                            except Exception:
+                                pass
+                        
+                        f_model_filter = request.POST.get('franchise_model_filter') or request.POST.get('franchise_model')
+                        if f_model_filter and f_model_filter.strip() in ['RA', 'MRA', 'SMRA']:
+                            query = query.filter(franchise_model=f_model_filter.strip())
                     elif table_name == "customer_report":
                         franchise_holder = Franchise.objects.filter(referral_id=OuterRef('referral_code')).values('holder_name')[:1]
                         last_login = CustomerLoginReport.objects.filter(customer=OuterRef('unique_id')).order_by('-login_date_time')
@@ -1435,6 +1539,15 @@ class DataList:
                             query=query.filter(Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(old_referral_code__icontains=search_tearm) | Q(new_referral_code__icontains=search_tearm))
                         elif table_name=="withdrawal_report":
                             query=query.filter(Q(customer__name__icontains=search_tearm) | Q(customer__mobile__icontains=search_tearm) | Q(transaction_number__icontains=search_tearm) | Q(status__icontains=search_tearm) | Q(customer__customertradingbankdetails__bank_name__icontains=search_tearm) | Q(customer__customertradingbankdetails__account_holder_name__icontains=search_tearm) | Q(customer__customertradingbankdetails__account_number__icontains=search_tearm) | Q(customer__customertradingbankdetails__ifsc_code__icontains=search_tearm))
+                        elif table_name == "franchise_commission_report" or table_name == "franchise_wise_report":
+                            query = query.filter(
+                                Q(referral_id__icontains=search_tearm) |
+                                Q(holder_name__icontains=search_tearm) |
+                                Q(franchise_name__icontains=search_tearm) |
+                                Q(mobile__icontains=search_tearm) |
+                                Q(email__icontains=search_tearm) |
+                                Q(address__icontains=search_tearm)
+                            )
                         
                     from_date=''
                     to_date=''
@@ -1478,12 +1591,15 @@ class DataList:
                     if table_name == "stock_movement":
                         conditions['product__unique_id__exact'] = request.session.get("product_id")
 
-                    if role == 4 and table_name == "customer":
+                    if role in [2, 3, 4]:
                         login = Login.objects.get(id=login_id)
                         parent_franchise = Franchise.objects.get(unique_id=login.table_id)
                         referral_id = parent_franchise.referral_id
                         
-                        conditions['referral_code__exact'] = referral_id
+                        if table_name in ["customer", "registration_report", "inactive_no_recharge", "inactive_customers", "customer_report"]:
+                            conditions['referral_code__startswith'] = referral_id
+                        elif table_name in ["transaction_report", "live_order_report", "high_value_live_orders_report", "order_report", "wallet_recharge_report", "first_recharge_report"]:
+                            conditions['customer__referral_code__startswith'] = referral_id
 
                     if table_name == "inactive_customers":
                         days = int(request.POST.get("days") or 15)
@@ -1513,11 +1629,11 @@ class DataList:
                     if (total_data > 0):
                         sr_no = start+1
                         for row in filter_query:
-                            if table_name not in ["stock", "stock_movement", "wallet_recharge_report", "first_recharge_report","transaction_report","order_report", "customer_transfer_report", "withdrawal_report"]:
-                                date=timezone.localtime(row.date).strftime('%d-%m-%Y')
-                                date_time=timezone.localtime(row.date).strftime('%d-%m-%Y @ %I:%M %p')
+                            if table_name not in ["stock", "stock_movement", "wallet_recharge_report", "first_recharge_report","transaction_report","order_report", "customer_transfer_report", "withdrawal_report", "live_order_report", "high_value_live_orders_report"]:
+                                date = make_dt_local_str(row.date).split(' @ ')[0]
+                                date_time = make_dt_local_str(row.date)
 
-                            if table_name not in ["customer_cart_list", "customer_order_list", "stock", "stock_movement", "contact_messages", "wallet_recharge_report", "first_recharge_report", "transaction_report","order_report", "customer_transfer_report", "withdrawal_report"]:
+                            if table_name not in ["customer_cart_list", "customer_order_list", "stock", "stock_movement", "contact_messages", "wallet_recharge_report", "first_recharge_report", "transaction_report","order_report", "customer_transfer_report", "withdrawal_report", "live_order_report", "high_value_live_orders_report"]:
                                 if(row.access=="Granted"):
                                     cls='success'
                                     states="checked"
@@ -1579,7 +1695,7 @@ class DataList:
                                         states_account=""
                                         demo_account='LIVE'
 
-                                table_data.append({'sr_no':sr_no,'unique_id':row.unique_id, 'date':date,'customer_name':row.name, 'mobile_number':row.mobile, 'email':row.email, 'access':row.access, 'cls':cls,'states':states, 'mac_reset_count':row.mac_reset_count,'trading':row.trading, 'cls_trade':cls_trade,'states_trade':states_trade,'status_cls':status_cls,'btn':btn,'status_txt':status_txt, 'cls_account':cls_account, 'states_account':states_account, 'demo_account':demo_account, 'referral_code':row.referral_code})
+                                table_data.append({'sr_no':sr_no,'unique_id':row.unique_id, 'date':date,'customer_name':row.name, 'mobile_number':get_masked_mobile(row.mobile), 'email':get_masked_email(row.email), 'access':row.access, 'cls':cls,'states':states, 'mac_reset_count':row.mac_reset_count,'trading':row.trading, 'cls_trade':cls_trade,'states_trade':states_trade,'status_cls':status_cls,'btn':btn,'status_txt':status_txt, 'cls_account':cls_account, 'states_account':states_account, 'demo_account':demo_account, 'referral_code':row.referral_code})
                             elif table_name=="customer_cart_list":
                                 if row.cart_status=="Pending":
                                     cls='primary'
@@ -1588,7 +1704,7 @@ class DataList:
 
                                 formatted_price = util_obj.formatPrice(row.cart_value)
 
-                                table_data.append({'sr_no':sr_no,'cart_id':row.cart_id, 'date':date,'customer_name':row.customer.name, 'mobile_number':row.customer.mobile, 'total_items':row.total_items, 'total_quantity':row.total_quantity, 'cart_value':formatted_price, 'cart_status':row.cart_status, 'cls':cls})
+                                table_data.append({'sr_no':sr_no,'cart_id':row.cart_id, 'date':date,'customer_name':row.customer.name, 'mobile_number':get_masked_mobile(row.customer.mobile), 'total_items':row.total_items, 'total_quantity':row.total_quantity, 'cart_value':formatted_price, 'cart_status':row.cart_status, 'cls':cls})
                             elif table_name=="customer_order_list":
                                 if row.order_status=="Placed":
                                     cls='primary'
@@ -1609,7 +1725,7 @@ class DataList:
 
                                 invoice_url = domainURLPortal + 'download_invoice/' + row.order_id + '/inline'
 
-                                table_data.append({'sr_no':sr_no,'order_number':row.order_number, 'order_id':row.order_id, 'date':date,'customer_name':row.customer.name, 'mobile_number':row.customer.mobile, 'total_items':row.total_items, 'total_quantity':row.total_quantity, 'sub_total':formatted_price, 'order_status':row.order_status, 'cls':cls, 'razorpay_order_id':row.razorpay_order_id, 'razorpay_payment_id':row.razorpay_payment_id, 'payment_status':row.payment_status, 'pay_cls':pay_cls, 'invoice_url':invoice_url})
+                                table_data.append({'sr_no':sr_no,'order_number':row.order_number, 'order_id':row.order_id, 'date':date,'customer_name':row.customer.name, 'mobile_number':get_masked_mobile(row.customer.mobile), 'total_items':row.total_items, 'total_quantity':row.total_quantity, 'sub_total':formatted_price, 'order_status':row.order_status, 'cls':cls, 'razorpay_order_id':row.razorpay_order_id, 'razorpay_payment_id':row.razorpay_payment_id, 'payment_status':row.payment_status, 'pay_cls':pay_cls, 'invoice_url':invoice_url})
                             elif table_name=="stock":
                                 last_updated = timezone.localtime(row.last_updated).strftime('%d-%m-%Y @ %I:%M %p')
                                 table_data.append({'sr_no':sr_no, 'product':row.product.unique_id, 'product_name':row.product.name, 'quantity':row.quantity, 'last_updated':last_updated})
@@ -1617,9 +1733,20 @@ class DataList:
                                 movement_date = timezone.localtime(row.movement_date).strftime('%d-%m-%Y @ %I:%M %p')
                                 table_data.append({'sr_no':sr_no, 'product':row.product.unique_id, 'product_name':row.product.name, 'quantity':row.quantity, 'movement_date':movement_date, 'movement_type':row.movement_type, 'reference':row.reference})
                             elif table_name=="trading_user":
+                                parent_franchise = None
+                                if role not in [1, 5]:
+                                    try:
+                                        login_obj = Login.objects.get(id=login_id)
+                                        parent_franchise = Franchise.objects.get(unique_id=login_obj.table_id)
+                                    except Franchise.DoesNotExist:
+                                        pass
+
                                 roleAccess = False
-                                if role!=None and role==1:
+                                if role!=None and (role==1 or role==5):
                                     roleAccess = True
+                                elif parent_franchise and row.parent_id == parent_franchise.id:
+                                    roleAccess = True
+
                                 btn = "No"
                                 if(row.status=="Approved"):
                                     status_cls='success'
@@ -1642,16 +1769,18 @@ class DataList:
                                 longitude = 'N/A'
                                 
                                 if row.last_login_date_time:
-                                    last_login = timezone.localtime(row.last_login_date_time).strftime('%d-%m-%Y @ %I:%M %p')
-                                    latitude = row.last_latitude
-                                    longitude = row.last_longitude
+                                    last_login = make_dt_local_str(row.last_login_date_time)
+                                    latitude = row.last_latitude if role not in [2, 3, 4] else 'N/A'
+                                    longitude = row.last_longitude if role not in [2, 3, 4] else 'N/A'
 
-                                table_data.append({'sr_no': sr_no,'unique_id': row.unique_id,'date': date_time,'customer_name': row.name,'mobile_number': row.mobile,'email': row.email,'last_login': last_login,'latitude': latitude,'longitude': longitude,'state': row.state,'access': row.access,'cls': cls,'states': states,'referral_code': row.referral_code,'referral_holder_name': referral_holder})
+                                state_val = row.state if role not in [2, 3, 4] else 'N/A'
+
+                                table_data.append({'sr_no': sr_no,'unique_id': row.unique_id,'date': date_time,'customer_name': row.name,'mobile_number': get_masked_mobile(row.mobile),'email': get_masked_email(row.email),'last_login': last_login,'latitude': latitude,'longitude': longitude,'state': state_val,'access': row.access,'cls': cls,'states': states,'referral_code': row.referral_code,'referral_holder_name': referral_holder})
                             elif table_name=="wallet_recharge_report" or table_name=="first_recharge_report":
-                                date_time=timezone.localtime(row.customer.date).strftime('%d-%m-%Y @ %I:%M %p')
-                                transaction_date=timezone.localtime(row.created_at).strftime('%d-%m-%Y @ %I:%M %p')
+                                date_time = make_dt_local_str(row.customer.date)
+                                transaction_date = make_dt_local_str(row.created_at)
 
-                                table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': row.customer.mobile,'email': row.customer.email,'amount': row.amount,'membership': row.membership_allocated.level,'razorpay_payment_id': row.razorpay_payment_id, 'razorpay_order_id': row.order.razorpay_order_id, 'transaction_date': transaction_date,'status':row.status,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder})
+                                table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': get_masked_mobile(row.customer.mobile),'email': get_masked_email(row.customer.email),'amount': row.amount,'membership': row.membership_allocated.level,'razorpay_payment_id': row.razorpay_payment_id, 'razorpay_order_id': row.order.razorpay_order_id, 'transaction_date': transaction_date,'status':row.status,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder})
                             elif table_name=="transaction_report":
                                 sell = row.sell_transactions.first()
 
@@ -1665,12 +1794,12 @@ class DataList:
                                     pnl = sell.profit_loss
                                     raw_pnl_amt = float(sell.profit_loss_amount)
                                     if pnl == "PROFIT":
-                                        pnl_amount = f"+{raw_pnl_amt}"
+                                        pnl_amount = f"+{abs(raw_pnl_amt)}"
                                     elif pnl == "LOSS":
-                                        pnl_amount = f"-{raw_pnl_amt}"
+                                        pnl_amount = f"-{abs(raw_pnl_amt)}"
                                     else:
                                         pnl_amount = str(raw_pnl_amt)
-                                    sell_date = timezone.localtime(sell.created_at).strftime('%d-%m-%Y @ %I:%M %p')
+                                    sell_date = make_dt_local_str(sell.created_at)
                                 else:
                                     from customer_transaction.views import getMetalRate, calculate_live_pnl
                                     try:
@@ -1695,13 +1824,16 @@ class DataList:
                                     pnl_amount = f"{pnl_prefix}{pnl_amt:.2f} ({pnl_prefix}{pnl_percent:.2f}%)"
                                     sell_date = "Active (Live)"
 
-                                buy_date = timezone.localtime(row.created_at).strftime('%d-%m-%Y @ %I:%M %p')
+                                buy_date = make_dt_local_str(row.created_at)
+                                stop_loss_str = f"{row.wallet.stop_loss_percentage}%" if getattr(row, 'wallet', None) and row.wallet.stop_loss_percentage > 0 else "Disabled"
+                                reward_val = float(row.reward)
+                                txn_val = round(reward_val / 5.0, 2)
 
                                 table_data.append({
                                     "sr_no": sr_no,
                                     "transaction_id": row.transaction_id,
                                     "customer_name": row.customer.name,
-                                    "mobile_number": row.customer.mobile,
+                                    "mobile_number": get_masked_mobile(row.customer.mobile),
                                     'referral_code': row.customer.referral_code,
                                     'referral_holder_name': referral_holder,
 
@@ -1715,6 +1847,9 @@ class DataList:
 
                                     "invested_amount": float(row.order_amount),
                                     "service_fee": float(row.service_fee),
+                                    "reward": reward_val,
+                                    "stop_loss": stop_loss_str,
+                                    "txn": txn_val,
 
                                     "profit_loss": pnl,
                                     "pnl_amount": pnl_amount,
@@ -1724,7 +1859,7 @@ class DataList:
 
                                     "sold_via": sell.sold_via if sell else "",
                                 })
-                            elif table_name == "live_order_report":
+                            elif table_name == "live_order_report" or table_name == "high_value_live_orders_report":
                                 from customer_transaction.views import getMetalRate, calculate_live_pnl
                                 try:
                                     live_rates = getMetalRate()
@@ -1747,13 +1882,14 @@ class DataList:
                                 pnl_prefix = "+" if pnl_amount > 0 else ""
                                 pnl_text = f"{pnl_prefix}{pnl_amount:.2f} ({pnl_prefix}{pnl_percent:.2f}%)"
                                 
-                                buy_date = timezone.localtime(row.created_at).strftime('%d-%m-%Y @ %I:%M %p')
+                                buy_date = make_dt_local_str(row.created_at)
+                                stop_loss_str = f"{row.wallet.stop_loss_percentage}%" if getattr(row, 'wallet', None) and row.wallet.stop_loss_percentage > 0 else "Disabled"
                                 
                                 table_data.append({
                                     "sr_no": sr_no,
                                     "transaction_id": row.transaction_id,
                                     "customer_name": row.customer.name,
-                                    "mobile_number": row.customer.mobile,
+                                    "mobile_number": get_masked_mobile(row.customer.mobile),
                                     'referral_code': row.customer.referral_code,
                                     'referral_holder_name': referral_holder,
                                     "metal_type": row.metal_type,
@@ -1761,6 +1897,8 @@ class DataList:
                                     "quantity": float(row.quantity_gm),
                                     "buy_price": float(row.metal_rate_per_gm),
                                     "invested_amount": float(row.order_amount),
+                                    "service_fee": float(row.service_fee),
+                                    "stop_loss": stop_loss_str,
                                     "buy_date": buy_date,
                                     "current_rate": float(current_metal_rate),
                                     "pnl_class": pnl_class,
@@ -1777,10 +1915,13 @@ class DataList:
                                     address_list.append(full_address)
                                     add_sr_no += 1
 
-                                if export == "excel":
-                                    address_str = " || ".join(address_list) if address_list else "N/A"
+                                if role in [2, 3, 4]:
+                                    address_str = "N/A"
                                 else:
-                                    address_str = "<br/>".join(address_list) if address_list else "N/A"
+                                    if export == "excel":
+                                        address_str = " || ".join(address_list) if address_list else "N/A"
+                                    else:
+                                        address_str = "<br/>".join(address_list) if address_list else "N/A"
 
                                 docs = row.customertradingdocuments_set.all()
                                 doc_list = []
@@ -1789,20 +1930,34 @@ class DataList:
                                     doc = f"{d.doc_type}:: {urlPrefix}{d.file_path}"
                                     doc_list.append(doc)
 
-                                if export == "excel":
-                                    doc_str = " || ".join(doc_list) if doc_list else "N/A"
+                                if role in [2, 3, 4]:
+                                    doc_str = "N/A"
                                 else:
-                                    doc_str = "<br/>".join(doc_list) if doc_list else "N/A"
+                                    if export == "excel":
+                                        doc_str = " || ".join(doc_list) if doc_list else "N/A"
+                                    else:
+                                        doc_str = "<br/>".join(doc_list) if doc_list else "N/A"
 
                                 trading_account = getattr(row, 'customertradingaccount', None)
 
                                 bank = getattr(row, 'customertradingbankdetails', None)
 
-                                bank_name = bank.bank_name if bank else "N/A"
-                                account_holder_name = bank.account_holder_name if bank else "N/A"
-                                account_number = bank.account_number if bank else "N/A"
-                                ifsc = bank.ifsc_code if bank else "N/A"
-                                branch_name = bank.branch_name if bank else "No"
+                                if role in [2, 3, 4]:
+                                    bank_name = "N/A"
+                                    account_holder_name = "N/A"
+                                    account_number = "N/A"
+                                    ifsc = "N/A"
+                                    branch_name = "N/A"
+                                    aadhaar_val = "N/A"
+                                    pan_val = "N/A"
+                                else:
+                                    bank_name = bank.bank_name if bank else "N/A"
+                                    account_holder_name = bank.account_holder_name if bank else "N/A"
+                                    account_number = bank.account_number if bank else "N/A"
+                                    ifsc = bank.ifsc_code if bank else "N/A"
+                                    branch_name = bank.branch_name if bank else "No"
+                                    aadhaar_val = row.aadhaar_number
+                                    pan_val = row.pan_number
 
                                 terms = getattr(row, 'customertradingterms', None)
                                 terms_status = terms.accepted if terms else "No"
@@ -1812,26 +1967,26 @@ class DataList:
                                 longitude = 'N/A'
                                 
                                 if row.last_login_date_time:
-                                    last_login = timezone.localtime(row.last_login_date_time).strftime('%d-%m-%Y @ %I:%M %p')
-                                    latitude = row.last_latitude
-                                    longitude = row.last_longitude
+                                    last_login = make_dt_local_str(row.last_login_date_time)
+                                    latitude = row.last_latitude if role not in [2, 3, 4] else 'N/A'
+                                    longitude = row.last_longitude if role not in [2, 3, 4] else 'N/A'
 
                                 table_data.append({
                                     'sr_no': sr_no,
                                     'date': date_time,
                                     'customer_name': row.name,
-                                    'mobile_number': row.mobile,
-                                    'email': row.email,
+                                    'mobile_number': get_masked_mobile(row.mobile),
+                                    'email': get_masked_email(row.email),
                                     'referral_code': row.referral_code,
                                     'referral_holder_name': referral_holder,
-                                    'aadhaar_number': row.aadhaar_number,
-                                    'pan_number': row.pan_number,
+                                    'aadhaar_number': aadhaar_val,
+                                    'pan_number': pan_val,
                                     'addresses': address_str,
                                     'documents': doc_str,
                                     'access': row.access,
                                     'trading': row.trading,
-                                    'trading_status': trading_account.status,
-                                    'account_type': trading_account.account_type,
+                                    'trading_status': trading_account.status if trading_account else "N/A",
+                                    'account_type': trading_account.account_type if trading_account else "N/A",
                                     'bank_name': bank_name,
                                     'account_holder_name': account_holder_name,
                                     'account_number': account_number,
@@ -1842,7 +1997,7 @@ class DataList:
                                     'longitude': longitude
                                 })
                             elif table_name=="order_report":
-                                order_date = timezone.localtime(row.date).strftime('%d-%m-%Y @ %I:%M %p')
+                                order_date = make_dt_local_str(row.date)
 
                                 # 🔹 All statuses fetch (already prefetched)
                                 all_statuses = row.orderstatus_set.all()
@@ -1854,7 +2009,7 @@ class DataList:
                                     if s.prd_detail_id not in product_status_map:
                                         product_status_map[s.prd_detail_id] = []
 
-                                    formatted_date = timezone.localtime(s.date).strftime('%d-%m-%Y @ %I:%M %p')
+                                    formatted_date = make_dt_local_str(s.date)
                                     product_status_map[s.prd_detail_id].append(
                                         f"{s.order_status} ({formatted_date})"
                                     )
@@ -1874,8 +2029,7 @@ class DataList:
                                     if product_filtered.exists():
                                         order_details = product_filtered
 
-                                total_data = total_filter_data = order_details.count()
-
+                                # Fetch correct status for the products
                                 for item in order_details:
 
                                     # ✅ Product specific status
@@ -1892,8 +2046,8 @@ class DataList:
 
                                         # 🔥 CUSTOMER
                                         'customer_name': row.customer.name if row.customer else "N/A",
-                                        'mobile': row.customer.mobile if row.customer else "N/A",
-                                        'email': row.customer.email if row.customer else "N/A",
+                                        'mobile': get_masked_mobile(row.customer.mobile) if row.customer else "N/A",
+                                        'email': get_masked_email(row.customer.email) if row.customer else "N/A",
                                         'referral_code': row.customer.referral_code,
                                         'referral_holder_name': referral_holder,
 
@@ -1921,24 +2075,24 @@ class DataList:
                                         'payment_status':row.payment_status,
 
                                         # 🔥 ADDRESS
-                                        'address_name':row.address_name, 
-                                        'address_mobile':row.address_mobile, 
-                                        'pincode':row.pincode, 
-                                        'postoffice':row.postoffice, 
-                                        'state':row.state, 
-                                        'city':row.city, 
-                                        'district':row.district, 
-                                        'region':row.region, 
-                                        'address_line_1':row.address_line_1, 
-                                        'address_line_2':row.address_line_2,
+                                        'address_name': row.address_name if role not in [2, 3, 4] else 'N/A', 
+                                        'address_mobile': get_masked_mobile(row.address_mobile) if role not in [2, 3, 4] and row.address_mobile else 'N/A', 
+                                        'pincode': row.pincode if role not in [2, 3, 4] else 'N/A', 
+                                        'postoffice': row.postoffice if role not in [2, 3, 4] else 'N/A', 
+                                        'state': row.state if role not in [2, 3, 4] else 'N/A', 
+                                        'city': row.city if role not in [2, 3, 4] else 'N/A', 
+                                        'district': row.district if role not in [2, 3, 4] else 'N/A', 
+                                        'region': row.region if role not in [2, 3, 4] else 'N/A', 
+                                        'address_line_1': row.address_line_1 if role not in [2, 3, 4] else 'N/A', 
+                                        'address_line_2': row.address_line_2 if role not in [2, 3, 4] else 'N/A',
                                     })
                             elif table_name=="inactive_no_recharge":
                                 table_data.append({
                                     'sr_no': sr_no,
                                     'date': date_time,
                                     'customer_name': row.name,
-                                    'mobile': row.mobile,
-                                    'email': row.email,
+                                    'mobile': get_masked_mobile(row.mobile),
+                                    'email': get_masked_email(row.email),
                                     'referral_code': row.referral_code,
                                     'referral_holder_name': referral_holder,
                                     'trading': row.trading,
@@ -1962,8 +2116,8 @@ class DataList:
                                     'sr_no': sr_no,
                                     'date': date_time,
                                     'customer_name': row.name,
-                                    'mobile': row.mobile,
-                                    'email': row.email,
+                                    'mobile': get_masked_mobile(row.mobile),
+                                    'email': get_masked_email(row.email),
                                     'referral_code': row.referral_code,
                                     'referral_holder_name': referral_holder,
                                     'last_login': last_login,
@@ -2002,6 +2156,76 @@ class DataList:
                                 recharge_till_date = float(online_sum + manual_sum + credit_sum)
 
                                 table_data.append({'sr_no': sr_no,'date': date_time,'customer_name': row.customer.name,'mobile_number': row.customer.mobile,'email': email,'state': state,'unique_id': row.unique_id,'recharge_till_date': recharge_till_date, 'request_amount': float(row.request_amount),'service_charge': float(row.service_charge),'gst_amount': float(row.gst_amount),'total_deduction': float(row.total_deduction),'final_amount': float(row.final_amount),'status': row.status, 'status_cls': status_cls, 'btn': btn, 'transaction_number':transaction_number, 'remark':remark,'action_date':action_date,'request_date': request_date,'referral_code': row.customer.referral_code,'referral_holder_name': referral_holder, 'bank_name': row.customer.customertradingbankdetails.bank_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_holder_name': row.customer.customertradingbankdetails.account_holder_name if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'account_number': row.customer.customertradingbankdetails.account_number if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A', 'ifsc_code': row.customer.customertradingbankdetails.ifsc_code if hasattr(row.customer, 'customertradingbankdetails') and row.customer.customertradingbankdetails else 'N/A'})
+                            elif table_name == "franchise_commission_report" or table_name == "franchise_wise_report":
+                                city_val = 'N/A'
+                                if row.address:
+                                    addr_parts = [p.strip() for p in row.address.split(',') if p.strip()]
+                                    if addr_parts:
+                                        city_val = addr_parts[-1]
+
+                                cust_qs = Customer.objects.filter(referral_code=row.referral_id)
+                                total_registration = cust_qs.count()
+
+                                total_wallet = float(CustomerWallet.objects.filter(customer__in=cust_qs).aggregate(total=Sum('balance'))['total'] or 0)
+
+                                txn_qs = CustomerTransaction.objects.filter(customer__in=cust_qs, transaction_type='BUY')
+                                if from_date:
+                                    txn_qs = txn_qs.filter(created_at__gte=datetime.strptime(from_date, "%Y-%m-%d"))
+                                if to_date:
+                                    txn_qs = txn_qs.filter(created_at__lt=datetime.strptime(to_date, "%Y-%m-%d") + timedelta(days=1))
+
+                                total_service_fee = float(txn_qs.aggregate(total=Sum('service_fee'))['total'] or 0)
+                                total_rewards = float(txn_qs.aggregate(total=Sum('reward'))['total'] or 0)
+                                total_txn = round(total_rewards / 5.0, 2)
+
+                                if table_name == "franchise_commission_report":
+                                    f_model = row.franchise_model
+                                    if f_model == 'RA':
+                                        if total_txn <= 10000:
+                                            commission_rate = "₹5 / Txn"
+                                            total_commission = round(total_txn * 5.0, 2)
+                                        else:
+                                            commission_rate = "₹7 / Txn"
+                                            total_commission = round(total_txn * 7.0, 2)
+                                    elif f_model == 'MRA':
+                                        if total_txn <= 10000:
+                                            commission_rate = "₹8 / Txn"
+                                            total_commission = round(total_txn * 8.0, 2)
+                                        else:
+                                            commission_rate = "₹10 / Txn"
+                                            total_commission = round(total_txn * 10.0, 2)
+                                    elif f_model == 'SMRA':
+                                        pct = float(row.commission_percentage or 0)
+                                        commission_rate = f"{pct}%"
+                                        total_commission = round(total_service_fee * (pct / 100.0), 2)
+                                    else:
+                                        commission_rate = "N/A"
+                                        total_commission = 0.0
+
+                                    table_data.append({
+                                        'sr_no': sr_no,
+                                        'referral_id': row.referral_id,
+                                        'holder_name': row.holder_name,
+                                        'franchise_model': row.franchise_model,
+                                        'mobile': get_masked_mobile(row.mobile),
+                                        'city': city_val,
+                                        'total_txn': total_txn,
+                                        'total_service_fee': total_service_fee,
+                                        'commission_rate': commission_rate,
+                                        'total_commission': total_commission,
+                                    })
+                                elif table_name == "franchise_wise_report":
+                                    table_data.append({
+                                        'sr_no': sr_no,
+                                        'referral_id': row.referral_id,
+                                        'holder_name': row.holder_name,
+                                        'mobile': get_masked_mobile(row.mobile),
+                                        'city': city_val,
+                                        'total_txn': total_txn,
+                                        'total_wallet': total_wallet,
+                                        'total_registration': total_registration,
+                                        'total_service_fee': total_service_fee,
+                                    })
 
                             sr_no=sr_no+1
 
@@ -2237,7 +2461,76 @@ class DataList:
             )
 
         except Exception as e:
-            return util_obj.printErrorResponse_200('Something went wrong')   
+            return util_obj.printErrorResponse_200('Something went wrong')
+
+    def bulkTradingOption(self, request):
+        if util_obj.checkSession(request):
+            return util_obj.goToLogin(request)
+
+        if request.method != 'POST':
+            return util_obj.printErrorResponse_200('Invalid request')
+
+        status = request.POST.get('status')
+        if status not in ['ON', 'OFF']:
+            return util_obj.printErrorResponse_200('Invalid status')
+
+        try:
+            from customer_transaction.models import Customer
+            from customer_wallet.models import CustomerTradingAccount, CustomerDemoWallet
+            from users.models import Franchise
+
+            with transaction.atomic():
+                # 1. Update all Customer trading fields
+                Customer.objects.all().update(trading=status)
+
+                # 2. Update CustomerTradingAccount fields
+                if status == 'OFF':
+                    CustomerTradingAccount.objects.all().update(trading_enabled='OFF', is_blocked='Yes')
+                else:
+                    # Update all existing trading accounts to ON
+                    CustomerTradingAccount.objects.all().update(trading_enabled='ON', is_blocked='No')
+                    
+                    # Create trading accounts for customers that don't have one
+                    customers_without_account = Customer.objects.filter(
+                        customertradingaccount__isnull=True
+                    )
+                    for customer in customers_without_account:
+                        ra = Franchise.objects.filter(referral_id=customer.referral_code).first()
+                        CustomerTradingAccount.objects.create(
+                            unique_id=random_obj.generateUID(),
+                            customer=customer,
+                            ra=ra,
+                            trading_enabled='ON',
+                            status='Pending',
+                            is_blocked='No'
+                        )
+
+                    # Create Demo Wallets for customers that don't have them
+                    customers_without_demo_wallet = Customer.objects.filter(
+                        customerdemowallet__isnull=True
+                    )
+                    for customer in customers_without_demo_wallet:
+                        CustomerDemoWallet.objects.create(
+                            customer=customer,
+                            balance=2000,
+                            current_membership_id=1
+                        )
+
+                # ================= ACTIVITY LOG =================
+                util_obj.activity_log(
+                    request.session['login_id'],
+                    request.session['logged'],
+                    "Trading",
+                    f"Bulk trading options set to {status} for all customers."
+                )
+
+            return JsonResponse(
+                {'success': 1, 'message': f'Bulk trading option {status} set successfully for all customers.'},
+                status=200
+            )
+
+        except Exception as e:
+            return util_obj.printErrorResponse_200(f'Something went wrong: {str(e)}')   
 
     def changeTradingAccount(self, request):
         if util_obj.checkSession(request):
@@ -2383,7 +2676,7 @@ class CustomerUtil:
         ).first()
 
     def get_all_memberships(self):
-        return MembershipMaster.objects.order_by('min_amount')
+        return MembershipMaster.objects.filter(is_new_plan=True).order_by('min_amount')
 
     def get_wallet_balance(self, customer, request):
         wallet_model = CustomerDemoWallet if getattr(request, "is_demo_account", False) else CustomerWallet
@@ -2392,8 +2685,14 @@ class CustomerUtil:
 
     def get_current_membership(self, customer, request):
         wallet_model = CustomerDemoWallet if getattr(request, "is_demo_account", False) else CustomerWallet
-        wallet = wallet_model.objects.select_related("current_membership").filter(customer=customer).first()
-        return wallet.current_membership if wallet else None
+        wallet, created = wallet_model.objects.get_or_create(customer=customer)
+        if not wallet.current_membership:
+            from customer_wallet.models import MembershipMaster
+            default_membership = MembershipMaster.objects.filter(level="Normal", is_new_plan=True).first()
+            if default_membership:
+                wallet.current_membership = default_membership
+                wallet.save(update_fields=['current_membership'])
+        return wallet.current_membership
         
     def get_pin_cache_key(self, customer_id):
         return f"PIN_SESSION:{customer_id}"

@@ -202,6 +202,13 @@ class Pages:
             wallet_qs = wallet_qs.filter(customer__referral_code__in=ref_ids)
         total_wallet_balance = float(wallet_qs.aggregate(total=Sum('balance'))['total'] or 0)
         
+        # 6.5 Total Txn (Sum of Reward / 5 for BUY transactions)
+        txn_qs = CustomerTransaction.objects.filter(transaction_type='BUY', created_at__range=(start_date, end_date))
+        if is_franchise:
+            txn_qs = txn_qs.filter(customer__referral_code__in=ref_ids)
+        total_rewards = float(txn_qs.aggregate(total=Sum('reward'))['total'] or 0)
+        total_txn = round(total_rewards / 5.0, 2)
+        
         # 7. Chart Series
         chart_data = {
             'labels': [],
@@ -327,6 +334,7 @@ class Pages:
                 'profit': total_profit,
                 'loss': total_loss,
                 'wallet_balance': total_wallet_balance,
+                'total_txn': total_txn,
             },
             'chart_data': chart_data
         })

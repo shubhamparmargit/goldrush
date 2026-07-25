@@ -30,7 +30,8 @@ class WeeklyAutoCloseTestCase(TestCase):
             min_amount=Decimal("0"),
             service_fee=Decimal("50"),  # service fee per 10gm
             service_fee_percent=Decimal("0.10"),
-            daily_slot=100
+            daily_slot=100,
+            is_new_plan=True
         )
         
         # 3. Create live and demo wallets
@@ -174,3 +175,54 @@ class WeeklyAutoCloseTestCase(TestCase):
         past_demo = order_list.get_past_orders(MockRequestDemo(), self.customer)
         self.assertEqual(len(past_live), 0)
         self.assertEqual(len(past_demo), 0)
+
+
+class GetMetalRateTestCase(TestCase):
+    @patch("customer_transaction.views.requests.get")
+    @patch("customer_transaction.views.is_market_open", return_value=True)
+    def test_get_metal_rate_freegoldprice_success(self, mock_market_open, mock_get):
+        from unittest.mock import Mock
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "GSJ": {
+                "date": "2026-07-06 18:54:00",
+                "unit": "ounce",
+                "Gold": {
+                    "USD": {
+                        "ask": "2300.00",
+                        "bid": "2290.00"
+                    }
+                },
+                "Silver": {
+                    "USD": {
+                        "ask": "30.00",
+                        "bid": "29.00"
+                    }
+                }
+            }
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        # Create default CompanyBankDetails
+        from portal_misc.models import CompanyBankDetails
+        CompanyBankDetails.objects.create(
+            account_name="Test Bank",
+            bank_name="Test Bank",
+            account_number="12345",
+            ifsc_code="TEST0001",
+            dollar_rate=Decimal("83.0"),
+            spread=Decimal("200"),
+            base_gold_price=Decimal("6000.0")
+        )
+
+        # Call getMetalRate
+        from customer_transaction.views import getMetalRate
+        rates = getMetalRate()
+
+        # Assert correct rates calculated
+        self.assertIn("buy_gold_rate", rates)
+        self.assertIn("sell_gold_rate", rates)
+        self.assertIn("buy_silver_rate", rates)
+        self.assertIn("sell_silver_rate", rates)
+

@@ -15,6 +15,10 @@ from customer_trading.models import CustomerTradingBankDetails
 from portal_misc.models import BankHoliday, CompanyBankDetails
 
 def is_withdrawal_window_open():
+    bank = CompanyBankDetails.objects.first()
+    if bank and bank.withdrawals_closed:
+        return False, "Withdrawals are temporarily disabled by the administrator."
+
     now = timezone.localtime(timezone.now())
     weekday = now.weekday()  # Monday=0, Sunday=6
 
@@ -33,9 +37,7 @@ from django.utils import timezone
 from datetime import datetime
 
 def get_customer_membership_queryset(customer):
-    cutoff = timezone.make_aware(datetime(2026, 7, 5, 14, 30, 0))
-    is_new = customer.date >= cutoff
-    return MembershipMaster.objects.filter(is_new_plan=is_new)
+    return MembershipMaster.objects.filter(is_new_plan=True)
 
 util_obj = Utility()
 random_obj = RandomIdGenerate()
@@ -710,53 +712,70 @@ class WithdrawalOperations:
                 "message": "Invalid customer"
             })
 
-        # ⏳ 24-HOUR WITHDRAWAL LOCK AFTER RECHARGE CHECK
+        # ⏳ 24-HOUR WITHDRAWAL LOCK AFTER RECHARGE CHECK (FOR FIRST RECHARGE ONLY)
         from django.utils import timezone
         from datetime import timedelta
         
-        latest_online = WalletRechargeHistory.objects.filter(
+        count_online = WalletRechargeHistory.objects.filter(
             customer=customer,
             status='Success'
-        ).order_by('-created_at').first()
+        ).count()
 
-        latest_manual = ManualRechargeRequest.objects.filter(
+        count_manual = ManualRechargeRequest.objects.filter(
             customer=customer,
             status='APPROVED'
-        ).order_by('-action_date').first()
+        ).count()
 
-        latest_credit = WalletManualCredit.objects.filter(
+        count_credit = WalletManualCredit.objects.filter(
             customer=customer
-        ).order_by('-credited_on').first()
+        ).count()
 
-        latest_recharge_time = None
+        total_recharges = count_online + count_manual + count_credit
 
-        if latest_online:
-            latest_recharge_time = latest_online.created_at
+        if total_recharges == 1:
+            latest_online = WalletRechargeHistory.objects.filter(
+                customer=customer,
+                status='Success'
+            ).order_by('-created_at').first()
 
-        if latest_manual and latest_manual.action_date:
-            if not latest_recharge_time or latest_manual.action_date > latest_recharge_time:
-                latest_recharge_time = latest_manual.action_date
+            latest_manual = ManualRechargeRequest.objects.filter(
+                customer=customer,
+                status='APPROVED'
+            ).order_by('-action_date').first()
 
-        if latest_credit:
-            if not latest_recharge_time or latest_credit.credited_on > latest_recharge_time:
-                latest_recharge_time = latest_credit.credited_on
+            latest_credit = WalletManualCredit.objects.filter(
+                customer=customer
+            ).order_by('-credited_on').first()
 
-        if latest_recharge_time:
-            time_difference = timezone.now() - latest_recharge_time
-            if time_difference < timedelta(hours=24):
-                remaining_time = timedelta(hours=24) - time_difference
-                remaining_hours = int(remaining_time.total_seconds() // 3600)
-                remaining_minutes = int((remaining_time.total_seconds() % 3600) // 60)
-                
-                if remaining_hours > 0:
-                    msg = f"You can withdraw only after 24 hours of your last recharge. Please try again after {remaining_hours} hour(s) and {remaining_minutes} minute(s)."
-                else:
-                    msg = f"You can withdraw only after 24 hours of your last recharge. Please try again after {remaining_minutes} minute(s)."
-                
-                return JsonResponse({
-                    'status': False,
-                    'message': msg
-                })
+            latest_recharge_time = None
+
+            if latest_online:
+                latest_recharge_time = latest_online.created_at
+
+            if latest_manual and latest_manual.action_date:
+                if not latest_recharge_time or latest_manual.action_date > latest_recharge_time:
+                    latest_recharge_time = latest_manual.action_date
+
+            if latest_credit:
+                if not latest_recharge_time or latest_credit.credited_on > latest_recharge_time:
+                    latest_recharge_time = latest_credit.credited_on
+
+            if latest_recharge_time:
+                time_difference = timezone.now() - latest_recharge_time
+                if time_difference < timedelta(hours=24):
+                    remaining_time = timedelta(hours=24) - time_difference
+                    remaining_hours = int(remaining_time.total_seconds() // 3600)
+                    remaining_minutes = int((remaining_time.total_seconds() % 3600) // 60)
+                    
+                    if remaining_hours > 0:
+                        msg = f"You can withdraw only after 24 hours of your first recharge. Please try again after {remaining_hours} hour(s) and {remaining_minutes} minute(s)."
+                    else:
+                        msg = f"You can withdraw only after 24 hours of your first recharge. Please try again after {remaining_minutes} minute(s)."
+                    
+                    return JsonResponse({
+                        'status': False,
+                        'message': msg
+                    })
 
         try:
             allowed, reason = is_withdrawal_window_open()
@@ -839,6 +858,10 @@ class WithdrawalOperations:
                             address_line_2=address_line_2,
                             access='Granted'
                         )
+
+                if email:
+                    customer.email = email
+                    customer.save(update_fields=['email'])
 
                 # ✅ CREATE REQUEST
                 WithdrawalRequest.objects.create(
@@ -1211,6 +1234,8 @@ class CompanyBankPortal:
                     return JsonResponse({'success': '0', 'message': 'PNL refresh interval must be an integer'})
 
                 manual_market_closed = request.POST.get('manual_market_closed', 'false').strip() == 'true'
+                market_closed_message = request.POST.get('market_closed_message', '').strip()
+                withdrawals_closed = request.POST.get('withdrawals_closed', 'false').strip() == 'true'
                 stop_api_hits = request.POST.get('stop_api_hits', 'false').strip() == 'true'
 
                 def parse_decimal_or_none(value):
@@ -1245,6 +1270,8 @@ class CompanyBankPortal:
                 bank.rate_refresh_interval = rate_interval_int
                 bank.pnl_refresh_interval = pnl_interval_int
                 bank.manual_market_closed = manual_market_closed
+                bank.market_closed_message = market_closed_message
+                bank.withdrawals_closed = withdrawals_closed
                 bank.stop_api_hits = stop_api_hits
                 bank.bulk_override_min_amount = bulk_min_amount
                 bank.bulk_override_min_weight = bulk_min_weight
@@ -1252,9 +1279,14 @@ class CompanyBankPortal:
                 bank.bulk_override_silver_rate = bulk_silver_rate
                 bank.save()
 
+                # Clear live rate caches
+                from django.core.cache import cache
+                cache.delete("last_metal_rates_v2")
+                cache.delete("live_metal_rates_cooldown")
+
                 username = request.session.get('logged', 'admin')
                 login_id = request.session.get('login_id')
-                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated. Spread: {spread_int}, Rate Interval: {rate_interval_int}s, PNL Interval: {pnl_interval_int}s, Manual Closed: {manual_market_closed}, Stop Hits: {stop_api_hits}, Bulk Override Min Amount: {bulk_min_amount}, Bulk Override Min Weight: {bulk_min_weight}, Bulk Gold: {bulk_gold_rate}, Bulk Silver: {bulk_silver_rate}")
+                util_obj.activity_log(login_id, username, "Spread Settings", f"Spread settings updated. Spread: {spread_int}, Rate Interval: {rate_interval_int}s, PNL Interval: {pnl_interval_int}s, Manual Closed: {manual_market_closed}, Withdrawals Closed: {withdrawals_closed}, Stop Hits: {stop_api_hits}, Bulk Override Min Amount: {bulk_min_amount}, Bulk Override Min Weight: {bulk_min_weight}, Bulk Gold: {bulk_gold_rate}, Bulk Silver: {bulk_silver_rate}")
 
                 return JsonResponse({'success': '1', 'message': 'Settings saved successfully'})
 
@@ -1371,6 +1403,8 @@ class AddWalletBalance:
                 username   = request.session.get('logged', 'admin')
                 login_id   = request.session.get('login_id')
 
+                is_offline_withdrawal = request.POST.get('is_offline_withdrawal', 'false').strip() == 'true'
+
                 if not unique_id:
                     return JsonResponse({'success': '0', 'message': 'Invalid customer'})
                 if amount < 1:
@@ -1397,6 +1431,7 @@ class AddWalletBalance:
                         balance_before = balance_before,
                         balance_after  = wallet.balance,
                         debited_by     = username,
+                        is_offline_withdrawal = is_offline_withdrawal,
                     )
 
                     util_obj.activity_log(login_id, username, "Manual Wallet Debit",

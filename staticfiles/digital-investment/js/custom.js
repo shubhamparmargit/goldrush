@@ -78,6 +78,21 @@ function fetchLiveRate()
             if (dateTimeEl) {
                 dateTimeEl.innerHTML = data.date_time;
             }
+
+            const marqueeContainer = document.getElementById("marketClosedMarqueeContainer");
+            if (marqueeContainer) {
+                if (!data.market_open && data.market_closed_message) {
+                    const expectedText = data.market_closed_message;
+                    const currentMarquee = marqueeContainer.querySelector("marquee");
+                    if (!currentMarquee || currentMarquee.textContent !== expectedText) {
+                        marqueeContainer.innerHTML = `<div style="background-color: red; color: white; font-size: 16px; padding: 6px 0; margin-top: 10px; margin-bottom: 10px; font-weight: bold; width: 100%;"><marquee scrollamount="5">${expectedText}</marquee></div>`;
+                        marqueeContainer.style.display = "block";
+                    }
+                } else {
+                    marqueeContainer.innerHTML = "";
+                    marqueeContainer.style.display = "none";
+                }
+            }
         }
     );
 }

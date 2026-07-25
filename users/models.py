@@ -23,8 +23,8 @@ class Franchise(models.Model):
     )
 
     company_support_id = models.CharField(max_length=20)
-    referral_id = models.CharField(max_length=20, unique=True)
-    referral_prefix = models.CharField(max_length=10)
+    referral_id = models.CharField(max_length=64, unique=True)
+    referral_prefix = models.CharField(max_length=64)
     referral_sequence = models.IntegerField()
 
     franchise_type = models.CharField(

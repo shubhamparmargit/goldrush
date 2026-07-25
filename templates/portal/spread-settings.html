@@ -51,6 +51,20 @@
                             </div>
                             
                             <div class="form-group">
+                                <label><b>Market Closed Message (Optional Comment)</b></label>
+                                <input type="text" class="form-control" id="market_closed_message" value="{{ bank.market_closed_message|default:'' }}" placeholder="e.g. Market closed due to public holiday">
+                                <p class="text-muted mt-5" style="font-size:12px;">Optional comment/headline to display as a marquee when the market is closed.</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <input type="checkbox" id="withdrawals_closed" {% if bank.withdrawals_closed %}checked{% endif %}>
+                                    <label for="withdrawals_closed"><b>Disable Withdrawals</b></label>
+                                </div>
+                                <p class="text-muted mt-5" style="font-size:12px;">Check this to disable withdrawal requests globally.</p>
+                            </div>
+                            
+                            <div class="form-group">
                                 <div class="checkbox">
                                     <input type="checkbox" id="stop_api_hits" {% if bank.stop_api_hits %}checked{% endif %}>
                                     <label for="stop_api_hits"><b>Stop API Hits</b></label>
@@ -59,6 +73,18 @@
                             </div>
                             
                             <button class="btn btn-primary" id="saveSpreadBtn">Save Settings</button>
+                        </div>
+                    </div>
+                    <div class="box mt-20">
+                        <div class="box-header with-border">
+                            <h4 class="box-title">Bulk Trading Option</h4>
+                        </div>
+                        <div class="box-body">
+                            <p class="text-muted" style="font-size:12px;">Turn trading option ON or OFF for all customers globally in one click.</p>
+                            <div class="d-flex gap-10 mt-10">
+                                <button class="btn btn-success" id="bulkTradingOnBtn"><i class="fa fa-play"></i> Enable Trading for All</button>
+                                <button class="btn btn-danger" id="bulkTradingOffBtn" style="margin-left: 10px;"><i class="fa fa-stop"></i> Disable Trading for All</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -103,6 +129,8 @@
         const rateIntervalVal = document.getElementById('rate_refresh_interval').value.trim();
         const pnlIntervalVal = document.getElementById('pnl_refresh_interval').value.trim();
         const manualMarketClosedVal = document.getElementById('manual_market_closed').checked ? 'true' : 'false';
+        const marketClosedMessageVal = document.getElementById('market_closed_message').value.trim();
+        const withdrawalsClosedVal = document.getElementById('withdrawals_closed').checked ? 'true' : 'false';
         const stopApiHitsVal = document.getElementById('stop_api_hits').checked ? 'true' : 'false';
         
         const bulkMinAmountVal = document.getElementById('bulk_override_min_amount').value.trim();
@@ -128,6 +156,8 @@
         formData.append('rate_refresh_interval', rateIntervalVal);
         formData.append('pnl_refresh_interval', pnlIntervalVal);
         formData.append('manual_market_closed', manualMarketClosedVal);
+        formData.append('market_closed_message', marketClosedMessageVal);
+        formData.append('withdrawals_closed', withdrawalsClosedVal);
         formData.append('stop_api_hits', stopApiHitsVal);
         
         formData.append('bulk_override_min_amount', bulkMinAmountVal);
@@ -150,5 +180,35 @@
             })
             .catch(() => { btn.disabled = false; btn.textContent = 'Save Settings'; alert('Something went wrong'); });
     });
+
+    function toggleBulkTrading(status) {
+        if (!confirm('Are you sure you want to turn ' + status + ' trading for ALL users?')) return;
+        
+        const formData = new FormData();
+        formData.append('status', status);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        const onBtn = document.getElementById('bulkTradingOnBtn');
+        const offBtn = document.getElementById('bulkTradingOffBtn');
+        onBtn.disabled = true;
+        offBtn.disabled = true;
+        
+        fetch("{% url 'bulkTradingOption' %}", { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                onBtn.disabled = false;
+                offBtn.disabled = false;
+                alert(data.message);
+                if (data.success === '1') location.reload();
+            })
+            .catch(() => {
+                onBtn.disabled = false;
+                offBtn.disabled = false;
+                alert('Something went wrong');
+            });
+    }
+    
+    document.getElementById('bulkTradingOnBtn').addEventListener('click', () => toggleBulkTrading('ON'));
+    document.getElementById('bulkTradingOffBtn').addEventListener('click', () => toggleBulkTrading('OFF'));
 </script>
 {% endblock %}

@@ -99,8 +99,8 @@ class MailNotification:
 
     #     return JsonResponse({"message": "Email sent successfully via localhost!"})
 
-    def welcomeMessage(self, name, email, mobile, password):
-        data = email_obj.welcome_message(name, email, mobile, password)
+    def welcomeMessage(self, name, email, mobile, password, portal_link=None):
+        data = email_obj.welcome_message(name, email, mobile, password, portal_link=portal_link)
         return self.sendMail(data)
     
     def passwordReset(self, name, email, username, unique_id, page_name, domain):

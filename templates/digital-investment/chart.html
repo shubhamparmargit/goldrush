@@ -1,0 +1,634 @@
+{% extends "digital-investment/includes/base.html" %}
+{% load static %}
+
+{% block pageTitle %}{{ title }}{% endblock %}
+
+{% block extraCSS %}
+<link rel="stylesheet" href="{% static 'digital-investment/css/wallet-balance-card.css' %}">
+<style>
+    /* ─── TradingView colour palette ─── */
+    :root {
+        --tv-bg: #131722;
+        --tv-surface: #1c2030;
+        --tv-border: #2a2e39;
+        --tv-text-primary: #d1d4dc;
+        --tv-text-muted: #868996;
+        --tv-up: #26a69a;
+        --tv-down: #ef5350;
+        --tv-accent: #2962ff;
+    }
+
+    .chart-page-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0 0 100px 0;
+    }
+
+    /* ─── Top bar: symbol + live price ─── */
+    .chart-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--tv-surface);
+        border-bottom: 1px solid var(--tv-border);
+        flex-wrap: wrap;
+        gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .chart-symbol {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .symbol-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+    }
+    .symbol-badge.gold  { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+    .symbol-badge.silver { background: linear-gradient(135deg, #9ca3af, #6b7280); color: #fff; }
+
+    .symbol-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--tv-text-primary);
+        letter-spacing: 0.5px;
+    }
+
+    .symbol-sub {
+        font-size: 11px;
+        color: var(--tv-text-muted);
+        margin-top: 1px;
+    }
+
+    .live-price-block {
+        text-align: right;
+    }
+
+    .live-price-value {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--tv-up);
+        font-variant-numeric: tabular-nums;
+        transition: color 0.3s;
+    }
+    .live-price-value.down { color: var(--tv-down); }
+
+    .live-price-meta {
+        font-size: 11px;
+        color: var(--tv-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-end;
+        margin-top: 2px;
+    }
+
+    .market-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .market-badge.open   { background: rgba(38,166,154,0.15); color: var(--tv-up); }
+    .market-badge.closed { background: rgba(239,83,80,0.15); color: var(--tv-down); }
+    .market-badge::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* ─── Chart card ─── */
+    .tradingview-card {
+        background: var(--tv-bg);
+        border-bottom: 1px solid var(--tv-border);
+        font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+    }
+
+    /* toolbar row: type toggle + range buttons */
+    .chart-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 14px;
+        background: var(--tv-surface);
+        border-bottom: 1px solid var(--tv-border);
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tv-btn-group { display: flex; gap: 2px; }
+
+    .tv-btn {
+        background: transparent;
+        border: none;
+        color: var(--tv-text-muted);
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.18s;
+    }
+    .tv-btn:hover { background: rgba(255,255,255,0.05); color: var(--tv-text-primary); }
+    .tv-btn.active { background: var(--tv-border); color: #fff; }
+
+    /* OHLC legend */
+    .chart-legend {
+        padding: 8px 16px 4px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--tv-text-muted);
+        font-weight: 500;
+        border-bottom: 1px solid var(--tv-border);
+        min-height: 34px;
+        align-items: center;
+    }
+
+    .ohlc-label { color: var(--tv-text-muted); }
+    .ohlc-val   { font-weight: 700; }
+
+    /* admin mark legend */
+    .chart-source-legend {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 5px 16px;
+        font-size: 11px;
+        color: var(--tv-text-muted);
+        border-bottom: 1px solid var(--tv-border);
+        flex-wrap: wrap;
+    }
+
+
+    /* the chart container */
+    #metalChart { width: 100%; }
+
+    /* range bar */
+    .chart-ranges {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 6px 14px;
+        background: var(--tv-surface);
+        border-top: 1px solid var(--tv-border);
+        gap: 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .chart-ranges::-webkit-scrollbar { display: none; }
+
+    /* ─── CTA bottom strip ─── */
+    .chart-cta {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        display: flex;
+        gap: 12px;
+        padding: 14px 20px;
+        background: var(--tv-surface);
+        border-top: 1px solid var(--tv-border);
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.35);
+    }
+
+    .cta-btn {
+        flex: 1;
+        padding: 13px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        transition: transform 0.15s, box-shadow 0.15s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .cta-btn:active { transform: scale(0.97); }
+
+    .cta-buy  {
+        background: linear-gradient(135deg, #26a69a, #1a8a80);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(38,166,154,0.35);
+    }
+    .cta-sell {
+        background: linear-gradient(135deg, #ef5350, #d32f2f);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(239,83,80,0.35);
+    }
+
+    /* ─── responsive ─── */
+    @media (max-width: 480px) {
+        .chart-topbar { padding: 8px 12px; }
+        .live-price-value { font-size: 18px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="main-wrapper" style="padding: 0;">
+                <div class="chart-page-wrapper">
+
+                    <!-- Wallet balance strip -->
+                    <div style="padding: 10px 16px 0;">
+                        {% include "digital-investment/includes/wallet-balance-card.html" %}
+                    </div>
+
+                    <!-- Top bar: symbol + live price -->
+                    <div class="chart-topbar">
+                        <div class="chart-symbol">
+                            <div class="symbol-badge {{ metal_type }}">
+                                {% if metal_type == 'gold' %}Au{% else %}Ag{% endif %}
+                            </div>
+                            <div>
+                                <div class="symbol-name">{{ metal_type|upper }}/INR</div>
+                                <div class="symbol-sub">{{ title }}</div>
+                            </div>
+                        </div>
+                        <div class="live-price-block">
+                            <div class="live-price-value" id="livePriceDisplay">
+                                <span id="currencyIcon">{{ currency_icon }}</span><span id="livePriceVal">{{ current_metal_rate }}</span>
+                                <span style="font-size:13px;font-weight:600;">/gm</span>
+                            </div>
+                            <div class="live-price-meta">
+                                <span id="marketStatusBadge" class="market-badge">—</span>
+                                <span id="dateTimeDisplay" style="font-size:10px;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart card -->
+                    <div class="tradingview-card">
+
+                        <!-- Toolbar: chart type + range active display -->
+                        <div class="chart-toolbar">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span id="activeRangeDisplay"
+                                      style="color:var(--tv-accent);font-size:12px;font-weight:700;">1D</span>
+                                <span style="width:1px;height:14px;background:var(--tv-border);display:inline-block;"></span>
+                                <span style="color:var(--tv-text-muted);font-size:11px;" id="candleCountDisplay"></span>
+                            </div>
+                            <div class="tv-btn-group chart-types">
+                                <button class="tv-btn active" data-type="candlestick" id="btnCandle">Candles</button>
+                                <button class="tv-btn" data-type="area" id="btnLine">Line</button>
+                            </div>
+                        </div>
+
+                        <!-- OHLC Legend -->
+                        <div class="chart-legend" id="ohlcLegend">
+                            <span class="ohlc-label">{{ metal_type|upper }}</span>
+                            <span id="tvOhlcValues" style="display:flex;gap:10px;color:var(--tv-text-primary);">
+                                <span>O <span class="ohlc-val" id="ohlcO" style="color:var(--tv-up);">—</span></span>
+                                <span>H <span class="ohlc-val" id="ohlcH" style="color:var(--tv-up);">—</span></span>
+                                <span>L <span class="ohlc-val" id="ohlcL" style="color:var(--tv-up);">—</span></span>
+                                <span>C <span class="ohlc-val" id="ohlcC" style="color:var(--tv-up);">—</span></span>
+                                <span id="ohlcChange" style="color:var(--tv-up);font-weight:700;">—</span>
+                            </span>
+                        </div>
+
+
+
+                        <!-- Chart area -->
+                        <div id="metalChart" style="min-height: 300px;"></div>
+
+                        <!-- Range selector -->
+                        <div class="chart-ranges chart-range-btns">
+                            <button class="tv-btn" data-range="5m">5m</button>
+                            <button class="tv-btn" data-range="10m">10m</button>
+                            <button class="tv-btn" data-range="1h">1h</button>
+                            <button class="tv-btn active" data-range="1D">1D</button>
+                            <button class="tv-btn" data-range="1M">1M</button>
+                            <button class="tv-btn" data-range="6M">6M</button>
+                            <button class="tv-btn" data-range="1Y">1Y</button>
+                        </div>
+                    </div>
+
+                </div><!-- /chart-page-wrapper -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fixed CTA: Buy / Sell -->
+<div class="chart-cta">
+    <a href="{% url 'weights' metal_type %}" class="cta-btn cta-buy" id="btnBuy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        BUY
+    </a>
+    <a href="{% url 'live_orders' %}" class="cta-btn cta-sell" id="btnSell">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 19V5M19 12l-7 7-7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        SELL
+    </a>
+</div>
+{% endblock %}
+
+{% block extraModal %}
+{% include "di{% block extraJS %}
+<script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function () {
+    const METAL_TYPE   = "{{ metal_type }}".toUpperCase();
+    const IS_GOLD      = METAL_TYPE === "GOLD";
+    const REFRESH_MS   = {{ rate_refresh_interval|default:'10' }} * 1000;
+
+    let tvChart        = null;
+    let candleSeries   = null;
+    let lineSeries     = null;
+    let currentRange   = "1D";
+    let currentType    = "candlestick";
+    let prevPrice      = null;
+
+    /* ─── Interval mapping ─── */
+    function intervalForRange(range) {
+        return { "5m":"5", "10m":"10", "1h":"60", "1D":"15", "1M":"60", "6M":"1440", "1Y":"1440" }[range] || "15";
+    }
+
+    function cutoffForRange(range) {
+        const now = new Date();
+        const MS = { "5m":6*3600e3, "10m":12*3600e3, "1h":48*3600e3, "1D":86400e3, "1M":2592000e3, "6M":15552000e3, "1Y":31536000e3 };
+        return new Date(now.getTime() - (MS[range] || 86400e3));
+    }
+
+    /* ─── OHLC legend ─── */
+    function updateOHLC(o, h, l, c) {
+        if (o == null) return;
+        const change = c - o;
+        const pct    = o !== 0 ? (change / o * 100).toFixed(2) : 0;
+        const color  = change >= 0 ? "var(--tv-up)" : "var(--tv-down)";
+        const sign   = change >= 0 ? "+" : "";
+
+        const fmt = v => v.toFixed(IS_GOLD ? 1 : 2);
+        document.getElementById("ohlcO").textContent = fmt(o);
+        document.getElementById("ohlcH").textContent = fmt(h);
+        document.getElementById("ohlcL").textContent = fmt(l);
+        document.getElementById("ohlcC").textContent = fmt(c);
+        document.getElementById("ohlcChange").textContent = `${sign}${fmt(change)} (${sign}${pct}%)`;
+
+        ["ohlcO","ohlcH","ohlcL","ohlcC","ohlcChange"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.color = color;
+        });
+    }
+
+    /* ─── Chart init ─── */
+    function initChart() {
+        const container = document.getElementById("metalChart");
+        if (!container) return;
+        container.innerHTML = "";
+
+        tvChart = LightweightCharts.createChart(container, {
+            height: 300,
+            layout: {
+                background: { type: "solid", color: "#131722" },
+                textColor: "#d1d4dc",
+                fontSize: 11,
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif"
+            },
+            grid: {
+                vertLines: { color: "#2a2e39", style: 2 },
+                horzLines: { color: "#2a2e39", style: 2 },
+            },
+            crosshair: {
+                mode: 1,
+                vertLine: { color: "#758696", width: 1, style: 3 },
+                horzLine: { color: "#758696", width: 1, style: 3 }
+            },
+            rightPriceScale: {
+                borderColor: "#2a2e39",
+                scaleMargins: { top: 0.1, bottom: 0.1 },
+                autoScale: true,
+            },
+            timeScale: {
+                borderColor: "#2a2e39",
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
+
+        if (currentType === "candlestick") {
+            candleSeries = tvChart.addCandlestickSeries({
+                upColor: "#26a69a",
+                downColor: "#ef5350",
+                borderVisible: false,
+                wickUpColor: "#26a69a",
+                wickDownColor: "#ef5350",
+            });
+            lineSeries = null;
+        } else {
+            lineSeries = tvChart.addAreaSeries({
+                topColor: "rgba(41, 98, 255, 0.4)",
+                bottomColor: "rgba(41, 98, 255, 0.0)",
+                lineColor: "#2962ff",
+                lineWidth: 2,
+            });
+            candleSeries = null;
+        }
+
+        tvChart.subscribeCrosshairMove(param => {
+            if (!param.time || !param.seriesData) return;
+            const activeSeries = candleSeries || lineSeries;
+            const data = param.seriesData.get(activeSeries);
+            if (data) {
+                if (currentType === "candlestick") {
+                    updateOHLC(data.open, data.high, data.low, data.close);
+                } else {
+                    updateOHLC(data.value, data.value, data.value, data.value);
+                }
+            }
+        });
+
+        handleResize();
+        loadChartData();
+    }
+
+    function handleResize() {
+        const container = document.getElementById("metalChart");
+        if (tvChart && container) {
+            tvChart.applyOptions({ width: container.clientWidth });
+        }
+    }
+
+    window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize);
+
+    /* ─── Data loader ─── */
+    function loadChartData() {
+        const interval = intervalForRange(currentRange);
+        const url = window.APP_URLS.get_chart_data + `?metal_type=${METAL_TYPE}&interval=${interval}`;
+
+        fetch(url).then(r => r.json()).then(res => {
+            if (!res.status || !res.data || !res.data.length) return;
+
+            const cutoff = cutoffForRange(currentRange);
+            let items = res.data.filter(d => new Date(d.time) >= cutoff);
+            if (!items.length) items = res.data;
+
+            items.sort((a, b) => new Date(a.time) - new Date(b.time));
+
+            if (currentType === "candlestick" && candleSeries) {
+                const formatted = [];
+                const seen = new Set();
+                items.forEach(d => {
+                    const t = Math.floor(new Date(d.time).getTime() / 1000);
+                    if (!seen.has(t)) {
+                        seen.add(t);
+                        formatted.push({
+                            time: t,
+                            open: parseFloat(d.open),
+                            high: parseFloat(d.high),
+                            low: parseFloat(d.low),
+                            close: parseFloat(d.close)
+                        });
+                    }
+                });
+                candleSeries.setData(formatted);
+
+                const countEl = document.getElementById("candleCountDisplay");
+                if (countEl) {
+                    countEl.textContent = `${formatted.length} candle${formatted.length !== 1 ? "s" : ""}`;
+                }
+            } else if (lineSeries) {
+                const formatted = [];
+                const seen = new Set();
+                items.forEach(d => {
+                    const t = Math.floor(new Date(d.time).getTime() / 1000);
+                    if (!seen.has(t)) {
+                        seen.add(t);
+                        formatted.push({
+                            time: t,
+                            value: parseFloat(d.close)
+                        });
+                    }
+                });
+                lineSeries.setData(formatted);
+
+                const countEl = document.getElementById("candleCountDisplay");
+                if (countEl) {
+                    countEl.textContent = `${formatted.length} point${formatted.length !== 1 ? "s" : ""}`;
+                }
+            }
+
+            if (tvChart) {
+                tvChart.timeScale().fitContent();
+            }
+
+            if (items.length > 0) {
+                const last = items[items.length - 1];
+                updateOHLC(parseFloat(last.open), parseFloat(last.high), parseFloat(last.low), parseFloat(last.close));
+            }
+        }).catch(err => console.warn("Chart data fetch error:", err));
+    }
+
+    /* ─── Live rate ticker ─── */
+    function fetchLiveRate() {
+        fetch(window.APP_URLS.getMetalLiveRate)
+            .then(r => r.json())
+            .then(data => {
+                const rate   = METAL_TYPE === "GOLD" ? data.current_gold_rate : data.current_silver_rate;
+                const icon   = data.currency_icon || "₹";
+                const isOpen = data.market_open;
+
+                const el = document.getElementById("livePriceVal");
+                const display = document.getElementById("livePriceDisplay");
+                if (el && rate != null) {
+                    const newRate = parseFloat(rate);
+                    if (prevPrice !== null) {
+                        display.classList.toggle("down", newRate < prevPrice);
+                    }
+                    prevPrice = newRate;
+                    el.textContent = rate;
+                }
+
+                const iconEl = document.getElementById("currencyIcon");
+                if (iconEl) iconEl.textContent = icon;
+
+                const badge = document.getElementById("marketStatusBadge");
+                if (badge) {
+                    badge.textContent = isOpen ? "Market Open" : "Market Closed";
+                    badge.className   = `market-badge ${isOpen ? "open" : "closed"}`;
+                }
+
+                const dt = document.getElementById("dateTimeDisplay");
+                if (dt && data.date_time) {
+                    const plain = data.date_time.replace(/<[^>]+>/g, "").trim();
+                    dt.textContent = plain;
+                }
+            })
+            .catch(() => {});
+    }
+
+    /* ─── Range button listeners ─── */
+    document.querySelectorAll(".chart-range-btns button").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".chart-range-btns button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentRange = btn.dataset.range;
+            document.getElementById("activeRangeDisplay").textContent = currentRange;
+            loadChartData();
+        });
+    });
+
+    /* ─── Chart type listeners ─── */
+    document.querySelectorAll(".chart-types button").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".chart-types button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentType = btn.dataset.type;
+            initChart();
+        });
+    });
+
+    /* ─── Boot ─── */
+    fetchLiveRate();
+    initChart();
+
+    setInterval(() => {
+        fetchLiveRate();
+        loadChartData();
+    }, REFRESH_MS);
+})();
+</script>
+{% endblock %}�� */
+    fetchLiveRate();
+    initChart();
+
+    setInterval(() => {
+        fetchLiveRate();
+        loadChartData();
+    }, REFRESH_MS);
+
+})();
+</script>
+{% endblock %}

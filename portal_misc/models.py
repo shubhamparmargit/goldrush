@@ -28,6 +28,8 @@ class CompanyBankDetails(models.Model):
     rate_refresh_interval = models.IntegerField(default=10, help_text="Live rate refresh interval in seconds")
     pnl_refresh_interval  = models.IntegerField(default=5, help_text="Live PNL refresh interval in seconds")
     manual_market_closed  = models.BooleanField(default=False)
+    market_closed_message = models.CharField(max_length=500, blank=True, default='', help_text="Optional message to display in marquee when market is closed")
+    withdrawals_closed    = models.BooleanField(default=False, help_text="Disable withdrawals globally")
     stop_api_hits        = models.BooleanField(default=False)
     bulk_override_min_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     bulk_override_min_weight = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)

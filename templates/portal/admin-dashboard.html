@@ -149,6 +149,20 @@
                         </div>
                     </div>
                 </div>
+                <!-- Total Txn -->
+                <div class="col-xl-4 col-md-6 col-12 mb-30">
+                    <div class="box box-body pull-up border-start border-info border-5 rounded">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-fade fs-14 mb-5 text-uppercase fw-500">Total Txn Points</p>
+                                <h2 class="mb-0 text-info fw-600" id="metric-total-txn">0</h2>
+                            </div>
+                            <div class="bg-info-light rounded-circle h-50 w-50 l-h-50 text-center">
+                                <i class="fa fa-exchange text-info fs-20"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Charts & Visualization Row -->
@@ -338,6 +352,7 @@ $(document).ready(function() {
                     animateValue($('#metric-profit'), 0, metrics.profit, 800, '₹');
                     animateValue($('#metric-loss'), 0, metrics.loss, 800, '₹');
                     animateValue($('#metric-wallet-balance'), 0, metrics.wallet_balance, 800, '₹');
+                    animateValue($('#metric-total-txn'), 0, metrics.total_txn || 0, 800, '', ' Txn');
 
                     // Stats in PNL box
                     $('#stat-profit').text(formatCurrency(metrics.profit));

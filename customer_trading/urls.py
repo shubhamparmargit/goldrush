@@ -37,4 +37,6 @@ urlpatterns = [
 
     re_path(r'^customer-trading-access$', checkCustomerTradingAccess, name='checkCustomerTradingAccess'),
     re_path(r'^initiate$', initiate_trading_handshake, name='initiate_trading_handshake'),
+
+    re_path(r'^chart/(?P<metal_type>gold|silver)$', page_obj.chart_page, name='chart_page'),
 ]

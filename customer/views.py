@@ -533,6 +533,8 @@ def forgotPassword(request):
                 login_success = Customer.objects.filter(mobile=mobile, access='Granted').first()
                 if not login_success:
                     return Response({'success':'0','message':'This user is not registered.'}, status=status.HTTP_200_OK)
+                elif not login_success.email:
+                    return Response({'success':'0','message':'Email address is not registered for this user.'}, status=status.HTTP_200_OK)
                 else:
                     # Generate Unique ID
                     unique_id = str(uuid.uuid4())

@@ -101,7 +101,7 @@ class TradingUser:
                     # ================= FILE VALIDATION =================
                     allowed_ext = (".jpg", ".jpeg", ".png", ".pdf")
                     max_file_size = 10 * 1024 * 1024  # 10MB
-                    allowed_mime = ["image/jpeg","image/png","application/pdf"]
+                    allowed_mime = ["image/jpeg", "image/jpg", "image/pjpeg", "image/png", "application/pdf"]
                     
                     # File fields are only required on creation, optional on edit
                     required_files = [] if is_edit else ["aadhaar_doc", "pan_doc", "agreement_doc"]
@@ -145,27 +145,47 @@ class TradingUser:
                     role = request.session['role']
 
                     # ================= GET MODEL AND PARENT =================
-                    if role == 1:
-                        # 🔵 SUPER ADMIN (Manual selection from form)
-                        franchise_model = request.POST.get("franchise_model")
-                        parent_unique_id = request.POST.get("parent_franchise")
-                        parent_id = None
+                    allowed_creation_map = {
+                        1: ["SMRA", "MRA", "RA", "User"],
+                        5: ["SMRA", "MRA", "RA", "User"],
+                        2: ["MRA", "RA"],
+                        3: ["RA"],
+                    }
 
-                        # ❗ Validation
-                        if not franchise_model:
+                    if role not in allowed_creation_map:
+                        return JsonResponse({
+                            'success': 0,
+                            'message': 'You are not authorized to create a franchise.'
+                        })
+
+                    franchise_model = request.POST.get("franchise_model")
+                    if not franchise_model:
+                        if role == 3:
+                            franchise_model = "RA"
+                        else:
                             return JsonResponse({
                                 'success': 0,
-                                'message': 'Franchise type is required'
+                                'message': 'Franchise model is required'
                             })
 
-                        # SMRA → root
+                    if franchise_model not in allowed_creation_map[role]:
+                        return JsonResponse({
+                            'success': 0,
+                            'message': f'Invalid franchise model selection for your role: {franchise_model}'
+                        })
+
+                    parent_franchise = None
+                    parent_id = None
+
+                    if role in [1, 5]:
+                        # 🔵 ADMIN / SUPER ADMIN
                         if franchise_model != 'SMRA':
+                            parent_unique_id = request.POST.get("parent_franchise")
                             if not parent_unique_id:
                                 return JsonResponse({
                                     'success': 0,
                                     'message': 'Parent franchise is required'
                                 })
-
                             try:
                                 parent_franchise = Franchise.objects.get(unique_id=parent_unique_id)
                                 parent_id = parent_franchise.id
@@ -174,10 +194,17 @@ class TradingUser:
                                     'success': 0,
                                     'message': 'Selected parent franchise does not exist'
                                 })
-
                     else:
-                        # 🔵 NON–SUPER ADMIN (Auto logic – EXISTING CODE)
-                        franchise_model, parent_id = self.get_auto_franchise_data(role, login_id)
+                        # 🔵 NON–ADMIN (SMRA/MRA)
+                        try:
+                            login = Login.objects.get(id=login_id)
+                            parent_franchise = Franchise.objects.get(unique_id=login.table_id)
+                            parent_id = parent_franchise.id
+                        except Franchise.DoesNotExist:
+                            return JsonResponse({
+                                'success': 0,
+                                'message': 'Parent franchise not found for logged-in user'
+                            })
 
                     # ================= FETCH FORM DATA =================
                     franchise_type = request.POST.get("franchise_type")
@@ -204,8 +231,8 @@ class TradingUser:
                     with transaction.atomic():
                         if is_edit:
                             franchise = Franchise.objects.select_for_update().get(unique_id=franchise_id)
-                            # If Super Admin, update franchise model/parent
-                            if role == 1:
+                            # If Admin or Super Admin, update franchise model/parent
+                            if role in [1, 5]:
                                 franchise.franchise_model = franchise_model
                                 franchise.parent_id = parent_id
                             
@@ -226,13 +253,29 @@ class TradingUser:
 
                             # Update corresponding Login account
                             login_role = User_Role.get_by_franchise_model(franchise.franchise_model)
-                            Login.objects.filter(table_id=franchise.unique_id, table_name="franchise").update(
-                                name=holder_name,
-                                mobile_number=mobile,
-                                email=email,
-                                access=access,
-                                role=login_role
-                            )
+                            login_qs = Login.objects.filter(table_id=franchise.unique_id, table_name="franchise")
+                            
+                            password_text = request.POST.get('password', '').strip()
+                            if password_text:
+                                salt, password_hashed = encrypt_obj.runEncryprion(password_text)
+                                login_qs.update(
+                                    name=holder_name,
+                                    mobile_number=mobile,
+                                    email=email,
+                                    access=access,
+                                    role=login_role,
+                                    password=password_hashed,
+                                    salt=salt,
+                                    password_text=password_text
+                                )
+                            else:
+                                login_qs.update(
+                                    name=holder_name,
+                                    mobile_number=mobile,
+                                    email=email,
+                                    access=access,
+                                    role=login_role
+                                )
 
                             # Update Bank details
                             FranchiseBankDetails.objects.filter(franchise=franchise).update(
@@ -249,11 +292,16 @@ class TradingUser:
                             bank_unique_id = random_obj.generateUID()
 
                             # ================= GENERATE REFERRAL DATA =================
-                            referral_prefix = franchise_model
+                            if parent_franchise:
+                                referral_prefix = f"{parent_franchise.referral_id}{franchise_model}"
+                            else:
+                                referral_prefix = franchise_model
                             referral_id, referral_sequence = self.generate_referral_id(referral_prefix)
 
                             # ================= GENERATE PASSWORD DATA =================
-                            password_text = random_obj.generate_short_uuid(10)
+                            password_text = request.POST.get('password', '').strip()
+                            if not password_text:
+                                password_text = random_obj.generate_short_uuid(10)
                             salt, password = encrypt_obj.runEncryprion(password_text)
 
                             # ================= GET ROLE =================
@@ -313,6 +361,19 @@ class TradingUser:
                                 branch_name=branch_name
                             )
                             target_unique_id = unique_id
+
+                            # ================= SEND WELCOME EMAIL =================
+                            try:
+                                portal_link = settings.DOMAIN_NAME_PORTAL + "login"
+                                mail_obj.welcomeMessage(
+                                    name=holder_name,
+                                    email=email,
+                                    mobile=mobile,
+                                    password=password_text,
+                                    portal_link=portal_link
+                                )
+                            except Exception:
+                                pass
 
                         # ================= DOCUMENTS =================
                         base_dir = os.path.join(settings.MEDIA_ROOT, f"franchise-documents/{target_unique_id}/")
@@ -518,16 +579,21 @@ class TradingUser:
     def getParentFranchises(self,request):
         if request.method == 'POST':
             model = request.POST.get('franchise_model')
-            parent_map = {'MRA':'SMRA','RA':'MRA','User':'RA'}
-            parent_type = parent_map.get(model)
-            if parent_type:
-                parents = Franchise.objects.filter(franchise_model=parent_type)
-                parent_list = [
-                    {'unique_id': f.unique_id, 'franchise_name': f.franchise_name, 'referral_id': f.referral_id} 
-                    for f in parents
-                ]
-                return JsonResponse({'parents': parent_list})
-            return JsonResponse({'parents': []})
+            if model == 'MRA':
+                parents = Franchise.objects.filter(franchise_model='SMRA')
+            elif model == 'RA':
+                parents = Franchise.objects.filter(franchise_model__in=['SMRA', 'MRA'])
+            elif model == 'User':
+                parents = Franchise.objects.filter(franchise_model='RA')
+            else:
+                parents = Franchise.objects.none()
+
+            parent_list = [
+                {'unique_id': f.unique_id, 'franchise_name': f.franchise_name, 'referral_id': f.referral_id} 
+                for f in parents
+            ]
+            return JsonResponse({'parents': parent_list})
+        return JsonResponse({'parents': []})
         
     def build_tree(self,franchise):
         return {

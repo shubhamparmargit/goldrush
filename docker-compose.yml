@@ -25,7 +25,25 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./private:/app/private
+      - .:/app
+    environment:
+      DB_NAME: ohwqiijn_gold_mine
+      DB_USER: root
+      DB_PASSWORD: goldmine_secure_pass_123
+      DB_HOST: db
+      DB_PORT: 3306
+      DEBUG: "True"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  auto_sell:
+    build: .
+    container_name: goldmine_auto_sell
+    restart: always
+    command: python manage.py run_auto_sell
+    volumes:
+      - .:/app
     environment:
       DB_NAME: ohwqiijn_gold_mine
       DB_USER: root

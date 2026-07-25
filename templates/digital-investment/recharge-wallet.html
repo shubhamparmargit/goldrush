@@ -144,20 +144,23 @@ Recharge Your Wallet
                 </div>
 
                 <!-- RAZORPAY -->
+                <!--
                 <button id="payBtn" class="action-btn primary-btn disabled">
                     Pay via Razorpay
                 </button>
+                -->
+                <button id="payBtn" style="display: none;"></button>
 
                 {% if company_bank %}
                 <!-- DIVIDER -->
-                <div class="payment-divider">OR</div>
+                <div class="payment-divider" style="display: none;">OR</div>
 
                 <!-- UPI / BANK TRANSFER -->
                 <div class="upi-card">
                     <h5>Pay via UPI / Bank Transfer</h5>
 
                     {% if company_bank.qr_code_image %}
-                    <img src="{{ MEDIA_URL }}{{ company_bank.qr_code_image }}" alt="UPI QR Code" class="upi-qr">
+                    <img src="{{ MEDIA_URL|default:'/media/' }}{{ company_bank.qr_code_image }}" alt="UPI QR Code" class="upi-qr">
                     <p style="text-align:center;font-size:12px;color:#aaa;margin-bottom:12px;">Scan to pay</p>
                     {% endif %}
 

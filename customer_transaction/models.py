@@ -137,6 +137,12 @@ class DemoTransactionAutoSellHistory(models.Model):
     changed_by = models.CharField(max_length=20, default="CUSTOMER", help_text="CUSTOMER / SYSTEM")
     created_at = models.DateTimeField(auto_now_add=True)
 
+SOURCE_CHOICES = (
+    ("LIVE", "Live API"),
+    ("ADMIN_OVERRIDE", "Admin Override"),
+    ("SPREAD_CHANGE", "Spread/Rate Change"),
+)
+
 class MetalRateLog(models.Model):
     class Meta:
         db_table = "metal_rate_log"
@@ -147,4 +153,5 @@ class MetalRateLog(models.Model):
 
     metal_type = models.CharField(max_length=6, choices=METAL_TYPE)
     rate = models.DecimalField(max_digits=10, decimal_places=2)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="LIVE")
     created_at = models.DateTimeField(auto_now_add=True)

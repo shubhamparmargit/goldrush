@@ -12,7 +12,14 @@ $(document).ready(function()
 
     if(type=="trading_user")
     {
-        $('.franchise-tabs a[title="SMRA"]').addClass('active');
+        let activeTab = $('.franchise-tabs a.active');
+        if (activeTab.length === 0) {
+            $('.franchise-tabs a').first().addClass('active');
+            activeTab = $('.franchise-tabs a.active');
+        }
+        if (activeTab.length > 0) {
+            franchise_model = activeTab.attr('title');
+        }
     }
 
     load_data(page,type);
@@ -1378,6 +1385,8 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].quantity+'</td>\
                                 <td>'+data.table_data[i].invested_amount+'</td>\
                                 <td>'+data.table_data[i].service_fee+'</td>\
+                                <td>'+data.table_data[i].reward+'</td>\
+                                <td>'+(data.table_data[i].stop_loss || 'Disabled')+'</td>\
                                 <td>'+data.table_data[i].buy_price+'</td>\
                                 <td>'+data.table_data[i].buy_date+'</td>\
                                 <td>'+data.table_data[i].sell_price+'</td>\
@@ -1385,6 +1394,7 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].order_type+'</td>\
                                 <td>'+profitLossText+'</td>\
                                 <td>'+pnlTextHtml+'</td>\
+                                <td>'+data.table_data[i].txn+'</td>\
                             </tr>';
                     }
                     $('.dynamic_content').append(output);
@@ -1406,6 +1416,8 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                 <td>'+data.table_data[i].metal_type+'</td>\
                                 <td>'+data.table_data[i].quantity+'</td>\
                                 <td><i class="fa fa-inr"></i> '+data.table_data[i].invested_amount+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].service_fee+'</td>\
+                                <td>'+(data.table_data[i].stop_loss || 'Disabled')+'</td>\
                                 <td><i class="fa fa-inr"></i> '+data.table_data[i].buy_price+'</td>\
                                 <td>'+data.table_data[i].buy_date+'</td>\
                                 <td><i class="fa fa-inr"></i> '+data.table_data[i].current_rate+'</td>\
@@ -1415,6 +1427,47 @@ function load_data(page,type,query='',from_date='',to_date='',access='',limit=''
                                     <button data-id="'+data.table_data[i].transaction_id+'" class="btn btn-danger closeLiveOrder" title="Close Order" style="padding: 4px 8px; font-size: 11px;"><span class="fa fa-times"></span> Close</button>\
                                     <button data-id="'+data.table_data[i].transaction_id+'" data-override="'+data.table_data[i].admin_rate_override+'" class="btn btn-warning overrideOrderRate" title="Override Rate" style="padding: 4px 8px; font-size: 11px;"><span class="fa fa-edit"></span> Override ('+(data.table_data[i].admin_rate_override || 'None')+')</button>\
                                 </td>\
+                            </tr>';
+                    }
+                    $('.dynamic_content').append(output);
+                }
+                else if(type=="franchise_commission_report")
+                {
+                    output = '';
+                    for(var i=0;i<data.table_data.length;i++)
+                    {
+                        output +='\
+                            <tr>\
+                                <td>'+data.table_data[i].sr_no+'</td>\
+                                <td>'+data.table_data[i].referral_id+'</td>\
+                                <td>'+data.table_data[i].holder_name+'</td>\
+                                <td><span class="badge badge-info">'+data.table_data[i].franchise_model+'</span></td>\
+                                <td>'+data.table_data[i].mobile+'</td>\
+                                <td>'+data.table_data[i].city+'</td>\
+                                <td>'+data.table_data[i].total_txn+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].total_service_fee+'</td>\
+                                <td>'+data.table_data[i].commission_rate+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].total_commission+'</td>\
+                            </tr>';
+                    }
+                    $('.dynamic_content').append(output);
+                }
+                else if(type=="franchise_wise_report")
+                {
+                    output = '';
+                    for(var i=0;i<data.table_data.length;i++)
+                    {
+                        output +='\
+                            <tr>\
+                                <td>'+data.table_data[i].sr_no+'</td>\
+                                <td>'+data.table_data[i].referral_id+'</td>\
+                                <td>'+data.table_data[i].holder_name+'</td>\
+                                <td>'+data.table_data[i].mobile+'</td>\
+                                <td>'+data.table_data[i].city+'</td>\
+                                <td>'+data.table_data[i].total_txn+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].total_wallet+'</td>\
+                                <td>'+data.table_data[i].total_registration+'</td>\
+                                <td><i class="fa fa-inr"></i> '+data.table_data[i].total_service_fee+'</td>\
                             </tr>';
                     }
                     $('.dynamic_content').append(output);
